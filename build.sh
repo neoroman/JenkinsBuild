@@ -233,6 +233,7 @@ if [ -f $jsonConfig ]; then
   PROJECT_NAME=$(cat $jsonConfig | $JQ '.ios.projectName' | tr -d '"')
   POD_FILE=$(cat $jsonConfig | $JQ '.ios.podFile' | tr -d '"')
   sudoPassword=$(cat $jsonConfig | $JQ '.ios.sudoPassword' | tr -d '"')
+  jenkinsUser=$(cat $jsonConfig | $JQ '.ios.jenkinsUser' | tr -d '"')
 fi
 ################################################################################
 if [ -f $installedOrNot ]; then
@@ -778,7 +779,7 @@ elif [[ "$INPUT_OS" == "ios" ]]; then
     ###################
     if [ $DEBUGGING -eq 0 ]; then
       # unlock the keychain to make code signing work
-      sudo -S su foo -c "security unlock-keychain -p "${sudoPassword}" ${HOME}/Library/Keychains/login.keychain" <<<"${sudoPassword}"
+      sudo -S su ${jenkinsUser} -c "security unlock-keychain -p "${sudoPassword}" ${HOME}/Library/Keychains/login.keychain" <<<"${sudoPassword}"
     fi
     ###################
     # Step 1.1: Build target for AppStore (We don't need AppStore version for preRelease)
