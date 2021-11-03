@@ -232,6 +232,7 @@ if [ -f $jsonConfig ]; then
   USING_MAIL=$(test $(cat $jsonConfig | $JQ '.mail.domesticEnabled') = true && echo 1 || echo 0)
   PROJECT_NAME=$(cat $jsonConfig | $JQ '.ios.projectName' | tr -d '"')
   POD_FILE=$(cat $jsonConfig | $JQ '.ios.podFile' | tr -d '"')
+  sudoPassword=$(cat $jsonConfig | $JQ '.ios.sudoPassword' | tr -d '"')
 fi
 ################################################################################
 if [ -f $installedOrNot ]; then
