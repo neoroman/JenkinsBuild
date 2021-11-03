@@ -1,0 +1,13 @@
+##
+# App binaries
+*.apk
+*.APK
+*.ipa
+*.IPA
+*.app
+##
+# PNG
+*.png
+##
+# Log
+*.log
