@@ -43,6 +43,11 @@ while [[ $# -gt 0 ]]; do
     shift # past argument
     shift # past value
     ;;
+  -dr | --docroot)
+    APP_ROOT_PREFIX="$2"
+    shift # past argument
+    shift # past value
+    ;;
   -d | --debug)
     DEBUGGING=1
     shift # past argument
@@ -143,7 +148,9 @@ if [ $DEBUGGING -eq 1 ]; then
   USING_TEAMS_WEBHOOK=0
   TEAMS_WEBHOOK="https://webhook.office.com/webhookb1/"
   DEBUG_ANDROID_HOME="/usr/local/share/android-sdk"
-  APP_ROOT_PREFIX="/Users/Company/Projects/sites"
+  if test -z $APP_ROOT_PREFIX; then
+    APP_ROOT_PREFIX="/Users/Company/Projects/sites"
+  fi
   sudoPassword="qwer1234"
 else
   FRONTEND_POINT="https://macmini.company.com"
@@ -151,7 +158,9 @@ else
   ### Using Teams or Not, 0=Not Using, 1=Using Teams
   USING_TEAMS_WEBHOOK=0
   TEAMS_WEBHOOK="https://webhook.office.com/webhookb2/"
-  APP_ROOT_PREFIX="/Library/WebServer/Documents"
+  if test -z $APP_ROOT_PREFIX; then
+    APP_ROOT_PREFIX="/Library/WebServer/Documents"
+  fi
   sudoPassword="qwer1234"
 fi
 GIT_USER="AppDevTeam"
