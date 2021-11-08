@@ -152,6 +152,7 @@ if [ $DEBUGGING -eq 1 ]; then
     APP_ROOT_PREFIX="/Users/Company/Projects/sites"
   fi
   sudoPassword="qwer1234"
+  jenkinsUser="jenkinsUser"
 else
   FRONTEND_POINT="https://macmini.company.com"
   USING_SLACK=0
@@ -162,6 +163,7 @@ else
     APP_ROOT_PREFIX="/Library/WebServer/Documents"
   fi
   sudoPassword="qwer1234"
+  jenkinsUser="jenkinsUser"
 fi
 GIT_USER="AppDevTeam"
 GIT_EMAIL="appdevteam@company.com"
@@ -878,7 +880,7 @@ elif [[ "$INPUT_OS" == "ios" ]]; then
               sed -e 's/ix_set_debug/IX_SET_DEBUG/g' $SPLASH_VIEW >$SPLASH_TEMP
               mv -f $SPLASH_TEMP $SPLASH_VIEW
 
-              cd $WORKSPACE && echo "MacBook-Pro:ios fooBar$ ./IxShieldCheck.sh -i ./${PROJECT_NAME}" >merong.txt
+              cd $WORKSPACE && echo "MacBook-Pro:ios myCompany$ ./IxShieldCheck.sh -i ./${PROJECT_NAME}" >merong.txt
               cd $WORKSPACE && ./IxShieldCheck.sh -i . >>merong.txt
               cd $WORKSPACE && cat merong.txt | $A2PS -=book -B -q --medium=A4dj --borders=no -o out1.ps && $GS -sDEVICE=png256 -dNOPAUSE -dBATCH -dSAFER -dTextAlphaBits=4 -q -r300x300 -sOutputFile=out2.png out1.ps &&
               cd $WORKSPACE && $CONVERT -trim out2.png $OUTPUT_FOLDER/$OUTPUT_FILENAME_APPSTORE_IX_SHIELD_CHECK
