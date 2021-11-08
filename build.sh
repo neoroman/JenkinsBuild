@@ -1022,6 +1022,9 @@ elif [[ "$INPUT_OS" == "ios" ]]; then
         >$OUTPUT_FOLDER/$OUTPUT_FILENAME_ENTER4WEB_PLIST
       ENTER4WEB_PLIST_ITMS_URL=${HTTPS_PREFIX}${OUTPUT_FILENAME_ENTER4WEB_PLIST}
     fi
+    APPSTORE_TITLE=$(cat $jsonConfig | $JQ '.ios.AppStore.title' | tr -d '"')
+    ADHOC_TITLE=$(cat $jsonConfig | $JQ '.ios.Adhoc.title' | tr -d '"')
+    ENTER_TITLE=$(cat $jsonConfig | $JQ '.ios.Enterprise.title' | tr -d '"')
 fi # iOS
 ###################
 
@@ -1043,21 +1046,21 @@ if [ $USING_SLACK -eq 1 ]; then
     SLACK_APPSTORE_DOWN_STR=""
     SLACK_APPSTORE_ATTACH_STR=""
     if [ $USING_APPSTORE -eq 1 ]; then
-      SLACK_INSTALL_STR="${HOSTNAME} > 엔터프라이즈 및 Ad-Hoc 설치: ${SITE_URL}\n(사이트 접근 ID/PW는 ${SITE_ID_PW})\n\n"
-      SLACK_APPSTORE_DOWN_STR="${HOSTNAME} > AppStore IPA 다운로드(${SIZE_STORE_APP_FILE}B): ${HTTPS_PREFIX}${OUTPUT_FILENAME_APPSTORE_IPA}\n"
+      SLACK_INSTALL_STR="${HOSTNAME} > ${ENTER_TITLE} 및 ${ADHOC_TITLE} 설치: ${SITE_URL}\n(사이트 접근 ID/PW는 ${SITE_ID_PW})\n\n"
+      SLACK_APPSTORE_DOWN_STR="${HOSTNAME} > ${APPSTORE_TITLE} IPA 다운로드(${SIZE_STORE_APP_FILE}B): ${HTTPS_PREFIX}${OUTPUT_FILENAME_APPSTORE_IPA}\n"
       SLACK_APPSTORE_ATTACH_STR="${HOSTNAME} > 첨부파일: ${HTTPS_PREFIX}${OUTPUT_FILENAME_APPSTORE_IX_SHIELD_CHECK}\n"
     fi
     SLACK_ADHOC_DOWN_STR=""
     SLACK_ADHOC_ITMS_STR=""
     if [ $USING_ADHOC -eq 1 ]; then
-      SLACK_ADHOC_DOWN_STR="${HOSTNAME} > Ad-Hoc(${SIZE_ADHOC_APP_FILE}B): ${HTTPS_PREFIX}${OUTPUT_FILENAME_ADHOC_IPA}\n"
-      SLACK_ADHOC_ITMS_STR="${HOSTNAME} > Ad-Hoc(${SIZE_ADHOC_APP_FILE}B): ${ITMS_PREFIX}${ADHOC_PLIST_ITMS_URL}]n"
+      SLACK_ADHOC_DOWN_STR="${HOSTNAME} > ${ADHOC_TITLE}(${SIZE_ADHOC_APP_FILE}B): ${HTTPS_PREFIX}${OUTPUT_FILENAME_ADHOC_IPA}\n"
+      SLACK_ADHOC_ITMS_STR="${HOSTNAME} > ${ADHOC_TITLE}(${SIZE_ADHOC_APP_FILE}B): ${ITMS_PREFIX}${ADHOC_PLIST_ITMS_URL}]n"
     fi
     SLACK_ENTER_DOWN_STR=""
     SLACK_ENTER_ITMS_STR=""
     if [ $USING_ENTERPRISE -eq 1 ]; then
-      SLACK_ENTER_DOWN_STR="${HOSTNAME} > Enterprise(${SIZE_ENTER_APP_FILE}B): ${HTTPS_PREFIX}${OUTPUT_FILENAME_ENTER_IPA}\n"
-      SLACK_ENTER_ITMS_STR="${HOSTNAME} > Enterprise(${SIZE_ENTER_APP_FILE}B): ${ITMS_PREFIX}${ENTER_PLIST_ITMS_URL}\n"
+      SLACK_ENTER_DOWN_STR="${HOSTNAME} > ${ENTER_TITLE}(${SIZE_ENTER_APP_FILE}B): ${HTTPS_PREFIX}${OUTPUT_FILENAME_ENTER_IPA}\n"
+      SLACK_ENTER_ITMS_STR="${HOSTNAME} > ${ENTER_TITLE}(${SIZE_ENTER_APP_FILE}B): ${ITMS_PREFIX}${ENTER_PLIST_ITMS_URL}\n"
     fi
     if [ $IS_RELEASE -eq 0 ]; then
       $SLACK chat send --text "${SLACK_ADHOC_DOWN_STR}${SLACK_ENTER_DOWN_STR}" --channel ${SLACK_CHANNEL} --pretext "${HOSTNAME} > iOS Build output files for ${GIT_BRANCH} - ${CHANGE_TITLE}(commit: ${GIT_COMMIT}) => ${BUILD_URL}" --color good
@@ -1165,12 +1168,7 @@ if [ -f $JQ -a $USING_JSON -eq 1 ]; then
   OUTPUT_FILENAME_JSON="${OUTPUT_FILENAME_ONLY}.json"
 
   if [[ "$INPUT_OS" == "ios" ]]; then
-    ADHOC_TITLE=$(cat $jsonConfig | $JQ '.ios.Adhoc.title' | tr -d '"')
-    ENTER_TITLE=$(cat $jsonConfig | $JQ '.ios.Enterprise.title' | tr -d '"')
-
     if [ $IS_RELEASE -eq 1 ]; then
-      APPSTORE_TITLE=$(cat $jsonConfig | $JQ '.ios.AppStore.title' | tr -d '"')
-
       file1Title="${APPSTORE_TITLE}"
       file1Size="${SIZE_STORE_APP_FILE}B"
       file1Binary="${OUTPUT_FILENAME_APPSTORE_IPA}"
@@ -1508,8 +1506,8 @@ if [ -f $OUTPUT_FOLDER/$OUTPUT_FILENAME_JSON ]; then
         BINARY_TITLE="iOS 검증용"
         if [ $USING_APPSTORE -eq 1 ]; then
           BINARY_FACTS="${BINARY_FACTS}{
-                            \"name\": \"App Store\",
-                            \"value\": \"${VERSION_STRING}[AppStore.ipa 다운로드](${HTTPS_PREFIX}${OUTPUT_FILENAME_APPSTORE_IPA}) (${SIZE_STORE_APP_FILE}B)\"
+                            \"name\": \"${APPSTORE_TITLE}\",
+                            \"value\": \"${VERSION_STRING}[${APPSTORE_TITLE}.ipa 다운로드](${HTTPS_PREFIX}${OUTPUT_FILENAME_APPSTORE_IPA}) (${SIZE_STORE_APP_FILE}B)\"
                     }"
         fi
         if [ $USING_ADHOC -eq 1 ]; then
@@ -1517,8 +1515,8 @@ if [ -f $OUTPUT_FOLDER/$OUTPUT_FILENAME_JSON ]; then
             BINARY_FACTS="${BINARY_FACTS}, "
           fi
           BINARY_FACTS="${BINARY_FACTS}{
-                            \"name\": \"Ad-Hoc\",
-                            \"value\": \"${VERSION_STRING}[Ad-Hoc.ipa 다운로드](${HTTPS_PREFIX}${OUTPUT_FILENAME_ADHOC_IPA}) (${SIZE_ADHOC_APP_FILE}B)\"
+                            \"name\": \"${ADHOC_TITLE}\",
+                            \"value\": \"${VERSION_STRING}[${ADHOC_TITLE}.ipa 다운로드](${HTTPS_PREFIX}${OUTPUT_FILENAME_ADHOC_IPA}) (${SIZE_ADHOC_APP_FILE}B)\"
                     }"
         fi
         if [ $USING_ENTERPRISE -eq 1 ]; then
@@ -1526,8 +1524,8 @@ if [ -f $OUTPUT_FOLDER/$OUTPUT_FILENAME_JSON ]; then
             BINARY_FACTS="${BINARY_FACTS}, "
           fi
           BINARY_FACTS="${BINARY_FACTS}{
-                            \"name\": \"Enterprise\",
-                            \"value\": \"${VERSION_STRING}[Enterprise.ipa 다운로드](${HTTPS_PREFIX}${OUTPUT_FILENAME_ENTER_IPA}) (${SIZE_ENTER_APP_FILE}B)\"
+                            \"name\": \"${ENTER_TITLE}\",
+                            \"value\": \"${VERSION_STRING}[${ENTER_TITLE}.ipa 다운로드](${HTTPS_PREFIX}${OUTPUT_FILENAME_ENTER_IPA}) (${SIZE_ENTER_APP_FILE}B)\"
                     }"
         fi
         if [ $USING_APPSTORE -eq 1 ]; then
@@ -1546,8 +1544,8 @@ if [ -f $OUTPUT_FOLDER/$OUTPUT_FILENAME_JSON ]; then
             BINARY_FACTS="${BINARY_FACTS}, "
           fi
           BINARY_FACTS="${BINARY_FACTS}{
-                            \"name\": \"AD-HOC\",
-                            \"value\": \"${VERSION_STRING}[Ad-Hoc.ipa 다운로드](${HTTPS_PREFIX}${OUTPUT_FILENAME_ADHOC_IPA}) (${SIZE_ADHOC_APP_FILE}B)\"
+                            \"name\": \"${ADHOC_TITLE}\",
+                            \"value\": \"${VERSION_STRING}[${ADHOC_TITLE}.ipa 다운로드](${HTTPS_PREFIX}${OUTPUT_FILENAME_ADHOC_IPA}) (${SIZE_ADHOC_APP_FILE}B)\"
                     }"
         fi
         if [ $USING_ENTERPRISE -eq 1 ]; then
@@ -1555,8 +1553,8 @@ if [ -f $OUTPUT_FOLDER/$OUTPUT_FILENAME_JSON ]; then
             BINARY_FACTS="${BINARY_FACTS}, "
           fi
           BINARY_FACTS="${BINARY_FACTS}{
-                          \"name\": \"Enterprise\",
-                          \"value\": \"${VERSION_STRING}[Enterprise.ipa 다운로드](${HTTPS_PREFIX}${OUTPUT_FILENAME_ENTER_IPA}) (${SIZE_ENTER_APP_FILE}B)\"
+                          \"name\": \"${ENTER_TITLE}\",
+                          \"value\": \"${VERSION_STRING}[${ENTER_TITLE}.ipa 다운로드](${HTTPS_PREFIX}${OUTPUT_FILENAME_ENTER_IPA}) (${SIZE_ENTER_APP_FILE}B)\"
                     }"
         fi
       fi
@@ -1599,20 +1597,20 @@ if [ -f $OUTPUT_FOLDER/$OUTPUT_FILENAME_JSON ]; then
       MAIL_APPSTORE_DOWN_STR=""
       MAIL_APPSTORE_ATTACH_STR=""
       if [ $USING_APPSTORE -eq 1 ]; then
-        MAIL_APPSTORE_DOWN_STR="AppStore IPA 다운로드(${SIZE_STORE_APP_FILE}B): <a href=${HTTPS_PREFIX}${OUTPUT_FILENAME_APPSTORE_IPA}>${HTTPS_PREFIX}${OUTPUT_FILENAME_APPSTORE_IPA}</a><br />"
+        MAIL_APPSTORE_DOWN_STR="${APPSTORE_TITLE} IPA 다운로드(${SIZE_STORE_APP_FILE}B): <a href=${HTTPS_PREFIX}${OUTPUT_FILENAME_APPSTORE_IPA}>${HTTPS_PREFIX}${OUTPUT_FILENAME_APPSTORE_IPA}</a><br />"
         MAIL_APPSTORE_ATTACH_STR="첨부파일: <a href=${HTTPS_PREFIX}${OUTPUT_FILENAME_APPSTORE_IX_SHIELD_CHECK}>${HTTPS_PREFIX}${OUTPUT_FILENAME_APPSTORE_IX_SHIELD_CHECK}</a>"
       fi
       MAIL_ADHOC_DOWN_STR=""
       MAIL_ADHOC_ITMS_STR=""
       if [ $USING_ADHOC -eq 1 ]; then
-        MAIL_ADHOC_DOWN_STR="Ad-Hoc IPA 다운로드(${SIZE_ADHOC_APP_FILE}B): <a href=${HTTPS_PREFIX}${OUTPUT_FILENAME_ADHOC_IPA}>${HTTPS_PREFIX}${OUTPUT_FILENAME_ADHOC_IPA}</a><br />"
-        MAIL_ADHOC_ITMS_STR="Ad-Hoc Plist: ${ITMS_PREFIX}${ADHOC_PLIST_ITMS_URL}<br />"
+        MAIL_ADHOC_DOWN_STR="${ADHOC_TITLE} IPA 다운로드(${SIZE_ADHOC_APP_FILE}B): <a href=${HTTPS_PREFIX}${OUTPUT_FILENAME_ADHOC_IPA}>${HTTPS_PREFIX}${OUTPUT_FILENAME_ADHOC_IPA}</a><br />"
+        MAIL_ADHOC_ITMS_STR="${ADHOC_TITLE} Plist: ${ITMS_PREFIX}${ADHOC_PLIST_ITMS_URL}<br />"
       fi
       MAIL_ENTER_DOWN_STR=""
       MAIL_ENTER_ITMS_STR=""
       if [ $USING_ENTERPRISE -eq 1 ]; then
-        MAIL_ENTER_DOWN_STR="Enterprise IPA 다운로드(${SIZE_ENTER_APP_FILE}B): <a href=${HTTPS_PREFIX}${OUTPUT_FILENAME_ENTER_IPA}>${HTTPS_PREFIX}${OUTPUT_FILENAME_ENTER_IPA}</a><br /><br />"
-        MAIL_ENTER_ITMS_STR="Enterprise Plist: ${ITMS_PREFIX}${ENTER_PLIST_ITMS_URL}<br />"
+        MAIL_ENTER_DOWN_STR="${ENTER_TITLE} IPA 다운로드(${SIZE_ENTER_APP_FILE}B): <a href=${HTTPS_PREFIX}${OUTPUT_FILENAME_ENTER_IPA}>${HTTPS_PREFIX}${OUTPUT_FILENAME_ENTER_IPA}</a><br /><br />"
+        MAIL_ENTER_ITMS_STR="${ENTER_TITLE} Plist: ${ITMS_PREFIX}${ENTER_PLIST_ITMS_URL}<br />"
       fi
       if [ -f $OUTPUT_FOLDER/$OUTPUT_FILENAME_APPSTORE_IX_SHIELD_CHECK -a $IS_RELEASE -eq 1 ]; then
         $CURL --data-urlencode "subject1=[iOS ${APP_NAME}.app > ${HOSTNAME}] Jenkins(${BUILD_NUMBER}) ${DEBUG_MSG} -" \
@@ -1651,8 +1649,8 @@ if [ -f $OUTPUT_FOLDER/$OUTPUT_FILENAME_JSON ]; then
             BINARY_FACTS="${BINARY_FACTS}, "
           fi
           BINARY_FACTS="${BINARY_FACTS}{
-                          \"name\": \"Google Playstore 배포용\",
-                          \"value\": \"${VERSION_STRING}[GoogleStore 다운로드](${HTTPS_PREFIX}${APK_GOOGLESTORE}) (${SIZE_GOOGLE_APP_FILE}B)\"
+                          \"name\": \"${GOOGLE_TITLE} 배포용\",
+                          \"value\": \"${VERSION_STRING}[${GRADLE_TASK_GOOGLESTORE} 다운로드](${HTTPS_PREFIX}${APK_GOOGLESTORE}) (${SIZE_GOOGLE_APP_FILE}B)\"
                   }"
         fi
         if [ $USING_ONESTORE -eq 1 ]; then
@@ -1660,8 +1658,8 @@ if [ -f $OUTPUT_FOLDER/$OUTPUT_FILENAME_JSON ]; then
             BINARY_FACTS="${BINARY_FACTS}, "
           fi
           BINARY_FACTS="${BINARY_FACTS}{
-                          \"name\": \"One Store 배포용\",
-                          \"value\": \"${VERSION_STRING}[OneStore 다운로드](${HTTPS_PREFIX}${APK_ONESTORE}) (${SIZE_ONE_APP_FILE}B)\"
+                          \"name\": \"${ONE_TITLE} 배포용\",
+                          \"value\": \"${VERSION_STRING}[${GRADLE_TASK_ONESTORE} 다운로드](${HTTPS_PREFIX}${APK_ONESTORE}) (${SIZE_ONE_APP_FILE}B)\"
                   }"
         fi
         if [ $USING_OBFUSCATION -eq 1 ]; then
