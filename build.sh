@@ -235,7 +235,7 @@ if [ -f $jsonConfig ]; then
   outputGoogleStoreSuffix=$(cat $jsonConfig | $JQ '.android.outputGoogleStoreSuffix' | tr -d '"')
   outputOneStoreSuffix=$(cat $jsonConfig | $JQ '.android.outputOneStoreSuffix' | tr -d '"')
   INFO_PLIST=$(cat $jsonConfig | $JQ '.ios.InfoPlist' | tr -d '"')
-  USING_SCP=$(test $(echo $config | $JQ '.usingSCP') = true && echo 1 || echo 0)
+  USING_SCP=$(test $(cat $jsonConfig | $JQ '.ssh.enabled') = true && echo 1 || echo 0)
   frontEndPoint=$(echo $config | $JQ '.frontEndPoint' | tr -d '"')
   frontEndProtocol=$(echo $config | $JQ '.frontEndProtocol' | tr -d '"')
   FRONTEND_POINT="$frontEndProtocol://$frontEndPoint"
@@ -258,9 +258,9 @@ fi
 if [ $USING_SCP -eq 1 ]; then
   SSH=$(which ssh)
   SCP=$(which scp)
-  SFTP_PORT="16122"
-  SFTP_ENDPOINT="foo@app.company.com"
-  SFTP_TARGET="/volume1/miniWebDocs/localDocuments"
+  SFTP_PORT=$(cat $jsonConfig | $JQ '.ssh.port' | tr -d '"')
+  SFTP_ENDPOINT=$(cat $jsonConfig | $JQ '.ssh.endpoint' | tr -d '"')
+  SFTP_TARGET=$(cat $jsonConfig | $JQ '.ssh.target' | tr -d '"')
   function checkDirExist() {
     DIR="$1"
     $SSH -p ${SFTP_PORT} ${SFTP_ENDPOINT} test -d ${SFTP_TARGET}/${DIR} && echo 1 || echo 0
