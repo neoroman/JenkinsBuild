@@ -604,7 +604,7 @@ if [[ "$INPUT_OS" == "android" ]]; then
     elif [ $DEBUGGING -eq 0 ]; then
       if [ $USING_SCP -eq 1 ]; then
         ###################
-        # Step 2.99: Send file to neo2ua (app.company.com)
+        # Step 2.99: Send file to NAS (app.company.com)
         if [ -f ${OUTPUT_FOLDER}/${APK_GOOGLESTORE} ]; then
           if [ $(sendFile ${OUTPUT_FOLDER}/${APK_GOOGLESTORE} ${NEO2UA_OUTPUT_FOLDER}) -eq 0 ]; then
             #   echo "Failed to send file"
@@ -813,10 +813,10 @@ elif [[ "$INPUT_OS" == "ios" ]]; then
           echo ""
         fi
         if [ ! -f $EXPORT_PLIST ]; then
-          APPSTORE_BUNDLE_IDENTIFIER="com.company.mobile"
-          APPSTORE_TEAM_ID="1234567890"
-          APPSTORE_KEY_STRING="company_iphone_Appstore"
-          APPSTORE_NOTIFICATION_KEY_STRING="company_NotificationServiceExtension_Appstore"
+          APPSTORE_BUNDLE_IDENTIFIER=$(cat $jsonConfig | $JQ '.ios.AppStore.bundleId' | tr -d '"')
+          APPSTORE_TEAM_ID=$(cat $jsonConfig | $JQ '.ios.AppStore.teamId' | tr -d '"')
+          APPSTORE_KEY_STRING=$(cat $jsonConfig | $JQ '.ios.AppStore.appKeyString' | tr -d '"')
+          APPSTORE_NOTIFICATION_KEY_STRING=$(cat $jsonConfig | $JQ '.ios.AppStore.notificationKeyString' | tr -d '"')
           printf "<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n<"'!'"DOCTYPE plist PUBLIC \"-//Apple//DTD PLIST 1.0//EN\" \"http://www.apple.com/DTDs/PropertyList-1.0.dtd\">\n<plist version=\"1.0\">\n<dict>\n\t<key>method</key>\n\t<string>app-store</string>\n\t<key>provisioningProfiles</key>\n\t<dict>\n\t\t<key>${APPSTORE_BUNDLE_IDENTIFIER}</key>\n\t\t<string>${APPSTORE_KEY_STRING}</string>\n\t\t<key>${APPSTORE_BUNDLE_IDENTIFIER}.NotificationServiceExtension</key>\n\t\t<string>${APPSTORE_NOTIFICATION_KEY_STRING}</string>\n\t</dict>\n\t<key>signingCertificate</key>\n\t<string>iPhone Distribution</string>\n\t<key>signingStyle</key>\n\t<string>manual</string>\n\t<key>stripSwiftSymbols</key>\n\t<true/>\n\t<key>teamID</key>\n\t<string>${APPSTORE_TEAM_ID}</string>\n\t<key>uploadBitcode</key>\n\t<false/>\n\t<key>uploadSymbols</key>\n\t<true/>\n</dict>\n</plist>\n" \
             >$EXPORT_PLIST
         fi
@@ -843,7 +843,8 @@ elif [[ "$INPUT_OS" == "ios" ]]; then
     if [ $USING_APPSTORE -eq 1 -a $IS_RELEASE -eq 1 ]; then
       ###################
       # Step 2.1: Copy ``App Store'' target from Applications to OUTPUT_FOLDER
-      OUTPUT_FILENAME_APPSTORE="${OUTPUT_PREFIX}${VERSION_STRING}_${FILE_TODAY}_AppStore"
+      OUTPUT_FILENAME_APPSTORE_SUFFIX=$(cat $jsonConfig | $JQ '.ios.AppStore.fileSuffix' | tr -d '"')
+      OUTPUT_FILENAME_APPSTORE="${OUTPUT_PREFIX}${VERSION_STRING}_${FILE_TODAY}${OUTPUT_FILENAME_APPSTORE_SUFFIX}"
       OUTPUT_FILENAME_APPSTORE_IPA="${OUTPUT_FILENAME_APPSTORE}.ipa"
       OUTPUT_FILENAME_APPSTORE_IX_SHIELD_CHECK="${OUTPUT_PREFIX}${VERSION_STRING}_${FILE_TODAY}_IxShieldCheck.png"
       TEMP_APPSTORE_APP_FOLDER="${OUTPUT_FILENAME_APPSTORE}.app"
@@ -880,7 +881,7 @@ elif [[ "$INPUT_OS" == "ios" ]]; then
               sed -e 's/ix_set_debug/IX_SET_DEBUG/g' $SPLASH_VIEW >$SPLASH_TEMP
               mv -f $SPLASH_TEMP $SPLASH_VIEW
 
-              cd $WORKSPACE && echo "MacBook-Pro:ios myCompany$ ./IxShieldCheck.sh -i ./${PROJECT_NAME}" >merong.txt
+              cd $WORKSPACE && echo "MacBook-Pro:ios appDevTeam$ ./IxShieldCheck.sh -i ./${PROJECT_NAME}" >merong.txt
               cd $WORKSPACE && ./IxShieldCheck.sh -i . >>merong.txt
               cd $WORKSPACE && cat merong.txt | $A2PS -=book -B -q --medium=A4dj --borders=no -o out1.ps && $GS -sDEVICE=png256 -dNOPAUSE -dBATCH -dSAFER -dTextAlphaBits=4 -q -r300x300 -sOutputFile=out2.png out1.ps &&
               cd $WORKSPACE && $CONVERT -trim out2.png $OUTPUT_FOLDER/$OUTPUT_FILENAME_APPSTORE_IX_SHIELD_CHECK
@@ -898,7 +899,8 @@ elif [[ "$INPUT_OS" == "ios" ]]; then
     ###################
     # Step 2.2: Copy ``Ad-Hoc'' target from Applications to OUTPUT_FOLDER
     if [ $USING_ADHOC -eq 1 ]; then
-      OUTPUT_FILENAME_ADHOC="${OUTPUT_PREFIX}${VERSION_STRING}_${FILE_TODAY}_Adhoc"
+      OUTPUT_FILENAME_ADHOC_SUFFIX=$(cat $jsonConfig | $JQ '.ios.Adhoc.fileSuffix' | tr -d '"')
+      OUTPUT_FILENAME_ADHOC="${OUTPUT_PREFIX}${VERSION_STRING}_${FILE_TODAY}${OUTPUT_FILENAME_ADHOC_SUFFIX}"
       OUTPUT_FILENAME_ADHOC_IPA="${OUTPUT_FILENAME_ADHOC}.ipa"
       OUTPUT_FILENAME_ADHOC_PLIST="${OUTPUT_FILENAME_ADHOC}.plist"
       OUTPUT_FILE="${DST_ROOT}/Applications/${OUTPUT_FILENAME_ADHOC_IPA}"
@@ -917,7 +919,8 @@ elif [[ "$INPUT_OS" == "ios" ]]; then
     ###################
     # Step 2.3: Copy ``Enterprise'' target from Applications to OUTPUT_FOLDER
     if [ $USING_ENTERPRISE -eq 1 ]; then
-      OUTPUT_FILENAME_ENTER="${OUTPUT_PREFIX}${VERSION_STRING}_${FILE_TODAY}_Enter"
+      OUTPUT_FILENAME_ENTER_SUFFIX=$(cat $jsonConfig | $JQ '.ios.Enterprise.fileSuffix' | tr -d '"')
+      OUTPUT_FILENAME_ENTER="${OUTPUT_PREFIX}${VERSION_STRING}_${FILE_TODAY}${OUTPUT_FILENAME_ENTER_SUFFIX}"
       OUTPUT_FILENAME_ENTER_IPA="${OUTPUT_FILENAME_ENTER}.ipa"
       OUTPUT_FILENAME_ENTER_PLIST="${OUTPUT_FILENAME_ENTER}.plist"
       OUTPUT_FILE="${DST_ROOT}/Applications/${OUTPUT_FILENAME_ENTER_IPA}"
@@ -969,7 +972,7 @@ elif [[ "$INPUT_OS" == "ios" ]]; then
       fi
     elif [ $USING_SCP -eq 1 ]; then
       ###################
-      # Step 2.99: Send file to neo2ua (app.company.com)
+      # Step 2.99: Send file to NAS (app.company.com)
       if [ -f ${OUTPUT_FOLDER}/${OUTPUT_FILENAME_APPSTORE_IPA} ]; then
         if [ $(sendFile ${OUTPUT_FOLDER}/${OUTPUT_FILENAME_APPSTORE_IPA} ${NEO2UA_OUTPUT_FOLDER}) -eq 0 ]; then
           #   echo "Failed to send file"
@@ -1314,7 +1317,7 @@ fi
 
 ##################################
 if [ $USING_SCP -eq 1 ]; then
-  # Step 7: Send JSON file to neo2ua(app.company.com)
+  # Step 7: Send JSON file to NAS(app.company.com)
   if [ $DEBUGGING -eq 0 ]; then
     if [ -f ${OUTPUT_FOLDER}/${OUTPUT_FILENAME_JSON} ]; then
       if [ $(sendFile ${OUTPUT_FOLDER}/${OUTPUT_FILENAME_JSON} ${NEO2UA_OUTPUT_FOLDER}) -eq 0 ]; then
