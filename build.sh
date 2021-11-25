@@ -699,10 +699,11 @@ elif [[ "$INPUT_OS" == "ios" ]]; then
       exit
     fi
     ###################
-    grep 'CFBundleShortVersionString' "${WORKSPACE}/${INFO_PLIST}"
-    if [ -f "${WORKSPACE}/${INFO_PLIST}" ]; then
-      APP_VERSION=$(/usr/libexec/PlistBuddy -c "Print CFBundleShortVersionString" "${WORKSPACE}/${INFO_PLIST}")
-      BUILD_VERSION=$(/usr/libexec/PlistBuddy -c "Print CFBundleVersion" "${WORKSPACE}/${INFO_PLIST}")
+    if test ! -z $(grep 'CFBundleShortVersionString' "${WORKSPACE}/${INFO_PLIST}"); then
+      if [ -f "${WORKSPACE}/${INFO_PLIST}" ]; then
+        APP_VERSION=$(/usr/libexec/PlistBuddy -c "Print CFBundleShortVersionString" "${WORKSPACE}/${INFO_PLIST}")
+        BUILD_VERSION=$(/usr/libexec/PlistBuddy -c "Print CFBundleVersion" "${WORKSPACE}/${INFO_PLIST}")
+      fi
     else
       APP_VERSION="MARKETING_VERSION"
     fi
