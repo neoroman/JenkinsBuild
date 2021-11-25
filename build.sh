@@ -699,9 +699,12 @@ elif [[ "$INPUT_OS" == "ios" ]]; then
       exit
     fi
     ###################
+    grep 'CFBundleShortVersionString' "${WORKSPACE}/${INFO_PLIST}"
     if [ -f "${WORKSPACE}/${INFO_PLIST}" ]; then
       APP_VERSION=$(/usr/libexec/PlistBuddy -c "Print CFBundleShortVersionString" "${WORKSPACE}/${INFO_PLIST}")
       BUILD_VERSION=$(/usr/libexec/PlistBuddy -c "Print CFBundleVersion" "${WORKSPACE}/${INFO_PLIST}")
+    else
+      APP_VERSION="MARKETING_VERSION"
     fi
     if [[ "$APP_VERSION" == *"MARKETING_VERSION"* ]]; then
       XCODE_PBXFILE="${WORKSPACE}/${PROJECT_NAME}.xcodeproj/project.pbxproj"
