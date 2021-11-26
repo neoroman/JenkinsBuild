@@ -507,7 +507,7 @@ if [[ "$INPUT_OS" == "android" ]]; then
         if [ $USING_GOOGLESTORE -eq 1 ]; then
           # Step 2.1: Build target for GoogleStore
           if [ $isFlutterEnabled -eq 1 ]; then
-            $FlutterBin build apk -flavor ${GRADLE_TASK_GOOGLESTORE}
+            $FlutterBin build apk --flavor ${GRADLE_TASK_GOOGLESTORE}
           else
             ./gradlew "assemble${GRADLE_TASK_GOOGLESTORE}"
           fi
@@ -528,7 +528,7 @@ if [[ "$INPUT_OS" == "android" ]]; then
         if [ $USING_ONESTORE -eq 1 ]; then
           # Step 2.2: Build target for OneStore
           if [ $isFlutterEnabled -eq 1 ]; then
-            $FlutterBin build apk -flavor ${GRADLE_TASK_ONESTORE}
+            $FlutterBin build apk --flavor ${GRADLE_TASK_ONESTORE}
           else
             ./gradlew "assemble${GRADLE_TASK_ONESTORE}"
           fi
@@ -550,7 +550,7 @@ if [[ "$INPUT_OS" == "android" ]]; then
         if [ $USING_LIVESERVER -eq 1 ]; then
           # Step 1.1: Build target for LiveServer
           if [ $isFlutterEnabled -eq 1 ]; then
-            $FlutterBin build apk -flavor ${GRADLE_TASK_LIVESERVER}
+            $FlutterBin build apk --flavor ${GRADLE_TASK_LIVESERVER}
           else
             ./gradlew "assemble${GRADLE_TASK_LIVESERVER}"
           fi
@@ -583,7 +583,7 @@ if [[ "$INPUT_OS" == "android" ]]; then
             fi
           fi
           if [ $isFlutterEnabled -eq 1 ]; then
-            $FlutterBin build apk -flavor ${GRADLE_TASK_TESTSERVER}
+            $FlutterBin build apk --flavor ${GRADLE_TASK_TESTSERVER}
           else
             ./gradlew "assemble${GRADLE_TASK_TESTSERVER}"
           fi
