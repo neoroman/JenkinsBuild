@@ -460,7 +460,9 @@ if [[ "$INPUT_OS" == "android" ]]; then
       fi
     fi
     cd ${WORKSPACE}
-    chmod +x ${WORKSPACE}/gradlew
+    if [ -f ${WORKSPACE}/gradlew ]; then
+      chmod +x ${WORKSPACE}/gradlew
+    fi
     ###################
     # Step 1.1: Check 'allatori' 난독화 실행 여부
     if [ $IS_RELEASE -eq 1 -a $USING_ALLATORI -eq 1 ]; then
@@ -1749,6 +1751,11 @@ if [ -f $OUTPUT_FOLDER/$OUTPUT_FILENAME_JSON ]; then
       fi
       ########
       ICON=$(cat $jsonConfig | $JQ '.teams.iconImage' | tr -d '"')
+      if [ $isFlutterEnabled -eq 1 ]; then
+        BUILD_COMMAND=$FlutterBin
+      else
+        BUILD_COMMAND="./gradlew"
+      fi
       JSON_ALL="{
             \"@type\": \"MessageCard\",
             \"@context\": \"${FRONTEND_POINT}/${TOP_PATH}/dist_uaqa.php\",
@@ -1773,7 +1780,7 @@ if [ -f $OUTPUT_FOLDER/$OUTPUT_FILENAME_JSON ]; then
                             \"value\": \"내부 QA 사이트 [바로가기](${FRONTEND_POINT}/${TOP_PATH}/android/dist_android.php) (ID/PW: ${QC_ID_PW})\"
                     }, {
                             \"name\": \"빌드 환경\",
-                            \"value\": \"<pre>$(cd ${WORKSPACE} && ./gradlew --version)</pre>\"
+                            \"value\": \"<pre>$(cd ${WORKSPACE} && $BUILD_COMMAND --version)</pre>\"
                     }, {
                             \"name\": \"Jenkin 작업 결과\",
                             \"value\": \"Jenkin 사이트 [바로가기](${BUILD_URL})\"
@@ -1785,6 +1792,11 @@ if [ -f $OUTPUT_FOLDER/$OUTPUT_FILENAME_JSON ]; then
     fi # Android
     
     if [ $USING_MAIL -eq 1 ]; then
+      if [ $isFlutterEnabled -eq 1 ]; then
+        BUILD_COMMAND=$FlutterBin
+      else
+        BUILD_COMMAND="./gradlew"
+      fi
       if [ -f $OUTPUT_FOLDER/$Obfuscation_OUTPUT_FILE -a $IS_RELEASE -eq 1 ]; then
         ATTACHMENT_DOWN=""
         ATTACHMENT_STR=""
@@ -1795,7 +1807,7 @@ if [ -f $OUTPUT_FOLDER/$OUTPUT_FILENAME_JSON ]; then
         $CURL --data-urlencode "subject1=[AOS ${APP_NAME}.app > ${HOSTNAME}] Jenkins(${BUILD_NUMBER}) 자동빌드 -" \
           --data-urlencode "subject2=Android ${GIT_BRANCH} - ${CHANGE_TITLE}(commit: ${GIT_COMMIT})" \
           --data-urlencode "message_header=안드로이드 1차 난독화 버전 전달합니다.<br /><br /><br />${MAIL_TEXT}<br /><br />${ATTACHMENT_DOWN}" \
-          --data-urlencode "message_description=${SHORT_GIT_LOG}<br />${GIT_LAST_LOG}<br /><br /><br /><pre>$(cd ${WORKSPACE} && ./gradlew --version)</pre><br /><br /><a href=${BUILD_URL}>${BUILD_URL}</a>" \
+          --data-urlencode "message_description=${SHORT_GIT_LOG}<br />${GIT_LAST_LOG}<br /><br /><br /><pre>$(cd ${WORKSPACE} && $BUILD_COMMAND --version)</pre><br /><br /><a href=${BUILD_URL}>${BUILD_URL}</a>" \
           --data-urlencode "${ATTACHMENT_STR}" \
           --data-urlencode "attachment_path=$OUTPUT_FOLDER/$Obfuscation_OUTPUT_FILE;$OUTPUT_FOLDER/$Obfuscation_SCREENSHOT" \
           ${FRONTEND_POINT}/${TOP_PATH}/sendmail_domestic.php
