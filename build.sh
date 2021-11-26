@@ -245,6 +245,8 @@ if [ -f $jsonConfig ]; then
   POD_FILE=$(cat $jsonConfig | $JQ '.ios.podFile' | tr -d '"')
   sudoPassword=$(cat $jsonConfig | $JQ '.ios.sudoPassword' | tr -d '"')
   jenkinsUser=$(cat $jsonConfig | $JQ '.ios.jenkinsUser' | tr -d '"')
+  isFlutterEnabled=$(test $(cat $jsonConfig | $JQ '.Flutter.enabled') = true && echo 1 || echo 0)
+  FlutterBin=$(cat $jsonConfig | $JQ '.Flutter.path' | tr -d '"')
 fi
 ################################################################################
 if [ -f $installedOrNot ]; then
@@ -502,7 +504,11 @@ if [[ "$INPUT_OS" == "android" ]]; then
         ###################
         if [ $USING_GOOGLESTORE -eq 1 ]; then
           # Step 2.1: Build target for GoogleStore
-          ./gradlew "assemble${GRADLE_TASK_GOOGLESTORE}"
+          if [ $isFlutterEnabled -eq 1 ]; then
+            $FlutterBin build apk -flavor ${GRADLE_TASK_GOOGLESTORE}
+          else
+            ./gradlew "assemble${GRADLE_TASK_GOOGLESTORE}"
+          fi
           if [ -d $OUTPUT_FOLDER_GOOGLESTORE -a -f $OUTPUT_FOLDER_GOOGLESTORE/output.json ]; then
             BUILD_APK_GOOGLESTORE=$(cat $OUTPUT_FOLDER_GOOGLESTORE/output.json | $JQ '.[0].apkData.outputFile' | tr -d '"')
           fi
@@ -519,7 +525,11 @@ if [[ "$INPUT_OS" == "android" ]]; then
         ###################
         if [ $USING_ONESTORE -eq 1 ]; then
           # Step 2.2: Build target for OneStore
-          ./gradlew "assemble${GRADLE_TASK_ONESTORE}"
+          if [ $isFlutterEnabled -eq 1 ]; then
+            $FlutterBin build apk -flavor ${GRADLE_TASK_ONESTORE}
+          else
+            ./gradlew "assemble${GRADLE_TASK_ONESTORE}"
+          fi
           if [ -d $OUTPUT_FOLDER_ONESTORE -a -f $OUTPUT_FOLDER_ONESTORE/output.json ]; then
             BUILD_APK_ONESTORE=$(cat $OUTPUT_FOLDER_ONESTORE/output.json | $JQ '.[0].apkData.outputFile' | tr -d '"')
           fi
@@ -537,7 +547,11 @@ if [[ "$INPUT_OS" == "android" ]]; then
         ##########
         if [ $USING_LIVESERVER -eq 1 ]; then
           # Step 1.1: Build target for LiveServer
-          ./gradlew "assemble${GRADLE_TASK_LIVESERVER}"
+          if [ $isFlutterEnabled -eq 1 ]; then
+            $FlutterBin build apk -flavor ${GRADLE_TASK_LIVESERVER}
+          else
+            ./gradlew "assemble${GRADLE_TASK_LIVESERVER}"
+          fi
           if [ -d $OUTPUT_FOLDER_LIVESERVER -a -f $OUTPUT_FOLDER_LIVESERVER/output.json ]; then
             APK_LIVESERVER=$(cat $OUTPUT_FOLDER_LIVESERVER/output.json | $JQ '.[0].apkData.outputFile' | tr -d '"')
           fi
@@ -566,7 +580,11 @@ if [[ "$INPUT_OS" == "android" ]]; then
               fi
             fi
           fi
-          ./gradlew "assemble${GRADLE_TASK_TESTSERVER}"
+          if [ $isFlutterEnabled -eq 1 ]; then
+            $FlutterBin build apk -flavor ${GRADLE_TASK_TESTSERVER}
+          else
+            ./gradlew "assemble${GRADLE_TASK_TESTSERVER}"
+          fi
           if [ -d $OUTPUT_FOLDER_TESTSERVER -a -f $OUTPUT_FOLDER_TESTSERVER/output.json ]; then
             APK_TESTSERVER=$(cat $OUTPUT_FOLDER_TESTSERVER/output.json | $JQ '.[0].apkData.outputFile' | tr -d '"')
           fi
