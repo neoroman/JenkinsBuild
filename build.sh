@@ -252,6 +252,7 @@ if [ -f $jsonConfig ]; then
   jenkinsUser=$(cat $jsonConfig | $JQ '.ios.jenkinsUser' | tr -d '"')
   isFlutterEnabled=$(test $(cat $jsonConfig | $JQ '.Flutter.enabled') = true && echo 1 || echo 0)
   FlutterBin=$(cat $jsonConfig | $JQ '.Flutter.path' | tr -d '"')
+  GRADLE_PATH=$(cat $jsonConfig | $JQ '.android.gradlePath' | tr -d '"')
 fi
 ################################################################################
 if [ -f $installedOrNot ]; then
@@ -396,17 +397,25 @@ if [[ "$INPUT_OS" == "android" ]]; then
       DEBUG_POINT=$(grep '^debug_point' ${WORKSPACE}/app/version.properties | sed -e 's/.*=\([0-9]\)/\1/')
       DEBUG_LOCAL=$(grep '^debug_local' ${WORKSPACE}/app/version.properties | sed -e 's/.*=\([0-9]\)/\1/')
     fi
+    if test -z $GRADLE_PATH; then
+      GRADLE_PATH="app/build.gradle"
+    fi
+    BUILD_GRADLE_CONFIG="${WORKSPACE}/${GRADLE_PATH}"
     if [ $IS_RELEASE -eq 1 ]; then
       APP_VERSION="${MAJOR}.${MINOR}.${POINT}"
-      BUILD_GRADLE_CONFIG="${WORKSPACE}/app/build.gradle"
-      BUILD_VERSION=$(grep ${APP_BUNDLE_IDENTIFIER_ANDROID} -5 ${WORKSPACE}/app/build.gradle | grep 'versionCode' | awk 'BEGIN{FS=" "} {print $2}')
+      BUILD_VERSION=$(grep ${APP_BUNDLE_IDENTIFIER_ANDROID} -5 ${BUILD_GRADLE_CONFIG} | grep 'versionCode' | awk 'BEGIN{FS=" "} {print $2}')
     else
       APP_VERSION="${DEBUG_MAJOR}.${DEBUG_MINOR}.${DEBUG_POINT}"
       BUILD_VERSION="${DEBUG_LOCAL}"
     fi
     if [[ "${APP_VERSION}" == ".." ]]; then
-      APP_VERSION=$(grep 'versionName' ${WORKSPACE}/app/build.gradle | sed -e 's/versionName "\(.*\)"/\1/' | tr -d ' ')
-      BUILD_VERSION=$(grep 'versionCode' ${WORKSPACE}/app/build.gradle | sed -e 's/versionCode \(.*\)$/\1/' | tr -d ' ')
+      if [ $isFlutterEnabled -eq 1 ]; then
+        APP_VERSION=$(grep 'flutterVersionName' ${BUILD_GRADLE_CONFIG} | sed -e 's/flutterVersionName "\(.*\)"/\1/' | tr -d ' ')
+        BUILD_VERSION=$(grep 'flutterVersionCode' ${BUILD_GRADLE_CONFIG} | sed -e 's/flutterVersionCode \(.*\)$/\1/' | tr -d ' ')
+      else
+        APP_VERSION=$(grep 'versionName' ${BUILD_GRADLE_CONFIG} | sed -e 's/versionName "\(.*\)"/\1/' | tr -d ' ')
+        BUILD_VERSION=$(grep 'versionCode' ${BUILD_GRADLE_CONFIG} | sed -e 's/versionCode \(.*\)$/\1/' | tr -d ' ')
+      fi
       if [[ "${APP_VERSION}" == ".." ]]; then
           APP_VERSION="1.0.0"
       fi
@@ -537,7 +546,11 @@ if [[ "$INPUT_OS" == "android" ]]; then
         if [ $USING_ONESTORE -eq 1 ]; then
           # Step 2.2: Build target for OneStore
           if [ $isFlutterEnabled -eq 1 ]; then
-            $FlutterBin build apk --flavor ${GRADLE_TASK_ONESTORE}
+            if test -z $FLUTTER_FLAG; then
+              $FlutterBin build apk --flavor ${GRADLE_TASK_ONESTORE}
+            else
+              $FlutterBin build apk --flavor ${GRADLE_TASK_ONESTORE} ${FLUTTER_FLAG}
+            fi
           else
             ./gradlew "assemble${GRADLE_TASK_ONESTORE}"
           fi
@@ -559,7 +572,11 @@ if [[ "$INPUT_OS" == "android" ]]; then
         if [ $USING_LIVESERVER -eq 1 ]; then
           # Step 1.1: Build target for LiveServer
           if [ $isFlutterEnabled -eq 1 ]; then
-            $FlutterBin build apk --flavor ${GRADLE_TASK_LIVESERVER}
+            if test -z $FLUTTER_FLAG; then
+              $FlutterBin build apk --flavor ${GRADLE_TASK_LIVESERVER}
+            else
+              $FlutterBin build apk --flavor ${GRADLE_TASK_LIVESERVER} ${FLUTTER_FLAG}
+            fi
           else
             ./gradlew "assemble${GRADLE_TASK_LIVESERVER}"
           fi
@@ -592,7 +609,11 @@ if [[ "$INPUT_OS" == "android" ]]; then
             fi
           fi
           if [ $isFlutterEnabled -eq 1 ]; then
-            $FlutterBin build apk --flavor ${GRADLE_TASK_TESTSERVER}
+            if test -z $FLUTTER_FLAG; then
+              $FlutterBin build apk --flavor ${GRADLE_TASK_TESTSERVER}
+            else
+              $FlutterBin build apk --flavor ${GRADLE_TASK_TESTSERVER} ${FLUTTER_FLAG}
+            fi
           else
             ./gradlew "assemble${GRADLE_TASK_TESTSERVER}"
           fi
