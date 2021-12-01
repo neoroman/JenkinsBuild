@@ -252,7 +252,7 @@ if [ -f $jsonConfig ]; then
   jenkinsUser=$(cat $jsonConfig | $JQ '.ios.jenkinsUser' | tr -d '"')
   isFlutterEnabled=$(test $(cat $jsonConfig | $JQ '.Flutter.enabled') = true && echo 1 || echo 0)
   FlutterBin=$(cat $jsonConfig | $JQ '.Flutter.path' | tr -d '"')
-  GRADLE_PATH=$(cat $jsonConfig | $JQ '.android.gradlePath' | tr -d '"')
+  ANDROID_APP_PATH=$(cat $jsonConfig | $JQ '.android.appPath' | tr -d '"')
 fi
 ################################################################################
 if [ -f $installedOrNot ]; then
@@ -388,19 +388,19 @@ if [[ "$INPUT_OS" == "android" ]]; then
     APP_ROOT="${APP_ROOT_PREFIX}/${TOP_PATH}/${APP_ROOT_SUFFIX}"
     APP_HTML="${APP_ROOT_PREFIX}/${APP_PATH}"
     ###################
-    if [ -f ${WORKSPACE}/app/version.properties ]; then
-      MAJOR=$(grep '^major' ${WORKSPACE}/app/version.properties | sed -e 's/.*=\([0-9]\)/\1/')
-      MINOR=$(grep '^minor' ${WORKSPACE}/app/version.properties | sed -e 's/.*=\([0-9]\)/\1/')
-      POINT=$(grep '^point' ${WORKSPACE}/app/version.properties | sed -e 's/.*=\([0-9]\)/\1/')
-      DEBUG_MAJOR=$(grep '^debug_major' ${WORKSPACE}/app/version.properties | sed -e 's/.*=\([0-9]\)/\1/')
-      DEBUG_MINOR=$(grep '^debug_minor' ${WORKSPACE}/app/version.properties | sed -e 's/.*=\([0-9]\)/\1/')
-      DEBUG_POINT=$(grep '^debug_point' ${WORKSPACE}/app/version.properties | sed -e 's/.*=\([0-9]\)/\1/')
-      DEBUG_LOCAL=$(grep '^debug_local' ${WORKSPACE}/app/version.properties | sed -e 's/.*=\([0-9]\)/\1/')
+    if test -z $ANDROID_APP_PATH; then
+      ANDROID_APP_PATH="app"
     fi
-    if test -z $GRADLE_PATH; then
-      GRADLE_PATH="app/build.gradle"
+    if [ -f ${WORKSPACE}/${ANDROID_APP_PATH}/version.properties ]; then
+      MAJOR=$(grep '^major' ${WORKSPACE}/${ANDROID_APP_PATH}/version.properties | sed -e 's/.*=\([0-9]\)/\1/')
+      MINOR=$(grep '^minor' ${WORKSPACE}/${ANDROID_APP_PATH}/version.properties | sed -e 's/.*=\([0-9]\)/\1/')
+      POINT=$(grep '^point' ${WORKSPACE}/${ANDROID_APP_PATH}/version.properties | sed -e 's/.*=\([0-9]\)/\1/')
+      DEBUG_MAJOR=$(grep '^debug_major' ${WORKSPACE}/${ANDROID_APP_PATH}/version.properties | sed -e 's/.*=\([0-9]\)/\1/')
+      DEBUG_MINOR=$(grep '^debug_minor' ${WORKSPACE}/${ANDROID_APP_PATH}/version.properties | sed -e 's/.*=\([0-9]\)/\1/')
+      DEBUG_POINT=$(grep '^debug_point' ${WORKSPACE}/${ANDROID_APP_PATH}/version.properties | sed -e 's/.*=\([0-9]\)/\1/')
+      DEBUG_LOCAL=$(grep '^debug_local' ${WORKSPACE}/${ANDROID_APP_PATH}/version.properties | sed -e 's/.*=\([0-9]\)/\1/')
     fi
-    BUILD_GRADLE_CONFIG="${WORKSPACE}/${GRADLE_PATH}"
+    BUILD_GRADLE_CONFIG="${WORKSPACE}/${ANDROID_APP_PATH}/build.gradle"
     if [ $IS_RELEASE -eq 1 ]; then
       APP_VERSION="${MAJOR}.${MINOR}.${POINT}"
       BUILD_VERSION=$(grep ${APP_BUNDLE_IDENTIFIER_ANDROID} -5 ${BUILD_GRADLE_CONFIG} | grep 'versionCode' | awk 'BEGIN{FS=" "} {print $2}')
@@ -410,8 +410,8 @@ if [[ "$INPUT_OS" == "android" ]]; then
     fi
     if [[ "${APP_VERSION}" == ".." ]]; then
       if [ $isFlutterEnabled -eq 1 ]; then
-        APP_VERSION=$(grep 'flutterVersionName' ${BUILD_GRADLE_CONFIG} | sed -e 's/flutterVersionName "\(.*\)"/\1/' | tr -d ' ')
-        BUILD_VERSION=$(grep 'flutterVersionCode' ${BUILD_GRADLE_CONFIG} | sed -e 's/flutterVersionCode \(.*\)$/\1/' | tr -d ' ')
+        APP_VERSION=$(grep 'flutterVersionName' ${BUILD_GRADLE_CONFIG} | grep "flutterVersionName = '"| sed -e "s/flutterVersionName = '\([0-9]*.[0-9]*.[0-9]*.*\)'/\1/" | tr -d "' ")
+        BUILD_VERSION=$(grep 'flutterVersionCode' ${BUILD_GRADLE_CONFIG} | grep "flutterVersionCode = '"| sed -e "s/flutterVersionCode = '\(.*\)'/\1/" | tr -d "' ")
       else
         APP_VERSION=$(grep 'versionName' ${BUILD_GRADLE_CONFIG} | sed -e 's/versionName "\(.*\)"/\1/' | tr -d ' ')
         BUILD_VERSION=$(grep 'versionCode' ${BUILD_GRADLE_CONFIG} | sed -e 's/versionCode \(.*\)$/\1/' | tr -d ' ')
@@ -439,22 +439,22 @@ if [[ "$INPUT_OS" == "android" ]]; then
     GRADLE_TASK_TESTSERVER=$(cat $jsonConfig | $JQ '.android.TestServer.taskName' | tr -d '"')
     ###################
     if [ $IS_RELEASE -eq 1 ]; then
-      OUTPUT_FOLDER_GOOGLESTORE="${WORKSPACE}/app/build/outputs/apk/${GRADLE_TASK_GOOGLESTORE}/release"
-      OUTPUT_FOLDER_ONESTORE="${WORKSPACE}/app/build/outputs/apk/${GRADLE_TASK_ONESTORE}/release"
+      OUTPUT_FOLDER_GOOGLESTORE="${WORKSPACE}/${ANDROID_APP_PATH}/build/outputs/apk/${GRADLE_TASK_GOOGLESTORE}/release"
+      OUTPUT_FOLDER_ONESTORE="${WORKSPACE}/${ANDROID_APP_PATH}/build/outputs/apk/${GRADLE_TASK_ONESTORE}/release"
       APK_FILE_TITLE="${OUTPUT_PREFIX}${APP_VERSION}(${BUILD_VERSION})_${FILE_TODAY}"
       APK_GOOGLESTORE="${APK_FILE_TITLE}${outputGoogleStoreSuffix}"
       APK_ONESTORE="${APK_FILE_TITLE}${outputOneStoreSuffix}"
       Obfuscation_SCREENSHOT="${OUTPUT_PREFIX}${APP_VERSION}(${BUILD_VERSION})_${FILE_TODAY}_Obfuscation.png"
       Obfuscation_OUTPUT_FILE="${OUTPUT_PREFIX}${APP_VERSION}(${BUILD_VERSION})_${FILE_TODAY}_file.png"
     else
-      OUTPUT_FOLDER_LIVESERVER="${WORKSPACE}/app/build/outputs/apk/${GRADLE_TASK_LIVESERVER}/debug"
-      OUTPUT_FOLDER_TESTSERVER="${WORKSPACE}/app/build/outputs/apk/${GRADLE_TASK_TESTSERVER}/debug"
+      OUTPUT_FOLDER_LIVESERVER="${WORKSPACE}/${ANDROID_APP_PATH}/build/outputs/apk/${GRADLE_TASK_LIVESERVER}/debug"
+      OUTPUT_FOLDER_TESTSERVER="${WORKSPACE}/${ANDROID_APP_PATH}/build/outputs/apk/${GRADLE_TASK_TESTSERVER}/debug"
       OUTPUT_APK_LIVESERVER="${OUTPUT_PREFIX}${APP_VERSION}.${BUILD_VERSION}_${FILE_TODAY}-${GRADLE_TASK_LIVESERVER}-debug.apk"
       OUTPUT_APK_TESTSERVER="${OUTPUT_PREFIX}${APP_VERSION}.${BUILD_VERSION}_${FILE_TODAY}-${GRADLE_TASK_TESTSERVER}-debug.apk"
     fi
     SLACK_TEXT=""
     MAIL_TEXT=""
-    FCM_CONFIG_JSON_PATH="${WORKSPACE}/app/google-services.json"
+    FCM_CONFIG_JSON_PATH="${WORKSPACE}/${ANDROID_APP_PATH}/google-services.json"
     ###################
     if [ ! -d $APP_ROOT ]; then
       mkdir -p $APP_ROOT
@@ -481,7 +481,7 @@ if [[ "$INPUT_OS" == "android" ]]; then
     # Step 1.1: Check 'allatori' 난독화 실행 여부
     if [ $IS_RELEASE -eq 1 -a $USING_ALLATORI -eq 1 ]; then
       ALLATORI_EXEC_PATH="${BUILD_GRADLE_CONFIG}"
-      ALLATORI_EXEC_TEMP="${WORKSPACE}/app/build.gradle.new"
+      ALLATORI_EXEC_TEMP="${WORKSPACE}/${ANDROID_APP_PATH}/build.gradle.new"
       ALLATORI_EXEC=$(grep 'runAllatori(variant)' ${ALLATORI_EXEC_PATH} | grep -v 'def runAllatori(variant)' | awk 'BEGIN{FS=" "; OFS=""} {print $1$2}')
       if [[ "$ALLATORI_EXEC" = "//"* ]]; then
         sed 's/^\/\/.*runAllatori(variant)/            runAllatori(variant)/' $ALLATORI_EXEC_PATH >$ALLATORI_EXEC_TEMP
@@ -687,8 +687,8 @@ if [[ "$INPUT_OS" == "android" ]]; then
       USING_OBFUSCATION=$(test $(cat $jsonConfig | $JQ '.android.usingObfuscation') = true && echo 1 || echo 0)
       if [ $USING_OBFUSCATION -eq 1 ]; then
         if [ -f ${OUTPUT_FOLDER}/${APK_GOOGLESTORE} -a -f ${OUTPUT_FOLDER}/${APK_ONESTORE} ]; then
-          if [ -f $WORKSPACE/app/check.sh -a $IS_RELEASE -eq 1 ]; then
-            chmod +x $WORKSPACE/app/check.sh
+          if [ -f $WORKSPACE/${ANDROID_APP_PATH}/check.sh -a $IS_RELEASE -eq 1 ]; then
+            chmod +x $WORKSPACE/${ANDROID_APP_PATH}/check.sh
             cd $WORKSPACE/app && echo "appdevteam@DESKTOP-ONE NIMGW32 ${WORKSPACE} (${GIT_BRANCH})" >merong.txt
             cd $WORKSPACE/app && echo "$ ./check.sh -a src" >>merong.txt
             cd $WORKSPACE/app && ./check.sh -a src >>merong.txt
