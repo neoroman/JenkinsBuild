@@ -48,6 +48,11 @@ while [[ $# -gt 0 ]]; do
     shift # past argument
     shift # past value
     ;;
+  -ff | --flutterflag)
+    FLUTTER_FLAG="$2"
+    shift # past argument
+    shift # past value
+    ;;
   -d | --debug)
     DEBUGGING=1
     shift # past argument
@@ -507,7 +512,11 @@ if [[ "$INPUT_OS" == "android" ]]; then
         if [ $USING_GOOGLESTORE -eq 1 ]; then
           # Step 2.1: Build target for GoogleStore
           if [ $isFlutterEnabled -eq 1 ]; then
-            $FlutterBin build apk --flavor ${GRADLE_TASK_GOOGLESTORE}
+            if test -z $FLUTTER_FLAG; then
+              $FlutterBin build apk --flavor ${GRADLE_TASK_GOOGLESTORE}
+            else
+              $FlutterBin build apk --flavor ${GRADLE_TASK_GOOGLESTORE} ${FLUTTER_FLAG}
+            fi
           else
             ./gradlew "assemble${GRADLE_TASK_GOOGLESTORE}"
           fi
