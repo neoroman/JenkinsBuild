@@ -1119,6 +1119,11 @@ fi # iOS
 ###################
 # Step 4: Send build result to Slack
 if [ $USING_SLACK -eq 1 ]; then
+  SLACK_CLI_TOKEN=$(cat $jsonConfig | $JQ '.slack.slack_cli_token' | tr -d '"')
+  if [ $SLACK_CLI_TOKEN != "null" ]; then
+    export SLACK_CLI_TOKEN="${SLACK_CLI_TOKEN}"
+    $SLACK init --token "${SLACK_CLI_TOKEN}"
+  fi
   jsonDefaultLang="${APP_ROOT_PREFIX}/${TOP_PATH}/lang/default.json"
   if [ -f "${jsonDefaultLang}" ]; then
     language=$(cat "${jsonDefaultLang}" | $JQ '.LANGUAGE' | tr -d '"')
