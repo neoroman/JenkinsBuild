@@ -438,17 +438,22 @@ if [[ "$INPUT_OS" == "android" ]]; then
     USING_TESTSERVER=$(test $(cat $jsonConfig | $JQ '.android.TestServer.enabled') = true && echo 1 || echo 0)
     GRADLE_TASK_TESTSERVER=$(cat $jsonConfig | $JQ '.android.TestServer.taskName' | tr -d '"')
     ###################
+    if [ $isFlutterEnabled -eq 1 ]; then
+      APK_OUTPUT_PATH="build/app/outputs/apk"
+    else
+      APK_OUTPUT_PATH="${ANDROID_APP_PATH}/build/outputs/apk"
+    fi
     if [ $IS_RELEASE -eq 1 ]; then
-      OUTPUT_FOLDER_GOOGLESTORE="${WORKSPACE}/${ANDROID_APP_PATH}/build/outputs/apk/${GRADLE_TASK_GOOGLESTORE}/release"
-      OUTPUT_FOLDER_ONESTORE="${WORKSPACE}/${ANDROID_APP_PATH}/build/outputs/apk/${GRADLE_TASK_ONESTORE}/release"
+      OUTPUT_FOLDER_GOOGLESTORE="${WORKSPACE}/${APK_OUTPUT_PATH}/${GRADLE_TASK_GOOGLESTORE}/release"
+      OUTPUT_FOLDER_ONESTORE="${WORKSPACE}/${APK_OUTPUT_PATH}/${GRADLE_TASK_ONESTORE}/release"
       APK_FILE_TITLE="${OUTPUT_PREFIX}${APP_VERSION}(${BUILD_VERSION})_${FILE_TODAY}"
       APK_GOOGLESTORE="${APK_FILE_TITLE}${outputGoogleStoreSuffix}"
       APK_ONESTORE="${APK_FILE_TITLE}${outputOneStoreSuffix}"
       Obfuscation_SCREENSHOT="${OUTPUT_PREFIX}${APP_VERSION}(${BUILD_VERSION})_${FILE_TODAY}_Obfuscation.png"
       Obfuscation_OUTPUT_FILE="${OUTPUT_PREFIX}${APP_VERSION}(${BUILD_VERSION})_${FILE_TODAY}_file.png"
     else
-      OUTPUT_FOLDER_LIVESERVER="${WORKSPACE}/${ANDROID_APP_PATH}/build/outputs/apk/${GRADLE_TASK_LIVESERVER}/debug"
-      OUTPUT_FOLDER_TESTSERVER="${WORKSPACE}/${ANDROID_APP_PATH}/build/outputs/apk/${GRADLE_TASK_TESTSERVER}/debug"
+      OUTPUT_FOLDER_LIVESERVER="${WORKSPACE}/${APK_OUTPUT_PATH}/${GRADLE_TASK_LIVESERVER}/debug"
+      OUTPUT_FOLDER_TESTSERVER="${WORKSPACE}/${APK_OUTPUT_PATH}/${GRADLE_TASK_TESTSERVER}/debug"
       OUTPUT_APK_LIVESERVER="${OUTPUT_PREFIX}${APP_VERSION}.${BUILD_VERSION}_${FILE_TODAY}-${GRADLE_TASK_LIVESERVER}-debug.apk"
       OUTPUT_APK_TESTSERVER="${OUTPUT_PREFIX}${APP_VERSION}.${BUILD_VERSION}_${FILE_TODAY}-${GRADLE_TASK_TESTSERVER}-debug.apk"
     fi
