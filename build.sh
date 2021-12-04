@@ -1116,59 +1116,6 @@ elif [[ "$INPUT_OS" == "ios" ]]; then
 fi # iOS
 ###################
 
-###################
-# Step 4: Send build result to Slack
-if [ $USING_SLACK -eq 1 ]; then
-  jsonDefaultLang="${APP_ROOT_PREFIX}/${TOP_PATH}/lang/default.json"
-  if [ -f "${jsonDefaultLang}" ]; then
-    language=$(cat "${jsonDefaultLang}" | $JQ '.LANGUAGE' | tr -d '"')
-    lang_file="${APP_ROOT_PREFIX}/${TOP_PATH}/lang/lang_${language}.json"
-    SITE_URL=$(cat $lang_file | $JQ '.client.short_url' | tr -d '"')
-    SITE_ID=$(cat $jsonConfig | $JQ '.users.app.userId' | tr -d '"')
-    SITE_PW=$(cat $jsonConfig | $JQ '.users.app.password' | tr -d '"')
-    SITE_ID_PW="${SITE_ID}/${SITE_PW}"
-  fi
-  if [[ "$INPUT_OS" == "ios" ]]; then
-    ITMS_PREFIX="itms-services://?action=download-manifest&url="
-    SLACK_INSTALL_STR=""
-    SLACK_APPSTORE_DOWN_STR=""
-    SLACK_APPSTORE_ATTACH_STR=""
-    if [ $USING_APPSTORE -eq 1 ]; then
-      SLACK_INSTALL_STR="${HOSTNAME} > ${ENTER_TITLE} 및 ${ADHOC_TITLE} 설치: ${SITE_URL}\n(사이트 접근 ID/PW는 ${SITE_ID_PW})\n\n"
-      SLACK_APPSTORE_DOWN_STR="${HOSTNAME} > ${APPSTORE_TITLE} IPA 다운로드(${SIZE_STORE_APP_FILE}B): ${HTTPS_PREFIX}${OUTPUT_FILENAME_APPSTORE_IPA}\n"
-      SLACK_APPSTORE_ATTACH_STR="${HOSTNAME} > 첨부파일: ${HTTPS_PREFIX}${OUTPUT_FILENAME_APPSTORE_IX_SHIELD_CHECK}\n"
-    fi
-    SLACK_ADHOC_DOWN_STR=""
-    SLACK_ADHOC_ITMS_STR=""
-    if [ $USING_ADHOC -eq 1 ]; then
-      SLACK_ADHOC_DOWN_STR="${HOSTNAME} > ${ADHOC_TITLE}(${SIZE_ADHOC_APP_FILE}B): ${HTTPS_PREFIX}${OUTPUT_FILENAME_ADHOC_IPA}\n"
-      SLACK_ADHOC_ITMS_STR="${HOSTNAME} > ${ADHOC_TITLE}(${SIZE_ADHOC_APP_FILE}B): ${ITMS_PREFIX}${ADHOC_PLIST_ITMS_URL}]n"
-    fi
-    SLACK_ENTER_DOWN_STR=""
-    SLACK_ENTER_ITMS_STR=""
-    if [ $USING_ENTERPRISE -eq 1 ]; then
-      SLACK_ENTER_DOWN_STR="${HOSTNAME} > ${ENTER_TITLE}(${SIZE_ENTER_APP_FILE}B): ${HTTPS_PREFIX}${OUTPUT_FILENAME_ENTER_IPA}\n"
-      SLACK_ENTER_ITMS_STR="${HOSTNAME} > ${ENTER_TITLE}(${SIZE_ENTER_APP_FILE}B): ${ITMS_PREFIX}${ENTER_PLIST_ITMS_URL}\n"
-    fi
-    if [ $IS_RELEASE -eq 0 ]; then
-      $SLACK chat send --text "${SLACK_ADHOC_DOWN_STR}${SLACK_ENTER_DOWN_STR}" --channel ${SLACK_CHANNEL} --pretext "${HOSTNAME} > iOS Build output files for ${GIT_BRANCH} - ${CHANGE_TITLE}(commit: ${GIT_COMMIT}) => ${BUILD_URL}" --color good
-      $SLACK chat send --text "${SLACK_ADHOC_ITMS_STR}${SLACK_ENTER_ITMS_STR}" --channel ${SLACK_CHANNEL} --pretext "${HOSTNAME} > iOS Uploaded IPA/Plist files for ${GIT_BRANCH} - ${CHANGE_TITLE}(commit: ${GIT_COMMIT}) => ${BUILD_URL}" --color good
-    else
-      $SLACK chat send --text "${SLACK_INSTALL_STR}${SLACK_APPSTORE_DOWN_STR}${SLACK_ADHOC_DOWN_STR}${SLACK_ENTER_DOWN_STR}\n${SLACK_APPSTORE_ATTACH_STR}" --channel ${SLACK_CHANNEL} --pretext "${HOSTNAME} > iOS Build output files for ${GIT_BRANCH} - ${CHANGE_TITLE}(commit: ${GIT_COMMIT}) => ${BUILD_URL}" --color good
-      $SLACK chat send --text "${SLACK_ADHOC_ITMS_STR}${SLACK_ENTER_ITMS_STR}" --channel ${SLACK_CHANNEL} --pretext "${HOSTNAME} > iOS Uploaded IPA/Plist files for ${GIT_BRANCH} - ${CHANGE_TITLE}(commit: ${GIT_COMMIT}) => ${BUILD_URL}" --color good
-    fi
-  elif [[ "$INPUT_OS" == "android" ]]; then
-    if [ $IS_RELEASE -eq 1 ]; then
-      if [ $USING_OBFUSCATION -eq 1 ]; then
-        $SLACK chat send --text "${HOSTNAME} > 안드로이드 1차 난독화 버전 전달합니다.\n\n\nAPK 설치: ${SITE_URL} (ID/PW ${SITE_ID_PW})\n\n${SLACK_TEXT}\n\n첨부파일: \n난독화파일_ES1 - ${HTTPS_PREFIX}${Obfuscation_OUTPUT_FILE}\n난독화스크립트_ES1 - ${HTTPS_PREFIX}${Obfuscation_SCREENSHOT}\n\n" --channel ${SLACK_CHANNEL} --pretext "Android Build output files for ${GIT_BRANCH} - ${CHANGE_TITLE}(commit: ${GIT_COMMIT}) => ${BUILD_URL}" --color good
-      else
-        $SLACK chat send --text "${HOSTNAME} > 안드로이드 1차 난독화 버전 전달합니다.\n\n\nAPK 설치: ${SITE_URL} (ID/PW ${SITE_ID_PW})\n\n${SLACK_TEXT}\n\n" --channel ${SLACK_CHANNEL} --pretext "Android Build output files for ${GIT_BRANCH} - ${CHANGE_TITLE}(commit: ${GIT_COMMIT}) => ${BUILD_URL}" --color good
-      fi
-    else
-      $SLACK chat send --text "${SLACK_TEXT}" --channel ${SLACK_CHANNEL} --pretext "${HOSTNAME} > Android Build output files for ${GIT_BRANCH} - ${CHANGE_TITLE}(commit: ${GIT_COMMIT}) => ${BUILD_URL}" --color good
-    fi
-  fi
-fi
 
 ###################
 # Step 5: Change HTML(index.html) file
@@ -1581,11 +1528,322 @@ if [ -f $OUTPUT_FOLDER/$OUTPUT_FILENAME_JSON ]; then
     QC_ID_PW="qc/insu1234"
   fi  
   ###########
+  ###################
+  # Step 4: Send build result to Slack
+  if [ $USING_SLACK -eq 1 ]; then
+    jsonDefaultLang="${APP_ROOT_PREFIX}/${TOP_PATH}/lang/default.json"
+    if [ -f "${jsonDefaultLang}" ]; then
+      language=$(cat "${jsonDefaultLang}" | $JQ '.LANGUAGE' | tr -d '"')
+      lang_file="${APP_ROOT_PREFIX}/${TOP_PATH}/lang/lang_${language}.json"
+      SITE_URL=$(cat $lang_file | $JQ '.client.short_url' | tr -d '"')
+      SITE_ID=$(cat $jsonConfig | $JQ '.users.app.userId' | tr -d '"')
+      SITE_PW=$(cat $jsonConfig | $JQ '.users.app.password' | tr -d '"')
+      SITE_ID_PW="${SITE_ID}/${SITE_PW}"
+      SLACK_WEBHOOK=$(cat $jsonConfig | $JQ '.slack.webhook' | tr -d '"')
+    fi
+    if [[ "$INPUT_OS" == "ios" ]]; then
+      ITMS_PREFIX="itms-services://?action=download-manifest&url="
+      SLACK_INSTALL_STR=""
+      SLACK_APPSTORE_DOWN_STR=""
+      SLACK_APPSTORE_ATTACH_STR=""
+      if [ $USING_APPSTORE -eq 1 ]; then
+        SLACK_INSTALL_STR="${ENTER_TITLE} 및 ${ADHOC_TITLE} 설치: ${SITE_URL}\n(사이트 접근 ID/PW는 ${SITE_ID_PW})\n\n"
+        SLACK_APPSTORE_DOWN_STR="${APPSTORE_TITLE} IPA 다운로드(${SIZE_STORE_APP_FILE}B): ${HTTPS_PREFIX}${OUTPUT_FILENAME_APPSTORE_IPA}\n"
+        SLACK_APPSTORE_ATTACH_STR="첨부파일: ${HTTPS_PREFIX}${OUTPUT_FILENAME_APPSTORE_IX_SHIELD_CHECK}\n"
+      fi
+      SLACK_ADHOC_DOWN_STR=""
+      SLACK_ADHOC_ITMS_STR=""
+      if [ $USING_ADHOC -eq 1 ]; then
+        SLACK_ADHOC_DOWN_STR="${ADHOC_TITLE}(${SIZE_ADHOC_APP_FILE}B): ${HTTPS_PREFIX}${OUTPUT_FILENAME_ADHOC_IPA}\n"
+        SLACK_ADHOC_ITMS_STR="${ADHOC_TITLE}(${SIZE_ADHOC_APP_FILE}B): ${ITMS_PREFIX}${ADHOC_PLIST_ITMS_URL}]n"
+      fi
+      SLACK_ENTER_DOWN_STR=""
+      SLACK_ENTER_ITMS_STR=""
+      if [ $USING_ENTERPRISE -eq 1 ]; then
+        SLACK_ENTER_DOWN_STR="${ENTER_TITLE}(${SIZE_ENTER_APP_FILE}B): ${HTTPS_PREFIX}${OUTPUT_FILENAME_ENTER_IPA}\n"
+        SLACK_ENTER_ITMS_STR="${ENTER_TITLE}(${SIZE_ENTER_APP_FILE}B): ${ITMS_PREFIX}${ENTER_PLIST_ITMS_URL}\n"
+      fi
+      if [[ "$SLACK_WEBHOOK" == "null" ]]; then
+        if [ $IS_RELEASE -eq 0 ]; then
+          $SLACK chat send --text "${HOSTNAME} > ${SLACK_ADHOC_DOWN_STR}${HOSTNAME} > ${SLACK_ENTER_DOWN_STR}" --channel ${SLACK_CHANNEL} --pretext "${HOSTNAME} > iOS Build output files for ${GIT_BRANCH} - ${CHANGE_TITLE}(commit: ${GIT_COMMIT}) => ${BUILD_URL}" --color good
+          $SLACK chat send --text "${HOSTNAME} > ${SLACK_ADHOC_ITMS_STR}${HOSTNAME} > ${SLACK_ENTER_ITMS_STR}" --channel ${SLACK_CHANNEL} --pretext "${HOSTNAME} > iOS Uploaded IPA/Plist files for ${GIT_BRANCH} - ${CHANGE_TITLE}(commit: ${GIT_COMMIT}) => ${BUILD_URL}" --color good
+        else
+          $SLACK chat send --text "${HOSTNAME} > ${SLACK_INSTALL_STR}${HOSTNAME} > ${SLACK_APPSTORE_DOWN_STR}${HOSTNAME} > ${SLACK_ADHOC_DOWN_STR}${HOSTNAME} > ${SLACK_ENTER_DOWN_STR}\n${HOSTNAME} > ${SLACK_APPSTORE_ATTACH_STR}" --channel ${SLACK_CHANNEL} --pretext "${HOSTNAME} > iOS Build output files for ${GIT_BRANCH} - ${CHANGE_TITLE}(commit: ${GIT_COMMIT}) => ${BUILD_URL}" --color good
+          $SLACK chat send --text "${HOSTNAME} > ${SLACK_ADHOC_ITMS_STR}${HOSTNAME} > ${SLACK_ENTER_ITMS_STR}" --channel ${SLACK_CHANNEL} --pretext "${HOSTNAME} > iOS Uploaded IPA/Plist files for ${GIT_BRANCH} - ${CHANGE_TITLE}(commit: ${GIT_COMMIT}) => ${BUILD_URL}" --color good
+        fi
+        $SLACK chat send --text "${HOSTNAME} > ${FRONTEND_POINT}/${TOP_PATH}/dist_uaqa.php > Go iOS" --channel ${SLACK_CHANNEL} --pretext "${HOSTNAME} > iOS Download Web Page for ${SHORT_GIT_LOG}" --color good
+      else
+        BLOCK_TITLE="iOS 테스트"
+        if [ $IS_RELEASE -eq 1 ]; then
+          BLOCK_TITLE="iOS 검증용"
+          BLOCK_SECTION="${BLOCK_SECTION}                {
+                  \"type\": \"section\",
+                  \"text\": {
+                      \"type\": \"mrkdwn\",
+                      \"text\": \"${VERSION_STRING} ${SLACK_APPSTORE_DOWN_STR}\"
+                  }
+              },"
+          BLOCK_SECTION="${BLOCK_SECTION}                {
+                  \"type\": \"section\",
+                  \"text\": {
+                      \"type\": \"mrkdwn\",
+                      \"text\": \"${VERSION_STRING} ${SLACK_APPSTORE_ATTACH_STR}\"
+                  }
+              },"
+        fi
+        BLOCK_SECTION="${BLOCK_SECTION}                {
+            \"type\": \"section\",
+            \"text\": {
+                \"type\": \"mrkdwn\",
+                \"text\": \"${VERSION_STRING} ${SLACK_ADHOC_DOWN_STR}\"
+            },
+            \"accessory\": {
+                \"type\": \"button\",
+                \"text\": {
+                    \"type\": \"plain_text\",
+                    \"text\": \"다운로드\",
+                    \"emoji\": true
+                },
+                \"value\": \"click_me_123\",
+                \"url\": \"${ITMS_PREFIX}${ADHOC_PLIST_ITMS_URL}\",
+                \"action_id\": \"button-action\"
+            }
+        },"
+        BLOCK_SECTION="${BLOCK_SECTION}                {
+            \"type\": \"section\",
+            \"text\": {
+                \"type\": \"mrkdwn\",
+                \"text\": \"${VERSION_STRING} ${SLACK_ENTER_DOWN_STR}\"
+            },
+            \"accessory\": {
+                \"type\": \"button\",
+                \"text\": {
+                    \"type\": \"plain_text\",
+                    \"text\": \"다운로드\",
+                    \"emoji\": true
+                },
+                \"value\": \"click_me_123\",
+                \"url\": \"${ITMS_PREFIX}${ENTER_PLIST_ITMS_URL}\",
+                \"action_id\": \"button-action\"
+            }
+        },"
+        SLACK_JSON_ALL="payload={
+            \"channel\": \"${SLACK_CHANNEL}\", 
+            \"username\": \"Jenkins(자동배포)\", 
+            \"icon_emoji\": \":bowtie:\",
+            \"blocks\": [
+                {
+                    \"type\": \"header\",
+                    \"text\": {
+                        \"type\": \"plain_text\",
+                        \"text\": \"${HOSTNAME} > ${BLOCK_TITLE} ${APP_NAME}.App\",
+                        \"emoji\": true
+                    }
+                },
+                {
+                    \"type\": \"section\",
+                    \"text\": {
+                        \"type\": \"mrkdwn\",
+                        \"text\": \"${CLIENT_NAME} ${APP_NAME} 앱: Jenkins(${BUILD_NUMBER}) - ${GIT_BRANCH} (commit: [${GIT_COMMIT}](${GIT_BROWSER_URL}/${GIT_COMMIT}))\"
+                    }
+                },
+                ${BLOCK_SECTION}
+                {
+                    \"type\": \"section\",
+                    \"text\": {
+                        \"type\": \"mrkdwn\",
+                        \"text\": \"설치 및 다운로드 사이트: ${CLIENT_TITLE} [${SITE_URL}](${SITE_URL}) (ID/PW: ${SITE_ID_PW})\"
+                    },
+                    \"accessory\": {
+                        \"type\": \"button\",
+                        \"text\": {
+                            \"type\": \"plain_text\",
+                            \"text\": \"사이트 링크\",
+                            \"emoji\": true
+                        },
+                        \"value\": \"click_me_123\",
+                        \"url\": \"${SITE_URL}\",
+                        \"action_id\": \"button-action\"
+                    }
+                }, 
+                {
+                    \"type\": \"section\",
+                    \"text\": {
+                        \"type\": \"mrkdwn\",
+                        \"text\": \"배포 웹사이트 (내부 QA용): 내부 QA 사이트 [바로가기](${FRONTEND_POINT}/${TOP_PATH}/ios/dist_iosphp) (ID/PW: ${QC_ID_PW})\"
+                    },
+                    \"accessory\": {
+                        \"type\": \"button\",
+                        \"text\": {
+                            \"type\": \"plain_text\",
+                            \"text\": \"사이트 링크\",
+                            \"emoji\": true
+                        },
+                        \"value\": \"click_me_123\",
+                        \"url\": \"${FRONTEND_POINT}/${TOP_PATH}/ios/dist_ios.php\",
+                        \"action_id\": \"button-action\"
+                    }
+                }, 
+                {
+                    \"type\": \"section\",
+                    \"text\": {
+                        \"type\": \"mrkdwn\",
+                        \"text\": \"빌드 환경: <pre>$($XCODE -version)\nCocoaPod $($POD --version)</pre>\"
+                    }
+                }, 
+                {
+                    \"type\": \"section\",
+                    \"text\": {
+                        \"type\": \"mrkdwn\",
+                        \"text\": \"Jenkin 작업 결과: Jenkin 사이트 [바로가기](${BUILD_URL})\"
+                    }
+                }
+            ]
+        }"
+        $CURL -H "Content-Type: application/json" -d "${SLACK_JSON_ALL}" $SLACK_WEBHOOK
+      fi
+    elif [[ "$INPUT_OS" == "android" ]]; then
+      if [[ "$SLACK_WEBHOOK" == "null" ]]; then
+        if [ $IS_RELEASE -eq 1 ]; then
+          if [ $USING_OBFUSCATION -eq 1 ]; then
+            $SLACK chat send --text "${HOSTNAME} > 안드로이드 1차 난독화 버전 전달합니다.\n\n\nAPK 설치: ${SITE_URL} (ID/PW ${SITE_ID_PW})\n\n${SLACK_TEXT}\n\n첨부파일: \n난독화파일_ES1 - ${HTTPS_PREFIX}${Obfuscation_OUTPUT_FILE}\n난독화스크립트_ES1 - ${HTTPS_PREFIX}${Obfuscation_SCREENSHOT}\n\n" --channel ${SLACK_CHANNEL} --pretext "Android Build output files for ${GIT_BRANCH} - ${CHANGE_TITLE}(commit: ${GIT_COMMIT}) => ${BUILD_URL}" --color good
+          else
+            $SLACK chat send --text "${HOSTNAME} > 안드로이드 1차 난독화 버전 전달합니다.\n\n\nAPK 설치: ${SITE_URL} (ID/PW ${SITE_ID_PW})\n\n${SLACK_TEXT}\n\n" --channel ${SLACK_CHANNEL} --pretext "Android Build output files for ${GIT_BRANCH} - ${CHANGE_TITLE}(commit: ${GIT_COMMIT}) => ${BUILD_URL}" --color good
+          fi
+        else
+          $SLACK chat send --text "${SLACK_TEXT}" --channel ${SLACK_CHANNEL} --pretext "${HOSTNAME} > Android Build output files for ${GIT_BRANCH} - ${CHANGE_TITLE}(commit: ${GIT_COMMIT}) => ${BUILD_URL}" --color good
+        fi
+        $SLACK chat send --text "${HOSTNAME} > ${FRONTEND_POINT}/${TOP_PATH}/dist_uaqa.php > Go Android" --channel ${SLACK_CHANNEL} --pretext "${HOSTNAME} > Android Download Web Page for ${SHORT_GIT_LOG}" --color good
+      else
+        BLOCK_TITLE="Android 테스트"
+        BLOCK_SECTION="${BLOCK_SECTION}                {
+                  \"type\": \"section\",
+                  \"text\": {
+                      \"type\": \"mrkdwn\",
+                      \"text\": \"${VERSION_STRING} ${SLACK_TEXT}\"
+                  }
+              },"
+        if [ $IS_RELEASE -eq 1 ]; then
+          BLOCK_TITLE="Android 검증용"
+          if [ $USING_OBFUSCATION -eq 1 ]; then
+            BLOCK_SECTION="${BLOCK_SECTION}                {
+                    \"type\": \"section\",
+                    \"text\": {
+                        \"type\": \"mrkdwn\",
+                        \"text\": \"${VERSION_STRING} 난독화파일_ES1 - [파일 다운로드](${HTTPS_PREFIX}${Obfuscation_OUTPUT_FILE})\"
+                    },
+                    \"accessory\": {
+                        \"type\": \"button\",
+                        \"text\": {
+                            \"type\": \"plain_text\",
+                            \"text\": \"Download\",
+                            \"emoji\": true
+                        },
+                        \"value\": \"click_me_123\",
+                        \"url\": \"${HTTPS_PREFIX}${Obfuscation_OUTPUT_FILE}\",
+                        \"action_id\": \"button-action\"
+                    }
+                },"
+            BLOCK_SECTION="${BLOCK_SECTION}                {
+                    \"type\": \"section\",
+                    \"text\": {
+                        \"type\": \"mrkdwn\",
+                        \"text\": \"${VERSION_STRING} 난독화파일_ES1 - [파일 다운로드](${HTTPS_PREFIX}${Obfuscation_OUTPUT_FILE})\"
+                    },
+                    \"accessory\": {
+                        \"type\": \"button\",
+                        \"text\": {
+                            \"type\": \"plain_text\",
+                            \"text\": \"Download\",
+                            \"emoji\": true
+                        },
+                        \"value\": \"click_me_123\",
+                        \"url\": \"${HTTPS_PREFIX}${Obfuscation_OUTPUT_FILE}\",
+                        \"action_id\": \"button-action\"
+                    }
+                },"                
+          fi
+        fi
+        SLACK_JSON_ALL="payload={
+            \"channel\": \"${SLACK_CHANNEL}\", 
+            \"username\": \"Jenkins(자동배포)\", 
+            \"icon_emoji\": \":bowtie:\",
+            \"blocks\": [
+                {
+                    \"type\": \"header\",
+                    \"text\": {
+                        \"type\": \"plain_text\",
+                        \"text\": \"${HOSTNAME} > ${BLOCK_TITLE} ${APP_NAME}.App\",
+                        \"emoji\": true
+                    }
+                },
+                {
+                    \"type\": \"section\",
+                    \"text\": {
+                        \"type\": \"mrkdwn\",
+                        \"text\": \"${CLIENT_NAME} ${APP_NAME} 앱: Jenkins(${BUILD_NUMBER}) - ${GIT_BRANCH} (commit: [${GIT_COMMIT}](${GIT_BROWSER_URL}/${GIT_COMMIT}))\"
+                    }
+                },
+                ${BLOCK_SECTION}
+                {
+                    \"type\": \"section\",
+                    \"text\": {
+                        \"type\": \"mrkdwn\",
+                        \"text\": \"설치 및 다운로드 사이트: ${CLIENT_TITLE} [${SITE_URL}](${SITE_URL}) (ID/PW: ${SITE_ID_PW})\"
+                    },
+                    \"accessory\": {
+                        \"type\": \"button\",
+                        \"text\": {
+                            \"type\": \"plain_text\",
+                            \"text\": \"사이트 링크\",
+                            \"emoji\": true
+                        },
+                        \"value\": \"click_me_123\",
+                        \"url\": \"${SITE_URL}\",
+                        \"action_id\": \"button-action\"
+                    }
+                }, 
+                {
+                    \"type\": \"section\",
+                    \"text\": {
+                        \"type\": \"mrkdwn\",
+                        \"text\": \"배포 웹사이트 (내부 QA용): 내부 QA 사이트 [바로가기](${FRONTEND_POINT}/${TOP_PATH}/ios/dist_android.php) (ID/PW: ${QC_ID_PW})\"
+                    },
+                    \"accessory\": {
+                        \"type\": \"button\",
+                        \"text\": {
+                            \"type\": \"plain_text\",
+                            \"text\": \"사이트 링크\",
+                            \"emoji\": true
+                        },
+                        \"value\": \"click_me_123\",
+                        \"url\": \"${FRONTEND_POINT}/${TOP_PATH}/ios/dist_android.php\",
+                        \"action_id\": \"button-action\"
+                    }
+                }, 
+                {
+                    \"type\": \"section\",
+                    \"text\": {
+                        \"type\": \"mrkdwn\",
+                        \"text\": \"빌드 환경: <pre>$(cd ${WORKSPACE} && $BUILD_COMMAND --version)</pre>\"
+                    }
+                }, 
+                {
+                    \"type\": \"section\",
+                    \"text\": {
+                        \"type\": \"mrkdwn\",
+                        \"text\": \"Jenkin 작업 결과: Jenkin 사이트 [바로가기](${BUILD_URL})\"
+                    }
+                }
+            ]
+        }"
+        $CURL -H "Content-Type: application/json" -d "${SLACK_JSON_ALL}" $SLACK_WEBHOOK
+      fi
+    fi
+  fi
+
   BINARY_FACTS=""
   if [[ "$INPUT_OS" == "ios" ]]; then
-    if [ $USING_SLACK -eq 1 ]; then
-      $SLACK chat send --text "${HOSTNAME} > ${FRONTEND_POINT}/${TOP_PATH}/dist_uaqa.php > Go iOS" --channel ${SLACK_CHANNEL} --pretext "${HOSTNAME} > iOS Download Web Page for ${SHORT_GIT_LOG}" --color good
-    fi
     ###########
     if [ $USING_TEAMS_WEBHOOK -eq 1 ]; then
       GIT_BROWSER_URL=$(cat $jsonConfig | $JQ '.ios.gitBrowseUrl' | tr -d '"')
@@ -1723,9 +1981,6 @@ if [ -f $OUTPUT_FOLDER/$OUTPUT_FILENAME_JSON ]; then
       fi
     fi
   else # iOS
-    if [ $USING_SLACK -eq 1 ]; then
-      $SLACK chat send --text "${HOSTNAME} > ${FRONTEND_POINT}/${TOP_PATH}/dist_uaqa.php > Go Android" --channel ${SLACK_CHANNEL} --pretext "${HOSTNAME} > Android Download Web Page for ${SHORT_GIT_LOG}" --color good
-    fi
     ###########
     if [ $USING_TEAMS_WEBHOOK -eq 1 ]; then
       GIT_BROWSER_URL=$(cat $jsonConfig | $JQ '.android.gitBrowseUrl' | tr -d '"')
