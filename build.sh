@@ -1675,7 +1675,7 @@ if [ -f $OUTPUT_FOLDER/$OUTPUT_FILENAME_JSON ]; then
                     \"type\": \"section\",
                     \"text\": {
                         \"type\": \"mrkdwn\",
-                        \"text\": \"배포 웹사이트 (내부 QA용): 내부 QA 사이트 [바로가기](${FRONTEND_POINT}/${TOP_PATH}/ios/dist_iosphp) (ID/PW: ${QC_ID_PW})\"
+                        \"text\": \"배포 웹사이트 (내부 QA용): 내부 QA 사이트 [바로가기](${FRONTEND_POINT}/${TOP_PATH}/ios/dist_ios.php) (ID/PW: ${QC_ID_PW})\"
                     },
                     \"accessory\": {
                         \"type\": \"button\",
