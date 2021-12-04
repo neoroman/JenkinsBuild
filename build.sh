@@ -1526,7 +1526,12 @@ if [ -f $OUTPUT_FOLDER/$OUTPUT_FILENAME_JSON ]; then
     SITE_URL="https://bit.ly/client_site"
     SITE_ID_PW="app/qwer1234"
     QC_ID_PW="qc/insu1234"
-  fi  
+  fi
+  if [ $isFlutterEnabled -eq 1 ]; then
+    BUILD_COMMAND=$FlutterBin
+  else
+    BUILD_COMMAND="./gradlew"
+  fi
   ###########
   ###################
   # Step 4: Send build result to Slack
@@ -2041,11 +2046,6 @@ if [ -f $OUTPUT_FOLDER/$OUTPUT_FILENAME_JSON ]; then
       fi
       ########
       ICON=$(cat $jsonConfig | $JQ '.teams.iconImage' | tr -d '"')
-      if [ $isFlutterEnabled -eq 1 ]; then
-        BUILD_COMMAND=$FlutterBin
-      else
-        BUILD_COMMAND="./gradlew"
-      fi
       JSON_ALL="{
             \"@type\": \"MessageCard\",
             \"@context\": \"${FRONTEND_POINT}/${TOP_PATH}/dist_uaqa.php\",
@@ -2082,11 +2082,6 @@ if [ -f $OUTPUT_FOLDER/$OUTPUT_FILENAME_JSON ]; then
     fi # Android
     
     if [ $USING_MAIL -eq 1 ]; then
-      if [ $isFlutterEnabled -eq 1 ]; then
-        BUILD_COMMAND=$FlutterBin
-      else
-        BUILD_COMMAND="./gradlew"
-      fi
       if [ -f $OUTPUT_FOLDER/$Obfuscation_OUTPUT_FILE -a $IS_RELEASE -eq 1 ]; then
         ATTACHMENT_DOWN=""
         ATTACHMENT_STR=""
