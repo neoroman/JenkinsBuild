@@ -1839,7 +1839,7 @@ if [ -f $OUTPUT_FOLDER/$OUTPUT_FILENAME_JSON ]; then
                             \"emoji\": true
                         },
                         \"value\": \"click_me_123\",
-                        \"url\": \"${FRONTEND_POINT}/${TOP_PATH}/ios/dist_android.php\",
+                        \"url\": \"${FRONTEND_POINT}/${TOP_PATH}/android/dist_android.php\",
                         \"action_id\": \"button-action\"
                     }
                 }, 
