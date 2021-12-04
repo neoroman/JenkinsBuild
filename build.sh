@@ -1578,8 +1578,9 @@ if [ -f $OUTPUT_FOLDER/$OUTPUT_FILENAME_JSON ]; then
         fi
         $SLACK chat send --text "${HOSTNAME} > ${FRONTEND_POINT}/${TOP_PATH}/dist_uaqa.php > Go iOS" --channel ${SLACK_CHANNEL} --pretext "${HOSTNAME} > iOS Download Web Page for ${SHORT_GIT_LOG}" --color good
       else
+        GIT_BROWSER_URL=$(cat $jsonConfig | $JQ '.ios.gitBrowseUrl' | tr -d '"')
         BLOCK_TITLE="iOS 테스트"
-        if [ $IS_RELEASE -eq 1 ]; then
+        if [ $IS_RELEASE -eq 1 -a $USING_APPSTORE -eq 1 ]; then
           BLOCK_TITLE="iOS 검증용"
           BLOCK_SECTION="${BLOCK_SECTION}                {
                   \"type\": \"section\",
@@ -1596,42 +1597,24 @@ if [ -f $OUTPUT_FOLDER/$OUTPUT_FILENAME_JSON ]; then
                   }
               },"
         fi
-        BLOCK_SECTION="${BLOCK_SECTION}                {
-            \"type\": \"section\",
-            \"text\": {
-                \"type\": \"mrkdwn\",
-                \"text\": \"${VERSION_STRING} ${SLACK_ADHOC_DOWN_STR}\"
-            },
-            \"accessory\": {
-                \"type\": \"button\",
-                \"text\": {
-                    \"type\": \"plain_text\",
-                    \"text\": \"다운로드\",
-                    \"emoji\": true
-                },
-                \"value\": \"click_me_123\",
-                \"url\": \"${ITMS_PREFIX}${ADHOC_PLIST_ITMS_URL}\",
-                \"action_id\": \"button-action\"
-            }
-        },"
-        BLOCK_SECTION="${BLOCK_SECTION}                {
-            \"type\": \"section\",
-            \"text\": {
-                \"type\": \"mrkdwn\",
-                \"text\": \"${VERSION_STRING} ${SLACK_ENTER_DOWN_STR}\"
-            },
-            \"accessory\": {
-                \"type\": \"button\",
-                \"text\": {
-                    \"type\": \"plain_text\",
-                    \"text\": \"다운로드\",
-                    \"emoji\": true
-                },
-                \"value\": \"click_me_123\",
-                \"url\": \"${ITMS_PREFIX}${ENTER_PLIST_ITMS_URL}\",
-                \"action_id\": \"button-action\"
-            }
-        },"
+        if [ $USING_ADHOC -eq 1 ]; then
+          BLOCK_SECTION="${BLOCK_SECTION}                {
+              \"type\": \"section\",
+              \"text\": {
+                  \"type\": \"mrkdwn\",
+                  \"text\": \"${VERSION_STRING} ${SLACK_ADHOC_DOWN_STR}\"
+              }
+          },"
+        fi
+        if [ $USING_ENTERPRISE -eq 1 ]; then
+          BLOCK_SECTION="${BLOCK_SECTION}                {
+              \"type\": \"section\",
+              \"text\": {
+                  \"type\": \"mrkdwn\",
+                  \"text\": \"${VERSION_STRING} ${SLACK_ENTER_DOWN_STR}\"
+              }
+          },"
+        fi
         SLACK_JSON_ALL="payload={
             \"channel\": \"${SLACK_CHANNEL}\", 
             \"username\": \"Jenkins(자동배포)\", 
@@ -1649,7 +1632,18 @@ if [ -f $OUTPUT_FOLDER/$OUTPUT_FILENAME_JSON ]; then
                     \"type\": \"section\",
                     \"text\": {
                         \"type\": \"mrkdwn\",
-                        \"text\": \"${CLIENT_NAME} ${APP_NAME} 앱: Jenkins(${BUILD_NUMBER}) - ${GIT_BRANCH} (commit: [${GIT_COMMIT}](${GIT_BROWSER_URL}/${GIT_COMMIT}))\"
+                        \"text\": \"${CLIENT_NAME} ${APP_NAME} 앱: Jenkins(${BUILD_NUMBER}) - ${GIT_BRANCH} (commit: ${GIT_COMMIT})\"
+                    },
+                    \"accessory\": {
+                        \"type\": \"button\",
+                        \"text\": {
+                            \"type\": \"plain_text\",
+                            \"text\": \"사이트 링크\",
+                            \"emoji\": true
+                        },
+                        \"value\": \"click_me_123\",
+                        \"url\": \"${GIT_BROWSER_URL}/${GIT_COMMIT}\",
+                        \"action_id\": \"button-action\"
                     }
                 },
                 ${BLOCK_SECTION}
@@ -1657,7 +1651,7 @@ if [ -f $OUTPUT_FOLDER/$OUTPUT_FILENAME_JSON ]; then
                     \"type\": \"section\",
                     \"text\": {
                         \"type\": \"mrkdwn\",
-                        \"text\": \"설치 및 다운로드 사이트: ${CLIENT_TITLE} [${SITE_URL}](${SITE_URL}) (ID/PW: ${SITE_ID_PW})\"
+                        \"text\": \"설치 및 다운로드 사이트: ${CLIENT_TITLE} ${SITE_URL} (ID/PW: ${SITE_ID_PW})\"
                     },
                     \"accessory\": {
                         \"type\": \"button\",
@@ -1675,7 +1669,7 @@ if [ -f $OUTPUT_FOLDER/$OUTPUT_FILENAME_JSON ]; then
                     \"type\": \"section\",
                     \"text\": {
                         \"type\": \"mrkdwn\",
-                        \"text\": \"배포 웹사이트 (내부 QA용): 내부 QA 사이트 [바로가기](${FRONTEND_POINT}/${TOP_PATH}/ios/dist_ios.php) (ID/PW: ${QC_ID_PW})\"
+                        \"text\": \"배포 웹사이트 (내부 QA용): 내부 QA 사이트 (ID/PW: ${QC_ID_PW})\"
                     },
                     \"accessory\": {
                         \"type\": \"button\",
@@ -1693,14 +1687,25 @@ if [ -f $OUTPUT_FOLDER/$OUTPUT_FILENAME_JSON ]; then
                     \"type\": \"section\",
                     \"text\": {
                         \"type\": \"mrkdwn\",
-                        \"text\": \"빌드 환경: <pre>$($XCODE -version)\nCocoaPod $($POD --version)</pre>\"
+                        \"text\": \"빌드 환경: $($XCODE -version | tr -d '\n'), CocoaPod $($POD --version)\"
                     }
                 }, 
                 {
                     \"type\": \"section\",
                     \"text\": {
                         \"type\": \"mrkdwn\",
-                        \"text\": \"Jenkin 작업 결과: Jenkin 사이트 [바로가기](${BUILD_URL})\"
+                        \"text\": \"Jenkin 작업 결과: Jenkin 사이트\"
+                    },
+                    \"accessory\": {
+                        \"type\": \"button\",
+                        \"text\": {
+                            \"type\": \"plain_text\",
+                            \"text\": \"바로가기\",
+                            \"emoji\": true
+                        },
+                        \"value\": \"click_me_123\",
+                        \"url\": \"${BUILD_URL}\",
+                        \"action_id\": \"button-action\"
                     }
                 }
             ]
@@ -1720,6 +1725,7 @@ if [ -f $OUTPUT_FOLDER/$OUTPUT_FILENAME_JSON ]; then
         fi
         $SLACK chat send --text "${HOSTNAME} > ${FRONTEND_POINT}/${TOP_PATH}/dist_uaqa.php > Go Android" --channel ${SLACK_CHANNEL} --pretext "${HOSTNAME} > Android Download Web Page for ${SHORT_GIT_LOG}" --color good
       else
+        GIT_BROWSER_URL=$(cat $jsonConfig | $JQ '.android.gitBrowseUrl' | tr -d '"')
         BLOCK_TITLE="Android 테스트"
         BLOCK_SECTION="${BLOCK_SECTION}                {
                   \"type\": \"section\",
@@ -1735,13 +1741,13 @@ if [ -f $OUTPUT_FOLDER/$OUTPUT_FILENAME_JSON ]; then
                     \"type\": \"section\",
                     \"text\": {
                         \"type\": \"mrkdwn\",
-                        \"text\": \"${VERSION_STRING} 난독화파일_ES1 - [파일 다운로드](${HTTPS_PREFIX}${Obfuscation_OUTPUT_FILE})\"
+                        \"text\": \"${VERSION_STRING} 난독화파일_ES1\"
                     },
                     \"accessory\": {
                         \"type\": \"button\",
                         \"text\": {
                             \"type\": \"plain_text\",
-                            \"text\": \"Download\",
+                            \"text\": \"파일 다운로드\",
                             \"emoji\": true
                         },
                         \"value\": \"click_me_123\",
@@ -1753,13 +1759,13 @@ if [ -f $OUTPUT_FOLDER/$OUTPUT_FILENAME_JSON ]; then
                     \"type\": \"section\",
                     \"text\": {
                         \"type\": \"mrkdwn\",
-                        \"text\": \"${VERSION_STRING} 난독화파일_ES1 - [파일 다운로드](${HTTPS_PREFIX}${Obfuscation_OUTPUT_FILE})\"
+                        \"text\": \"${VERSION_STRING} 난독화파일_ES1\"
                     },
                     \"accessory\": {
                         \"type\": \"button\",
                         \"text\": {
                             \"type\": \"plain_text\",
-                            \"text\": \"Download\",
+                            \"text\": \"파일 다운로드\",
                             \"emoji\": true
                         },
                         \"value\": \"click_me_123\",
@@ -1786,7 +1792,18 @@ if [ -f $OUTPUT_FOLDER/$OUTPUT_FILENAME_JSON ]; then
                     \"type\": \"section\",
                     \"text\": {
                         \"type\": \"mrkdwn\",
-                        \"text\": \"${CLIENT_NAME} ${APP_NAME} 앱: Jenkins(${BUILD_NUMBER}) - ${GIT_BRANCH} (commit: [${GIT_COMMIT}](${GIT_BROWSER_URL}/${GIT_COMMIT}))\"
+                        \"text\": \"${CLIENT_NAME} ${APP_NAME} 앱: Jenkins(${BUILD_NUMBER}) - ${GIT_BRANCH} (commit: ${GIT_COMMIT})\"
+                    },
+                    \"accessory\": {
+                        \"type\": \"button\",
+                        \"text\": {
+                            \"type\": \"plain_text\",
+                            \"text\": \"사이트 링크\",
+                            \"emoji\": true
+                        },
+                        \"value\": \"click_me_123\",
+                        \"url\": \"${GIT_BROWSER_URL}/${GIT_COMMIT}\",
+                        \"action_id\": \"button-action\"
                     }
                 },
                 ${BLOCK_SECTION}
@@ -1794,7 +1811,7 @@ if [ -f $OUTPUT_FOLDER/$OUTPUT_FILENAME_JSON ]; then
                     \"type\": \"section\",
                     \"text\": {
                         \"type\": \"mrkdwn\",
-                        \"text\": \"설치 및 다운로드 사이트: ${CLIENT_TITLE} [${SITE_URL}](${SITE_URL}) (ID/PW: ${SITE_ID_PW})\"
+                        \"text\": \"설치 및 다운로드 사이트: ${CLIENT_TITLE} ${SITE_URL} (ID/PW: ${SITE_ID_PW})\"
                     },
                     \"accessory\": {
                         \"type\": \"button\",
@@ -1812,7 +1829,7 @@ if [ -f $OUTPUT_FOLDER/$OUTPUT_FILENAME_JSON ]; then
                     \"type\": \"section\",
                     \"text\": {
                         \"type\": \"mrkdwn\",
-                        \"text\": \"배포 웹사이트 (내부 QA용): 내부 QA 사이트 [바로가기](${FRONTEND_POINT}/${TOP_PATH}/ios/dist_android.php) (ID/PW: ${QC_ID_PW})\"
+                        \"text\": \"배포 웹사이트 (내부 QA용): 내부 QA 사이트 (ID/PW: ${QC_ID_PW})\"
                     },
                     \"accessory\": {
                         \"type\": \"button\",
@@ -1830,14 +1847,25 @@ if [ -f $OUTPUT_FOLDER/$OUTPUT_FILENAME_JSON ]; then
                     \"type\": \"section\",
                     \"text\": {
                         \"type\": \"mrkdwn\",
-                        \"text\": \"빌드 환경: <pre>$(cd ${WORKSPACE} && $BUILD_COMMAND --version)</pre>\"
+                        \"text\": \"빌드 환경: $(cd ${WORKSPACE} && $BUILD_COMMAND --version | sed -e 's/$/\\n/g' | tr -d '\n')\"
                     }
                 }, 
                 {
                     \"type\": \"section\",
                     \"text\": {
                         \"type\": \"mrkdwn\",
-                        \"text\": \"Jenkin 작업 결과: Jenkin 사이트 [바로가기](${BUILD_URL})\"
+                        \"text\": \"Jenkin 작업 결과: Jenkin 사이트\"
+                    },
+                    \"accessory\": {
+                        \"type\": \"button\",
+                        \"text\": {
+                            \"type\": \"plain_text\",
+                            \"text\": \"바로가기\",
+                            \"emoji\": true
+                        },
+                        \"value\": \"click_me_123\",
+                        \"url\": \"${BUILD_URL}\",
+                        \"action_id\": \"button-action\"
                     }
                 }
             ]
