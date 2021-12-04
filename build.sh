@@ -1615,7 +1615,7 @@ if [ -f $OUTPUT_FOLDER/$OUTPUT_FILENAME_JSON ]; then
               }
           },"
         fi
-        SLACK_JSON_ALL="payload={
+        SLACK_JSON_ALL="{
             \"channel\": \"${SLACK_CHANNEL}\", 
             \"username\": \"Jenkins(자동배포)\", 
             \"icon_emoji\": \":bowtie:\",
@@ -1775,7 +1775,7 @@ if [ -f $OUTPUT_FOLDER/$OUTPUT_FILENAME_JSON ]; then
                 },"                
           fi
         fi
-        SLACK_JSON_ALL="payload={
+        SLACK_JSON_ALL="{
             \"channel\": \"${SLACK_CHANNEL}\", 
             \"username\": \"Jenkins(자동배포)\", 
             \"icon_emoji\": \":bowtie:\",
