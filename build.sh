@@ -2128,7 +2128,7 @@ if [ -f $OUTPUT_FOLDER/$OUTPUT_FILENAME_JSON ]; then
         $CURL --data-urlencode "subject1=[AOS ${APP_NAME}.app > ${HOSTNAME}] Jenkins(${BUILD_NUMBER}) 자동빌드 -" \
           --data-urlencode "subject2=Android ${GIT_BRANCH} - ${CHANGE_TITLE}(commit: ${GIT_COMMIT})" \
           --data-urlencode "message_header=안드로이드 테스트 ${APP_NAME} 전달합니다.<br /><br /><br />${MAIL_TEXT}<br />" \
-          --data-urlencode "message_description=$(echo ${GIT_LAST_LOG} | sed -e 's/\[uDev\]/<br \/>\&nbsp;\&nbsp;\&nbsp;/g' | sed -e 's/\\n/<br \/>\&nbsp;\&nbsp;\&nbsp;/g')<br /><br /><br /><br /><pre>$(cd ${WORKSPACE} && ./gradlew --version)</pre><br /><a href=${BUILD_URL}>${BUILD_URL}</a>" \
+          --data-urlencode "message_description=$(echo ${GIT_LAST_LOG} | sed -e 's/\[uDev\]/<br \/>\&nbsp;\&nbsp;\&nbsp;/g' | sed -e 's/\\n/<br \/>\&nbsp;\&nbsp;\&nbsp;/g')<br /><br /><br /><br /><pre>$(cd ${WORKSPACE} && $BUILD_COMMAND --version)</pre><br /><a href=${BUILD_URL}>${BUILD_URL}</a>" \
           ${FRONTEND_POINT}/${TOP_PATH}/sendmail_domestic.php
       fi
     fi
