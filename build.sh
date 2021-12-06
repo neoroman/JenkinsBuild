@@ -53,6 +53,11 @@ while [[ $# -gt 0 ]]; do
     shift # past argument
     shift # past value
     ;;
+  -r | --release)
+    IS_RELEASE=1
+    RELEASE_TYPE="release"
+    shift # past argument
+    ;;
   -d | --debug)
     DEBUGGING=1
     shift # past argument
@@ -346,14 +351,16 @@ elif test -z $WORKSPACE; then
   WORKSPACE="."
 fi
 ###################
-if [ -d ".git" ]; then
-  GIT_LAST_TAG=$(cd $WORKSPACE && $GIT describe --tags)
-  if [[ $GIT_LAST_TAG == R* ]]; then
-    IS_RELEASE=1
-    RELEASE_TYPE="release"
-  else
-    IS_RELEASE=0
-    RELEASE_TYPE="develop"
+if test -z $IS_RELEASE; then
+  if [ -d ".git" ]; then
+    GIT_LAST_TAG=$(cd $WORKSPACE && $GIT describe --tags)
+    if [[ $GIT_LAST_TAG == R* ]]; then
+      IS_RELEASE=1
+      RELEASE_TYPE="release"
+    else
+      IS_RELEASE=0
+      RELEASE_TYPE="develop"
+    fi
   fi
 fi
 ###################
@@ -1251,26 +1258,55 @@ if [ -f $JQ -a $USING_JSON -eq 1 ]; then
       GOOGLE_TITLE=$(cat $jsonConfig | $JQ '.android.GoogleStore.title' | tr -d '"')
       ONE_TITLE=$(cat $jsonConfig | $JQ '.android.OneStore.title' | tr -d '"')
 
-      file1Title="${GOOGLE_TITLE}"
-      file1Size="${SIZE_GOOGLE_APP_FILE}B"
-      file1Binary="${APK_GOOGLESTORE}"
-      file1Plist=""
-      file2Title="${ONE_TITLE}"
-      file2Size="${SIZE_ONE_APP_FILE}B"
-      file2Binary="${APK_ONESTORE}"
-      file2Plist=""
-      file3Title="난독화파일_스크린샷"
-      file3Size="PNG"
-      file3Binary="${Obfuscation_OUTPUT_FILE}"
-      file3Plist=""
-      file4Title="난독화스크립트_증적자료"
-      file4Size="PNG"
-      file4Binary="${Obfuscation_SCREENSHOT}"
-      file4Plist=""
-      file5Title="2차 난독화 APK Signing"
-      file5Size="unsigned 버전 업로드 필요"
-      file5Binary="android_signing.php?title=${APK_FILE_TITLE}"
-      file5Plist=""
+      if [ $USING_GOOGLESTORE -eq 1 ]; then
+        file1Title="${GOOGLE_TITLE}"
+        file1Size="${SIZE_GOOGLE_APP_FILE}B"
+        file1Binary="${APK_GOOGLESTORE}"
+        file1Plist=""
+      else
+        file1Title=""
+        file1Size=""
+        file1Binary=""
+        file1Plist=""
+      fi
+      if [ $USING_ONESTORE -eq 1 ]; then
+        file2Title="${ONE_TITLE}"
+        file2Size="${SIZE_ONE_APP_FILE}B"
+        file2Binary="${APK_ONESTORE}"
+        file2Plist=""
+      else
+        file1Title=""
+        file1Size=""
+        file1Binary=""
+        file1Plist=""
+      fi
+      if [ $USING_OBFUSCATION -eq 1 ]; then
+        file3Title="난독화파일_스크린샷"
+        file3Size="PNG"
+        file3Binary="${Obfuscation_OUTPUT_FILE}"
+        file3Plist=""
+        file4Title="난독화스크립트_증적자료"
+        file4Size="PNG"
+        file4Binary="${Obfuscation_SCREENSHOT}"
+        file4Plist=""
+        file5Title="2차 난독화 APK Signing"
+        file5Size="unsigned 버전 업로드 필요"
+        file5Binary="android_signing.php?title=${APK_FILE_TITLE}"
+        file5Plist=""
+      else
+        file3Title=""
+        file3Size=""
+        file3Binary=""
+        file3Plist=""
+        file4Title=""
+        file4Size=""
+        file4Binary=""
+        file4Plist=""
+        file5Title=""
+        file5Size=""
+        file5Binary=""
+        file5Plist=""
+      fi
     else
       LIVE_TITLE=$(cat $jsonConfig | $JQ '.android.LiveServer.title' | tr -d '"')
       TEST_TITLE=$(cat $jsonConfig | $JQ '.android.TestServer.title' | tr -d '"')
