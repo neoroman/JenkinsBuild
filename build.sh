@@ -766,7 +766,7 @@ elif [[ "$INPUT_OS" == "ios" ]]; then
       POD_LOCK_FILE="${WORKSPACE}/${POD_FILE}.lock"
       cd $(dirname ${WORKSPACE}/${POD_FILE})
       export LANG=en_US.UTF-8
-      export GEM_PATH="/System/Library/Frameworks/Ruby.framework/Versions/2.6/usr/lib/ruby/gems/2.6.0"
+      # export GEM_PATH="/System/Library/Frameworks/Ruby.framework/Versions/2.6/usr/lib/ruby/gems/2.6.0"
       rm $POD_LOCK_FILE
       $POD install
       cd ${WORKSPACE}
