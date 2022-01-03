@@ -762,7 +762,6 @@ elif [[ "$INPUT_OS" == "ios" ]]; then
     fi
     ###################
     if [ $isFlutterEnabled -eq 1 ]; then
-      rm ${WORKSPACE}/${POD_FILE}
       $POD repo update
       POD_LOCK_FILE="${WORKSPACE}/${POD_FILE}.lock"
       cd $(dirname ${WORKSPACE}/${POD_FILE})
