@@ -762,8 +762,8 @@ elif [[ "$INPUT_OS" == "ios" ]]; then
     fi
     ###################
     if [ $isFlutterEnabled -eq 1 ]; then
-      # export LANG=en_US.UTF-8
-      # export GEM_PATH="/System/Library/Frameworks/Ruby.framework/Versions/2.6/usr/lib/ruby/gems/2.6.0"
+      export LANG=en_US.UTF-8
+      export GEM_PATH="/System/Library/Frameworks/Ruby.framework/Versions/2.6/usr/lib/ruby/gems/2.6.0"
       # $POD repo update
       # POD_LOCK_FILE="${WORKSPACE}/${POD_FILE}.lock"
       # cd $(dirname ${WORKSPACE}/${POD_FILE})
@@ -772,7 +772,7 @@ elif [[ "$INPUT_OS" == "ios" ]]; then
       # cd ${WORKSPACE}
       POD_EXEC_DIR=$(dirname ${POD})
       export PATH=${POD_EXEC_DIR}:$PATH
-      $FlutterBin build ios --config-only
+      $FlutterBin build ios
     fi
     if test ! -z $(grep 'CFBundleShortVersionString' "${WORKSPACE}/${INFO_PLIST}"); then
       if [ -f "${WORKSPACE}/${INFO_PLIST}" ]; then
