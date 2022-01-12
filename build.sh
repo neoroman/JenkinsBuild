@@ -828,7 +828,13 @@ elif [[ "$INPUT_OS" == "ios" ]]; then
       BUNDLE_ID_ENTER=$(cat $jsonConfig | $JQ '.ios.Enterprise.bundleId' | tr -d '"')
       BUNDLE_NAME_ENTER=$(cat $jsonConfig | $JQ '.ios.Enterprise.bundleName' | tr -d '"')
     fi
-    WEB_DEBUGGING_USE=0
+    USING_ENTER4WEB=$(test $(cat $jsonConfig | $JQ '.ios.Enterprise4WebDebug.enabled') = true && echo 1 || echo 0)
+    if [ $USING_ENTER4WEB -eq 1 ]; then
+      SCHEME_ENTER4WEB=$(cat $jsonConfig | $JQ '.ios.Enterprise4WebDebug.schemeName' | tr -d '"')
+      TARGET_ENTER4WEB=$(cat $jsonConfig | $JQ '.ios.Enterprise4WebDebug.targetName' | tr -d '"')
+      BUNDLE_ID_ENTER4WEB=$(cat $jsonConfig | $JQ '.ios.Enterprise4WebDebug.bundleId' | tr -d '"')
+      BUNDLE_NAME_ENTER4WEB=$(cat $jsonConfig | $JQ '.ios.Enterprise4WebDebug.bundleName' | tr -d '"')
+    fi
     ###################
     if [ ! -d $DST_ROOT ]; then
       mkdir -p $DST_ROOT
@@ -909,6 +915,10 @@ elif [[ "$INPUT_OS" == "ios" ]]; then
       if [ $USING_ENTERPRISE -eq 1 ]; then
         # Step 1.1: Build target for Enterprise
         $XCODE -workspace "${XCODE_WORKSPACE}" -scheme "${SCHEME_ENTER}" DSTROOT="${DST_ROOT}" -destination "generic/platform=iOS" archive
+      fi
+      if [ $USING_ENTER4WEB -eq 1 ]; then
+        # Step 1.1: Build target for Enterprise
+        $XCODE -workspace "${XCODE_WORKSPACE}" -scheme "${SCHEME_ENTER4WEB}" DSTROOT="${DST_ROOT}" -destination "generic/platform=iOS" archive
       fi
     fi
     ###################
@@ -1016,12 +1026,35 @@ elif [[ "$INPUT_OS" == "ios" ]]; then
       fi
     fi
     ###################
+    # Step 2.3.1: Copy ``Enterprise4WebDebugging'' target from Applications to OUTPUT_FOLDER
+    if [ $USING_ENTER4WEB -eq 1 ]; then
+      OUTPUT_FILENAME_ENTER4WEB_SUFFIX=$(cat $jsonConfig | $JQ '.ios.Enterprise4WebDebug.fileSuffix' | tr -d '"')
+      OUTPUT_FILENAME_ENTER4WEB="${OUTPUT_PREFIX}${VERSION_STRING}_${FILE_TODAY}${OUTPUT_FILENAME_ENTER4WEB_SUFFIX}"
+      OUTPUT_FILENAME_ENTER4WEB_IPA="${OUTPUT_FILENAME_ENTER4WEB}.ipa"
+      OUTPUT_FILENAME_ENTER4WEB_PLIST="${OUTPUT_FILENAME_ENTER4WEB}.plist"
+      OUTPUT_FILE="${DST_ROOT}/Applications/${OUTPUT_FILENAME_ENTER4WEB_IPA}"
+      if [ -d "${DST_ROOT}/Applications/${TARGET_ENTER4WEB}" ]; then
+        if [ -d $PAYLOAD_FOLDER ]; then
+          rm -rf $PAYLOAD_FOLDER
+        fi
+        mkdir -p $PAYLOAD_FOLDER
+        mv "${DST_ROOT}/Applications/${TARGET_ENTER4WEB}" "${DST_ROOT}/Applications/Payload"
+        cd "${DST_ROOT}/Applications"
+        $ZIP -r "${OUTPUT_FILE}" Payload
+        mv $OUTPUT_FILE "${OUTPUT_FOLDER}/"
+        SIZE_ENTER4WEB_APP_FILE=$(du -sh ${OUTPUT_FOLDER}/${OUTPUT_FILENAME_ENTER4WEB_IPA} | awk '{print $1}')
+      fi
+    fi
+    ###################
     # Step 2.4-1: Exit if output not using for distribution, maybe it's for Jenkins PR Checker
     if [ $PRODUCE_OUTPUT_USE -eq 0 ]; then
       if [ $OUTPUT_AND_EXIT_USE -ne 1 ]; then
         # Exit here with remove all binary outputs
         if [ -f ${OUTPUT_FOLDER}/${OUTPUT_FILENAME_ENTER_IPA} ]; then
           rm -f ${OUTPUT_FOLDER}/${OUTPUT_FILENAME_ENTER_IPA}
+        fi
+        if [ -f ${OUTPUT_FOLDER}/${OUTPUT_FILENAME_ENTER4WEB_IPA} ]; then
+          rm -f ${OUTPUT_FOLDER}/${OUTPUT_FILENAME_ENTER4WEB_IPA}
         fi
         if [ -f ${OUTPUT_FOLDER}/${OUTPUT_FILENAME_ADHOC_IPA} ]; then
           rm -f ${OUTPUT_FOLDER}/${OUTPUT_FILENAME_ADHOC_IPA}
@@ -1035,13 +1068,22 @@ elif [[ "$INPUT_OS" == "ios" ]]; then
       fi
       exit
     elif [ $DEBUGGING -eq 1 ]; then
-      if [ ! -f ${OUTPUT_FOLDER}/${OUTPUT_FILENAME_ENTER_IPA} ]; then
-        touch ${OUTPUT_FOLDER}/${OUTPUT_FILENAME_ENTER_IPA}
+      if [ $USING_ENTERPRISE -eq 1 ]; then
+        if [ ! -f ${OUTPUT_FOLDER}/${OUTPUT_FILENAME_ENTER_IPA} ]; then
+          touch ${OUTPUT_FOLDER}/${OUTPUT_FILENAME_ENTER_IPA}
+        fi
       fi
-      if [ ! -f ${OUTPUT_FOLDER}/${OUTPUT_FILENAME_ADHOC_IPA} ]; then
-        touch ${OUTPUT_FOLDER}/${OUTPUT_FILENAME_ADHOC_IPA}
+      if [ $USING_ENTER4WEB -eq 1 ]; then
+        if [ ! -f ${OUTPUT_FOLDER}/${OUTPUT_FILENAME_ENTER4WEB_IPA} ]; then
+          touch ${OUTPUT_FOLDER}/${OUTPUT_FILENAME_ENTER4WEB_IPA}
+        fi
       fi
-      if [ $IS_RELEASE -eq 1 ]; then
+      if [ $USING_ADHOC -eq 1 ]; then
+        if [ ! -f ${OUTPUT_FOLDER}/${OUTPUT_FILENAME_ADHOC_IPA} ]; then
+          touch ${OUTPUT_FOLDER}/${OUTPUT_FILENAME_ADHOC_IPA}
+        fi
+      fi
+      if [ $IS_RELEASE -eq 1 -a $USING_APPSTORE -eq 1 ]; then
         if [ ! -f $OUTPUT_FOLDER/$OUTPUT_FILENAME_APPSTORE_IX_SHIELD_CHECK ]; then
           touch $OUTPUT_FOLDER/$OUTPUT_FILENAME_APPSTORE_IX_SHIELD_CHECK
         fi
@@ -1074,6 +1116,12 @@ elif [[ "$INPUT_OS" == "ios" ]]; then
         if [ $(sendFile ${OUTPUT_FOLDER}/${OUTPUT_FILENAME_ENTER_IPA} ${NEO2UA_OUTPUT_FOLDER}) -eq 0 ]; then
           #   echo "Failed to send file"
           echo "TODO: **NEED** to resend this file => ${OUTPUT_FOLDER}/${OUTPUT_FILENAME_ENTER_IPA} to ${NEO2UA_OUTPUT_FOLDER}"
+        fi
+      fi
+      if [ -f ${OUTPUT_FOLDER}/${OUTPUT_FILENAME_ENTER4WEB_IPA} ]; then
+        if [ $(sendFile ${OUTPUT_FOLDER}/${OUTPUT_FILENAME_ENTER4WEB_IPA} ${NEO2UA_OUTPUT_FOLDER}) -eq 0 ]; then
+          #   echo "Failed to send file"
+          echo "TODO: **NEED** to resend this file => ${OUTPUT_FOLDER}/${OUTPUT_FILENAME_ENTER4WEB_IPA} to ${NEO2UA_OUTPUT_FOLDER}"
         fi
       fi
     fi
@@ -1116,7 +1164,7 @@ elif [[ "$INPUT_OS" == "ios" ]]; then
         fi
       fi
     fi
-    if [ $WEB_DEBUGGING_USE -eq 1 ]; then
+    if [ $USING_ENTER4WEB -eq 1 ]; then
       ENTER4WEB_IPA_DOWNLOAD_URL=${HTTPS_PREFIX}${OUTPUT_FILENAME_ENTER4WEB_IPA}
       echo "<?xml version=\"1.0\" encoding=\"UTF-8\"?><"'!'"DOCTYPE plist PUBLIC \"-//Apple//DTD PLIST 1.0//EN\" \"http://www.apple.com/DTDs/PropertyList-1.0.dtd\"><plist version=\"1.0\"><dict><key>items</key><array><dict><key>assets</key><array><dict><key>kind</key><string>software-package</string><key>url</key><string>${ENTER4WEB_IPA_DOWNLOAD_URL}</string></dict></array><key>metadata</key><dict><key>bundle-identifier</key><string>${BUNDLE_ID_ENTER4WEB}</string><key>bundle-version</key><string>${APP_VERSION}</string><key>kind</key><string>software</string><key>title</key><string>${BUNDLE_NAME_ENTER4WEB} ${VERSION_STRING}</string></dict></dict></array></dict></plist>" \
         >$OUTPUT_FOLDER/$OUTPUT_FILENAME_ENTER4WEB_PLIST
@@ -1133,6 +1181,7 @@ elif [[ "$INPUT_OS" == "ios" ]]; then
     APPSTORE_TITLE=$(cat $jsonConfig | $JQ '.ios.AppStore.title' | tr -d '"')
     ADHOC_TITLE=$(cat $jsonConfig | $JQ '.ios.Adhoc.title' | tr -d '"')
     ENTER_TITLE=$(cat $jsonConfig | $JQ '.ios.Enterprise.title' | tr -d '"')
+    ENTER4WEB_TITLE=$(cat $jsonConfig | $JQ '.ios.Enterprise4WebDebug.title' | tr -d '"')
 fi # iOS
 ###################
 
@@ -1294,8 +1343,8 @@ if [ -f $JQ -a $USING_JSON -eq 1 ]; then
         file2Binary=""
         file2Plist=""
       fi
-      if [ $WEB_DEBUGGING_USE -eq 1 ]; then
-        file3Title="${ENTER_TITLE}4Web"
+      if [ $USING_ENTER4WEB -eq 1 ]; then
+        file3Title="${ENTER4WEB_TITLE}"
         file3Size="${SIZE_ENTER4WEB_APP_FILE}B"
         file3Binary="${OUTPUT_FILENAME_ENTER4WEB_IPA}"
         file3Plist="${ENTER4WEB_PLIST_ITMS_URL}"
