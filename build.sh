@@ -1224,39 +1224,87 @@ if [ -f $JQ -a $USING_JSON -eq 1 ]; then
 
   if [[ "$INPUT_OS" == "ios" ]]; then
     if [ $IS_RELEASE -eq 1 ]; then
-      file1Title="${APPSTORE_TITLE}"
-      file1Size="${SIZE_STORE_APP_FILE}B"
-      file1Binary="${OUTPUT_FILENAME_APPSTORE_IPA}"
-      file1Plist=""
-      file2Title="${ADHOC_TITLE}"
-      file2Size="${SIZE_ADHOC_APP_FILE}B"
-      file2Binary="${OUTPUT_FILENAME_ADHOC_IPA}"
-      file2Plist="${ADHOC_PLIST_ITMS_URL}"
-      file3Title="${ENTER_TITLE}"
-      file3Size="${SIZE_ENTER_APP_FILE}B"
-      file3Binary="${OUTPUT_FILENAME_ENTER_IPA}"
-      file3Plist="${ENTER_PLIST_ITMS_URL}"
-      file4Title="IxShieldCheck 화면캡처"
-      file4Size="PNG"
-      file4Binary="${OUTPUT_FILENAME_APPSTORE_IX_SHIELD_CHECK}"
+      if [ $USING_APPSTORE -eq 1 ]; then
+        file1Title="${APPSTORE_TITLE}"
+        file1Size="${SIZE_STORE_APP_FILE}B"
+        file1Binary="${OUTPUT_FILENAME_APPSTORE_IPA}"
+        file1Plist=""
+      else
+        file1Title=""
+        file1Size=""
+        file1Binary=""
+        file1Plist=""
+      fi
+      if [ $USING_ADHOC -eq 1 ]; then
+        file2Title="${ADHOC_TITLE}"
+        file2Size="${SIZE_ADHOC_APP_FILE}B"
+        file2Binary="${OUTPUT_FILENAME_ADHOC_IPA}"
+        file2Plist="${ADHOC_PLIST_ITMS_URL}"
+      else
+        file2Title=""
+        file2Size=""
+        file2Binary=""
+        file2Plist=""
+      fi
+      if [ $USING_ENTERPRISE -eq 1 ]; then
+        file3Title="${ENTER_TITLE}"
+        file3Size="${SIZE_ENTER_APP_FILE}B"
+        file3Binary="${OUTPUT_FILENAME_ENTER_IPA}"
+        file3Plist="${ENTER_PLIST_ITMS_URL}"
+      else
+        file3Title=""
+        file3Size=""
+        file3Binary=""
+        file3Plist=""
+      fi
+      if [ -f $OUTPUT_FOLDER/$OUTPUT_FILENAME_APPSTORE_IX_SHIELD_CHECK ]; then
+        file4Title="IxShieldCheck 화면캡처"
+        file4Size="PNG"
+        file4Binary="${OUTPUT_FILENAME_APPSTORE_IX_SHIELD_CHECK}"
+      else
+        file4Title=""
+        file4Size=""
+        file4Binary=""
+      fi
       file4Plist=""
       file5Title=""
       file5Size=""
       file5Binary=""
       file5Plist=""
     else
-      file1Title="${ADHOC_TITLE}"
-      file1Size="${SIZE_ADHOC_APP_FILE}B"
-      file1Binary="${OUTPUT_FILENAME_ADHOC_IPA}"
-      file1Plist="${ADHOC_PLIST_ITMS_URL}"
-      file2Title="${ENTER_TITLE}"
-      file2Size="${SIZE_ENTER_APP_FILE}B"
-      file2Binary="${OUTPUT_FILENAME_ENTER_IPA}"
-      file2Plist="${ENTER_PLIST_ITMS_URL}"
-      file3Title="${ENTER_TITLE}4Web"
-      file3Size="${SIZE_ENTER4WEB_APP_FILE}B"
-      file3Binary="${OUTPUT_FILENAME_ENTER4WEB_IPA}"
-      file3Plist="${ENTER4WEB_PLIST_ITMS_URL}"
+      if [ $USING_ADHOC -eq 1 ]; then
+        file1Title="${ADHOC_TITLE}"
+        file1Size="${SIZE_ADHOC_APP_FILE}B"
+        file1Binary="${OUTPUT_FILENAME_ADHOC_IPA}"
+        file1Plist="${ADHOC_PLIST_ITMS_URL}"
+      else
+        file1Title=""
+        file1Size=""
+        file1Binary=""
+        file1Plist=""
+      fi
+      if [ $USING_ENTERPRISE -eq 1 ]; then
+        file2Title="${ENTER_TITLE}"
+        file2Size="${SIZE_ENTER_APP_FILE}B"
+        file2Binary="${OUTPUT_FILENAME_ENTER_IPA}"
+        file2Plist="${ENTER_PLIST_ITMS_URL}"
+      else
+        file2Title=""
+        file2Size=""
+        file2Binary=""
+        file2Plist=""
+      fi
+      if [ $WEB_DEBUGGING_USE -eq 1 ]; then
+        file3Title="${ENTER_TITLE}4Web"
+        file3Size="${SIZE_ENTER4WEB_APP_FILE}B"
+        file3Binary="${OUTPUT_FILENAME_ENTER4WEB_IPA}"
+        file3Plist="${ENTER4WEB_PLIST_ITMS_URL}"
+      else
+        file3Title=""
+        file3Size=""
+        file3Binary=""
+        file3Plist=""
+      fi
       file4Title=""
       file4Size=""
       file4Binary=""
