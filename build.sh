@@ -543,6 +543,9 @@ if [[ "$INPUT_OS" == "android" ]]; then
           fi
           if [ -d $OUTPUT_FOLDER_GOOGLESTORE -a -f $OUTPUT_FOLDER_GOOGLESTORE/output.json ]; then
             BUILD_APK_GOOGLESTORE=$(cat $OUTPUT_FOLDER_GOOGLESTORE/output.json | $JQ '.[0].apkData.outputFile' | tr -d '"')
+            if [[ "$BUILD_APK_GOOGLESTORE" == "null" ]]; then
+              BUILD_APK_GOOGLESTORE=$(cat $OUTPUT_FOLDER_GOOGLESTORE/output.json | $JQ '.[0].apkInfo.outputFile' | tr -d '"')
+            fi
           fi
           if [[ "${BUILD_APK_GOOGLESTORE}" == "" ]]; then
             BUILD_APK_GOOGLESTORE=$(find ${OUTPUT_FOLDER_GOOGLESTORE} -name '*.apk' -exec basename {} \;)
