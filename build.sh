@@ -24,6 +24,8 @@ DEBUGGING=0
 PRODUCE_OUTPUT_USE=1 # Exit if output not using for distribution, maybe it's for SonarQube
 USING_MAIL=0
 WITH_TAG_PUSH=1
+GIT_USER="AppDevTeam"
+GIT_EMAIL="app.support@company.com"
 ## Parsing arguments, https://stackoverflow.com/a/14203146
 while [[ $# -gt 0 ]]; do
   key="$1"
@@ -175,8 +177,6 @@ else
   sudoPassword="qwer1234"
   jenkinsUser="jenkinsUser"
 fi
-GIT_USER="AppDevTeam"
-GIT_EMAIL="appdevteam@company.com"
 DEBUG_WORKSPACE_IOS="/Users/Company/Projects/app-ios"
 DEBUG_WORKSPACE_ANDROID="/Users/Company/Projects/app-android"
 SLACK="/usr/local/bin/slack"
