@@ -1388,10 +1388,10 @@ if [ -f $JQ -a $USING_JSON -eq 1 ]; then
         file2Binary="${APK_ONESTORE}"
         file2Plist=""
       else
-        file1Title=""
-        file1Size=""
-        file1Binary=""
-        file1Plist=""
+        file2Title=""
+        file2Size=""
+        file2Binary=""
+        file2Plist=""
       fi
       if [ $USING_OBFUSCATION -eq 1 ]; then
         file3Title="난독화파일_스크린샷"
