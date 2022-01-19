@@ -876,9 +876,17 @@ elif [[ "$INPUT_OS" == "ios" ]]; then
       export LANG=en_US.UTF-8
       export GEM_PATH="/System/Library/Frameworks/Ruby.framework/Versions/2.6/usr/lib/ruby/gems/2.6.0"
       if [ ! -f $POD_LOCK_FILE ]; then
-        $POD install
+        if [ $(uname -p) == "arm" ]; then
+          arch -x86_64 $POD install
+        else
+          $POD install
+        fi
       else
-        $POD update
+        if [ $(uname -p) == "arm" ]; then
+          arch -x86_64 $POD update
+        else
+          $POD update
+        fi
       fi
     fi
     ###################
