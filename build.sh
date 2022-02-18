@@ -259,7 +259,14 @@ if [ -f $jsonConfig ]; then
   FlutterBin=$(cat $jsonConfig | $JQ '.Flutter.path' | tr -d '"')
   ANDROID_APP_PATH=$(cat $jsonConfig | $JQ '.android.appPath' | tr -d '"')
   isReactNativeEnabled=$(test $(cat $jsonConfig | $JQ '.ReactNative.enabled') = true && echo 1 || echo 0)
-  ReactNativeBin=$(cat $jsonConfig | $JQ '.ReactNative.path' | tr -d '"')
+  if [ $isReactNativeEnabled -eq 1 ]; then
+    NodePath=$(cat $jsonConfig | $JQ '.ReactNative.path' | tr -d '"')
+    ReactNativeBin="${NodePath}/npm"
+    export PATH=${NodePath}:$PATH
+  else
+    NodePath=""
+    ReactNativeBin=""
+  fi
 fi
 ################################################################################
 if [ -f $installedOrNot ]; then
