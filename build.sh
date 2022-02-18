@@ -436,7 +436,11 @@ if [[ "$INPUT_OS" == "android" ]]; then
         fi
       else
         APP_VERSION=$(grep 'versionName' ${BUILD_GRADLE_CONFIG} | sed -e 's/versionName "\(.*\)"/\1/' | tr -d ' ')
-        BUILD_VERSION=$(grep 'versionCode' ${BUILD_GRADLE_CONFIG} | sed -e 's/versionCode \(.*\)$/\1/' | tr -d ' ')
+        if [ $isReactNativeEnabled -eq 1 ]; then
+          BUILD_VERSION=$(grep 'versionCode' ${BUILD_GRADLE_CONFIG} | head -1 | sed -e 's/versionCode \(.*\)$/\1/' | tr -d ' ')
+        else
+          BUILD_VERSION=$(grep 'versionCode' ${BUILD_GRADLE_CONFIG} | sed -e 's/versionCode \(.*\)$/\1/' | tr -d ' ')
+        fi
       fi
       if [[ "${APP_VERSION}" == ".." ]]; then
           APP_VERSION="1.0.0"
