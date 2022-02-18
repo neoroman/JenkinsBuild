@@ -259,6 +259,7 @@ if [ -f $jsonConfig ]; then
   FlutterBin=$(cat $jsonConfig | $JQ '.Flutter.path' | tr -d '"')
   ANDROID_APP_PATH=$(cat $jsonConfig | $JQ '.android.appPath' | tr -d '"')
   isReactNativeEnabled=$(test $(cat $jsonConfig | $JQ '.ReactNative.enabled') = true && echo 1 || echo 0)
+  ReactNativeBin=$(cat $jsonConfig | $JQ '.ReactNative.path' | tr -d '"')
 fi
 ################################################################################
 if [ -f $installedOrNot ]; then
@@ -613,7 +614,7 @@ if [[ "$INPUT_OS" == "android" ]]; then
               $FlutterBin build apk --flavor ${GRADLE_TASK_LIVESERVER} ${FLUTTER_FLAG}
             fi
           elif [ $isReactNativeEnabled -eq 1 ]; then
-            npm run android_prod_apk
+            $ReactNativeBin run android_prod_apk
           else
             ./gradlew "assemble${GRADLE_TASK_LIVESERVER}"
           fi
@@ -654,7 +655,7 @@ if [[ "$INPUT_OS" == "android" ]]; then
               $FlutterBin build apk --flavor ${GRADLE_TASK_TESTSERVER} ${FLUTTER_FLAG}
             fi
           elif [ $isReactNativeEnabled -eq 1 ]; then
-            npm run android_tb_apk
+            $ReactNativeBin run android_tb_apk
           else
             ./gradlew "assemble${GRADLE_TASK_TESTSERVER}"
           fi
@@ -805,7 +806,7 @@ elif [[ "$INPUT_OS" == "ios" ]]; then
       $FlutterBin build ios
     elif [ $isReactNativeEnabled -eq 1 ]; then
       cd ${WORKSPACE}
-      npm run build
+      $ReactNativeBin run build
     fi
     if test ! -z $(grep 'CFBundleShortVersionString' "${WORKSPACE}/${INFO_PLIST}"); then
       if [ -f "${WORKSPACE}/${INFO_PLIST}" ]; then
