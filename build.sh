@@ -111,8 +111,8 @@ while [[ $# -gt 0 ]]; do
     if [ $($GIT remote -v | grep "${upstreamDomain}" >/dev/null && [ $? -eq 0 ] && echo 1 || echo 0) -eq 0 ]; then
       $GIT remote add external $upstreamUrl
     fi
-    $GIT config --global user.name $GIT_USER
-    $GIT config --global user.email $GIT_EMAIL
+    $GIT config user.name $GIT_USER
+    $GIT config user.email $GIT_EMAIL
     $GIT config core.autocrlf false
     $GIT fetch --prune
     CURRENT_BRANCH=$($GIT rev-parse --abbrev-ref HEAD)
@@ -539,6 +539,8 @@ if [[ "$INPUT_OS" == "android" ]]; then
         if [ $USING_GOOGLESTORE -eq 1 ]; then
           # Step 2.1: Build target for GoogleStore
           if [ $isFlutterEnabled -eq 1 ]; then
+            $FlutterBin pub get
+
             if test -z $FLUTTER_FLAG; then
               $FlutterBin build apk --flavor ${GRADLE_TASK_GOOGLESTORE}
             else
@@ -567,6 +569,8 @@ if [[ "$INPUT_OS" == "android" ]]; then
         if [ $USING_ONESTORE -eq 1 ]; then
           # Step 2.2: Build target for OneStore
           if [ $isFlutterEnabled -eq 1 ]; then
+            $FlutterBin pub get
+
             if test -z $FLUTTER_FLAG; then
               $FlutterBin build apk --flavor ${GRADLE_TASK_ONESTORE}
             else
@@ -593,6 +597,8 @@ if [[ "$INPUT_OS" == "android" ]]; then
         if [ $USING_LIVESERVER -eq 1 ]; then
           # Step 1.1: Build target for LiveServer
           if [ $isFlutterEnabled -eq 1 ]; then
+            $FlutterBin pub get
+
             if test -z $FLUTTER_FLAG; then
               $FlutterBin build apk --flavor ${GRADLE_TASK_LIVESERVER}
             else
@@ -630,6 +636,8 @@ if [[ "$INPUT_OS" == "android" ]]; then
             fi
           fi
           if [ $isFlutterEnabled -eq 1 ]; then
+            $FlutterBin pub get
+
             if test -z $FLUTTER_FLAG; then
               $FlutterBin build apk --flavor ${GRADLE_TASK_TESTSERVER}
             else
@@ -781,6 +789,7 @@ elif [[ "$INPUT_OS" == "ios" ]]; then
       # cd ${WORKSPACE}
       POD_EXEC_DIR=$(dirname ${POD})
       export PATH=${POD_EXEC_DIR}:$PATH
+      $FlutterBin pub get
       $FlutterBin build ios
     fi
     if test ! -z $(grep 'CFBundleShortVersionString' "${WORKSPACE}/${INFO_PLIST}"); then
