@@ -258,6 +258,7 @@ if [ -f $jsonConfig ]; then
   isFlutterEnabled=$(test $(cat $jsonConfig | $JQ '.Flutter.enabled') = true && echo 1 || echo 0)
   FlutterBin=$(cat $jsonConfig | $JQ '.Flutter.path' | tr -d '"')
   ANDROID_APP_PATH=$(cat $jsonConfig | $JQ '.android.appPath' | tr -d '"')
+  isReactNativeEnabled=$(test $(cat $jsonConfig | $JQ '.ReactNative.enabled') = true && echo 1 || echo 0)
 fi
 ################################################################################
 if [ -f $installedOrNot ]; then
@@ -465,10 +466,17 @@ if [[ "$INPUT_OS" == "android" ]]; then
       Obfuscation_SCREENSHOT="${OUTPUT_PREFIX}${APP_VERSION}(${BUILD_VERSION})_${FILE_TODAY}_Obfuscation.png"
       Obfuscation_OUTPUT_FILE="${OUTPUT_PREFIX}${APP_VERSION}(${BUILD_VERSION})_${FILE_TODAY}_file.png"
     else
-      OUTPUT_FOLDER_LIVESERVER="${WORKSPACE}/${APK_OUTPUT_PATH}/${GRADLE_TASK_LIVESERVER}/debug"
-      OUTPUT_FOLDER_TESTSERVER="${WORKSPACE}/${APK_OUTPUT_PATH}/${GRADLE_TASK_TESTSERVER}/debug"
-      OUTPUT_APK_LIVESERVER="${OUTPUT_PREFIX}${APP_VERSION}.${BUILD_VERSION}_${FILE_TODAY}-${GRADLE_TASK_LIVESERVER}-debug.apk"
-      OUTPUT_APK_TESTSERVER="${OUTPUT_PREFIX}${APP_VERSION}.${BUILD_VERSION}_${FILE_TODAY}-${GRADLE_TASK_TESTSERVER}-debug.apk"
+      if [ $isReactNativeEnabled -eq 1 ]; then
+        OUTPUT_FOLDER_LIVESERVER="${WORKSPACE}/${APK_OUTPUT_PATH}/release"
+        OUTPUT_FOLDER_TESTSERVER="${WORKSPACE}/${APK_OUTPUT_PATH}/debug"
+        OUTPUT_APK_LIVESERVER="${OUTPUT_PREFIX}${APP_VERSION}.${BUILD_VERSION}_${FILE_TODAY}-${GRADLE_TASK_LIVESERVER}-release.apk"
+        OUTPUT_APK_TESTSERVER="${OUTPUT_PREFIX}${APP_VERSION}.${BUILD_VERSION}_${FILE_TODAY}-${GRADLE_TASK_TESTSERVER}-debug.apk"
+      else
+        OUTPUT_FOLDER_LIVESERVER="${WORKSPACE}/${APK_OUTPUT_PATH}/${GRADLE_TASK_LIVESERVER}/debug"
+        OUTPUT_FOLDER_TESTSERVER="${WORKSPACE}/${APK_OUTPUT_PATH}/${GRADLE_TASK_TESTSERVER}/debug"
+        OUTPUT_APK_LIVESERVER="${OUTPUT_PREFIX}${APP_VERSION}.${BUILD_VERSION}_${FILE_TODAY}-${GRADLE_TASK_LIVESERVER}-debug.apk"
+        OUTPUT_APK_TESTSERVER="${OUTPUT_PREFIX}${APP_VERSION}.${BUILD_VERSION}_${FILE_TODAY}-${GRADLE_TASK_TESTSERVER}-debug.apk"
+      fi
     fi
     SLACK_TEXT=""
     MAIL_TEXT=""
@@ -604,6 +612,8 @@ if [[ "$INPUT_OS" == "android" ]]; then
             else
               $FlutterBin build apk --flavor ${GRADLE_TASK_LIVESERVER} ${FLUTTER_FLAG}
             fi
+          elif [ $isReactNativeEnabled -eq 1 ]; then
+            npm run android_prod_apk
           else
             ./gradlew "assemble${GRADLE_TASK_LIVESERVER}"
           fi
@@ -643,6 +653,8 @@ if [[ "$INPUT_OS" == "android" ]]; then
             else
               $FlutterBin build apk --flavor ${GRADLE_TASK_TESTSERVER} ${FLUTTER_FLAG}
             fi
+          elif [ $isReactNativeEnabled -eq 1 ]; then
+            npm run android_tb_apk
           else
             ./gradlew "assemble${GRADLE_TASK_TESTSERVER}"
           fi
@@ -791,6 +803,9 @@ elif [[ "$INPUT_OS" == "ios" ]]; then
       export PATH=${POD_EXEC_DIR}:$PATH
       $FlutterBin pub get
       $FlutterBin build ios
+    elif [ $isReactNativeEnabled -eq 1 ]; then
+      cd ${WORKSPACE}
+      npm run build
     fi
     if test ! -z $(grep 'CFBundleShortVersionString' "${WORKSPACE}/${INFO_PLIST}"); then
       if [ -f "${WORKSPACE}/${INFO_PLIST}" ]; then
