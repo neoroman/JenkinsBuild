@@ -1728,6 +1728,8 @@ if [ -f $OUTPUT_FOLDER/$OUTPUT_FILENAME_JSON ]; then
   fi
   if [ $isFlutterEnabled -eq 1 ]; then
     BUILD_COMMAND=$FlutterBin
+  elif [ $isReactNativeEnabled -eq 1 ]; then
+    BUILD_COMMAND="./android/gradlew"
   else
     BUILD_COMMAND="./gradlew"
   fi
