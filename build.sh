@@ -1726,10 +1726,14 @@ if [ -f $OUTPUT_FOLDER/$OUTPUT_FILENAME_JSON ]; then
     SITE_ID_PW="app/qwer1234"
     QC_ID_PW="qc/insu1234"
   fi
+  OTHER_BUILE_ENV=""
   if [ $isFlutterEnabled -eq 1 ]; then
     BUILD_COMMAND=$FlutterBin
   elif [ $isReactNativeEnabled -eq 1 ]; then
     BUILD_COMMAND="./android/gradlew"
+    OTHER_BUILE_ENV="node "$(node --version)
+    OTHER_BUILE_ENV="${OTHER_BUILE_ENV}\npm v"$(npm --version)
+    OTHER_BUILE_ENV="${OTHER_BUILE_ENV}\n"
   else
     BUILD_COMMAND="./gradlew"
   fi
@@ -2048,7 +2052,7 @@ if [ -f $OUTPUT_FOLDER/$OUTPUT_FILENAME_JSON ]; then
                     \"type\": \"section\",
                     \"text\": {
                         \"type\": \"mrkdwn\",
-                        \"text\": \"빌드 환경: $(cd ${WORKSPACE} && $BUILD_COMMAND --version | sed -e 's/$/\\n/g' | tr -d '\n')\"
+                        \"text\": \"빌드 환경: ${OTHER_BUILE_ENV}$(cd ${WORKSPACE} && $BUILD_COMMAND --version | sed -e 's/$/\\n/g' | tr -d '\n')\"
                     }
                 }, 
                 {
@@ -2299,7 +2303,7 @@ if [ -f $OUTPUT_FOLDER/$OUTPUT_FILENAME_JSON ]; then
                             \"value\": \"내부 QA 사이트 [바로가기](${FRONTEND_POINT}/${TOP_PATH}/android/dist_android.php) (ID/PW: ${QC_ID_PW})\"
                     }, {
                             \"name\": \"빌드 환경\",
-                            \"value\": \"<pre>$(cd ${WORKSPACE} && $BUILD_COMMAND --version)</pre>\"
+                            \"value\": \"<pre>${OTHER_BUILE_ENV}$(cd ${WORKSPACE} && $BUILD_COMMAND --version)</pre>\"
                     }, {
                             \"name\": \"Jenkin 작업 결과\",
                             \"value\": \"Jenkin 사이트 [바로가기](${BUILD_URL})\"
@@ -2329,7 +2333,7 @@ if [ -f $OUTPUT_FOLDER/$OUTPUT_FILENAME_JSON ]; then
         $CURL --data-urlencode "subject1=[AOS ${APP_NAME}.app > ${HOSTNAME}] Jenkins(${BUILD_NUMBER}) 자동빌드 -" \
           --data-urlencode "subject2=Android ${GIT_BRANCH} - ${CHANGE_TITLE}(commit: ${GIT_COMMIT})" \
           --data-urlencode "message_header=안드로이드 테스트 ${APP_NAME} 전달합니다.<br /><br /><br />${MAIL_TEXT}<br />" \
-          --data-urlencode "message_description=$(echo ${GIT_LAST_LOG} | sed -e 's/\[uDev\]/<br \/>\&nbsp;\&nbsp;\&nbsp;/g' | sed -e 's/\\n/<br \/>\&nbsp;\&nbsp;\&nbsp;/g')<br /><br /><br /><br /><pre>$(cd ${WORKSPACE} && $BUILD_COMMAND --version)</pre><br /><a href=${BUILD_URL}>${BUILD_URL}</a>" \
+          --data-urlencode "message_description=$(echo ${GIT_LAST_LOG} | sed -e 's/\[uDev\]/<br \/>\&nbsp;\&nbsp;\&nbsp;/g' | sed -e 's/\\n/<br \/>\&nbsp;\&nbsp;\&nbsp;/g')<br /><br /><br /><br /><pre>${OTHER_BUILE_ENV}$(cd ${WORKSPACE} && $BUILD_COMMAND --version)</pre><br /><a href=${BUILD_URL}>${BUILD_URL}</a>" \
           ${FRONTEND_POINT}/${TOP_PATH}/sendmail_domestic.php
       fi
     fi
