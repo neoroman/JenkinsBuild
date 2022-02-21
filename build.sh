@@ -1732,7 +1732,7 @@ if [ -f $OUTPUT_FOLDER/$OUTPUT_FILENAME_JSON ]; then
   elif [ $isReactNativeEnabled -eq 1 ]; then
     BUILD_COMMAND="./android/gradlew"
     OTHER_BUILE_ENV="node "$(node --version)
-    OTHER_BUILE_ENV="${OTHER_BUILE_ENV}\npm v"$(npm --version)
+    OTHER_BUILE_ENV="${OTHER_BUILE_ENV}\nnpm v"$(npm --version)
     OTHER_BUILE_ENV="${OTHER_BUILE_ENV}\n"
   else
     BUILD_COMMAND="./gradlew"
