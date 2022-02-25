@@ -15,6 +15,7 @@
 #  3. Install a2ps via HomeBrew, brew install a2ps
 #  4. Install gs via HomeBrew, brew install gs
 #  5. Install convert(ImageMagick) via HomeBrew, brew install imagemagick
+#  6. Install bundletool for Android AAB output since 2021 Aug, brew install bundletool
 #
 ################################################################################
 GIT=$(which git)
@@ -454,40 +455,75 @@ if [[ "$INPUT_OS" == "android" ]]; then
     ###################
     USING_GOOGLESTORE=$(test $(cat $jsonConfig | $JQ '.android.GoogleStore.enabled') = true && echo 1 || echo 0)
     GRADLE_TASK_GOOGLESTORE=$(cat $jsonConfig | $JQ '.android.GoogleStore.taskName' | tr -d '"')
+    USING_BUNDLE_GOOGLESTORE=$(test $(cat $jsonConfig | $JQ '.android.GoogleStore.usingBudleAAB') = true && echo 1 || echo 0)
     ###
     USING_ONESTORE=$(test $(cat $jsonConfig | $JQ '.android.OneStore.enabled') = true && echo 1 || echo 0)
     GRADLE_TASK_ONESTORE=$(cat $jsonConfig | $JQ '.android.OneStore.taskName' | tr -d '"')
+    USING_BUNDLE_ONESTORE=$(test $(cat $jsonConfig | $JQ '.android.OneStore.usingBudleAAB') = true && echo 1 || echo 0)
     ###
     USING_LIVESERVER=$(test $(cat $jsonConfig | $JQ '.android.LiveServer.enabled') = true && echo 1 || echo 0)
     GRADLE_TASK_LIVESERVER=$(cat $jsonConfig | $JQ '.android.LiveServer.taskName' | tr -d '"')
+    USING_BUNDLE_LIVESERVER=$(test $(cat $jsonConfig | $JQ '.android.LiveServer.usingBudleAAB') = true && echo 1 || echo 0)
     ###
     USING_TESTSERVER=$(test $(cat $jsonConfig | $JQ '.android.TestServer.enabled') = true && echo 1 || echo 0)
     GRADLE_TASK_TESTSERVER=$(cat $jsonConfig | $JQ '.android.TestServer.taskName' | tr -d '"')
+    USING_BUNDLE_TESTSERVER=$(test $(cat $jsonConfig | $JQ '.android.TestServer.usingBudleAAB') = true && echo 1 || echo 0)
     ###################
+    FILE_EXTENSION="apk"
     if [ $isFlutterEnabled -eq 1 ]; then
-      APK_OUTPUT_PATH="build/app/outputs/apk"
+      APK_OUTPUT_PATH="build/app/outputs"
     else
-      APK_OUTPUT_PATH="${ANDROID_APP_PATH}/build/outputs/apk"
+      APK_OUTPUT_PATH="${ANDROID_APP_PATH}/build/outputs"
     fi
     if [ $IS_RELEASE -eq 1 ]; then
-      OUTPUT_FOLDER_GOOGLESTORE="${WORKSPACE}/${APK_OUTPUT_PATH}/${GRADLE_TASK_GOOGLESTORE}/release"
-      OUTPUT_FOLDER_ONESTORE="${WORKSPACE}/${APK_OUTPUT_PATH}/${GRADLE_TASK_ONESTORE}/release"
+      if [ $USING_BUNDLE_GOOGLESTORE -eq 1 ]; then
+        FILE_EXTENSION="aab"
+        OUTPUT_FOLDER_GOOGLESTORE="${WORKSPACE}/${APK_OUTPUT_PATH}/bundle/${GRADLE_TASK_GOOGLESTORE}Release"
+      else
+        OUTPUT_FOLDER_GOOGLESTORE="${WORKSPACE}/${APK_OUTPUT_PATH}/apk/${GRADLE_TASK_GOOGLESTORE}/release"
+      fi
+      if [ $USING_BUNDLE_ONESTORE -eq 1 ]; then
+        FILE_EXTENSION="aab"
+        OUTPUT_FOLDER_ONESTORE="${WORKSPACE}/${APK_OUTPUT_PATH}/bundle/${GRADLE_TASK_ONESTORE}Release"
+      else
+        OUTPUT_FOLDER_ONESTORE="${WORKSPACE}/${APK_OUTPUT_PATH}/apk/${GRADLE_TASK_ONESTORE}/release"
+      fi
       APK_FILE_TITLE="${OUTPUT_PREFIX}${APP_VERSION}(${BUILD_VERSION})_${FILE_TODAY}"
-      APK_GOOGLESTORE="${APK_FILE_TITLE}${outputGoogleStoreSuffix}"
-      APK_ONESTORE="${APK_FILE_TITLE}${outputOneStoreSuffix}"
+      APK_GOOGLESTORE="${APK_FILE_TITLE}${outputGoogleStoreSuffix%.*}.${FILE_EXTENSION}"
+      APK_ONESTORE="${APK_FILE_TITLE}${outputOneStoreSuffix%.*}.${FILE_EXTENSION}"
       Obfuscation_SCREENSHOT="${OUTPUT_PREFIX}${APP_VERSION}(${BUILD_VERSION})_${FILE_TODAY}_Obfuscation.png"
       Obfuscation_OUTPUT_FILE="${OUTPUT_PREFIX}${APP_VERSION}(${BUILD_VERSION})_${FILE_TODAY}_file.png"
     else
       if [ $isReactNativeEnabled -eq 1 ]; then
-        OUTPUT_FOLDER_LIVESERVER="${WORKSPACE}/${APK_OUTPUT_PATH}/release"
-        OUTPUT_FOLDER_TESTSERVER="${WORKSPACE}/${APK_OUTPUT_PATH}/debug"
-        OUTPUT_APK_LIVESERVER="${OUTPUT_PREFIX}${APP_VERSION}.${BUILD_VERSION}_${FILE_TODAY}-${GRADLE_TASK_LIVESERVER}-release.apk"
-        OUTPUT_APK_TESTSERVER="${OUTPUT_PREFIX}${APP_VERSION}.${BUILD_VERSION}_${FILE_TODAY}-${GRADLE_TASK_TESTSERVER}-debug.apk"
+        if [ $USING_BUNDLE_LIVESERVER -eq 1 ]; then
+          FILE_EXTENSION="aab"
+          OUTPUT_FOLDER_LIVESERVER="${WORKSPACE}/${APK_OUTPUT_PATH}/bundle/release"
+        else
+          OUTPUT_FOLDER_LIVESERVER="${WORKSPACE}/${APK_OUTPUT_PATH}/apk/release"
+        fi
+        if [ $USING_BUNDLE_TESTSERVER -eq 1 ]; then
+          FILE_EXTENSION="aab"
+          OUTPUT_FOLDER_TESTSERVER="${WORKSPACE}/${APK_OUTPUT_PATH}/bundle/debug"
+        else
+          OUTPUT_FOLDER_TESTSERVER="${WORKSPACE}/${APK_OUTPUT_PATH}/apk/debug"
+        fi
+        OUTPUT_APK_LIVESERVER="${OUTPUT_PREFIX}${APP_VERSION}.${BUILD_VERSION}_${FILE_TODAY}-${GRADLE_TASK_LIVESERVER}-release.${FILE_EXTENSION}"
+        OUTPUT_APK_TESTSERVER="${OUTPUT_PREFIX}${APP_VERSION}.${BUILD_VERSION}_${FILE_TODAY}-${GRADLE_TASK_TESTSERVER}-debug.${FILE_EXTENSION}"
       else
-        OUTPUT_FOLDER_LIVESERVER="${WORKSPACE}/${APK_OUTPUT_PATH}/${GRADLE_TASK_LIVESERVER}/debug"
-        OUTPUT_FOLDER_TESTSERVER="${WORKSPACE}/${APK_OUTPUT_PATH}/${GRADLE_TASK_TESTSERVER}/debug"
-        OUTPUT_APK_LIVESERVER="${OUTPUT_PREFIX}${APP_VERSION}.${BUILD_VERSION}_${FILE_TODAY}-${GRADLE_TASK_LIVESERVER}-debug.apk"
-        OUTPUT_APK_TESTSERVER="${OUTPUT_PREFIX}${APP_VERSION}.${BUILD_VERSION}_${FILE_TODAY}-${GRADLE_TASK_TESTSERVER}-debug.apk"
+        if [ $USING_BUNDLE_LIVESERVER -eq 1 ]; then
+          FILE_EXTENSION="aab"
+          OUTPUT_FOLDER_LIVESERVER="${WORKSPACE}/${APK_OUTPUT_PATH}/bundle/${GRADLE_TASK_LIVESERVER}Debug"
+        else
+          OUTPUT_FOLDER_LIVESERVER="${WORKSPACE}/${APK_OUTPUT_PATH}/apk/${GRADLE_TASK_LIVESERVER}/debug"
+        fi
+        if [ $USING_BUNDLE_TESTSERVER -eq 1 ]; then
+          FILE_EXTENSION="aab"
+          OUTPUT_FOLDER_TESTSERVER="${WORKSPACE}/${APK_OUTPUT_PATH}/bundle/${GRADLE_TASK_TESTSERVER}/debug"
+        else
+          OUTPUT_FOLDER_TESTSERVER="${WORKSPACE}/${APK_OUTPUT_PATH}/apk/${GRADLE_TASK_TESTSERVER}/debug"
+        fi
+        OUTPUT_APK_LIVESERVER="${OUTPUT_PREFIX}${APP_VERSION}.${BUILD_VERSION}_${FILE_TODAY}-${GRADLE_TASK_LIVESERVER}-debug.${FILE_EXTENSION}"
+        OUTPUT_APK_TESTSERVER="${OUTPUT_PREFIX}${APP_VERSION}.${BUILD_VERSION}_${FILE_TODAY}-${GRADLE_TASK_TESTSERVER}-debug.${FILE_EXTENSION}"
       fi
     fi
     SLACK_TEXT=""
@@ -554,20 +590,34 @@ if [[ "$INPUT_OS" == "android" ]]; then
         fi
       fi
     else
+      gradleBuildKey="assemble"
+      flutterBuildKey="apk"
+      FILE_EXTENSION="apk"
       if [ $IS_RELEASE -eq 1 ]; then
         ###################
         if [ $USING_GOOGLESTORE -eq 1 ]; then
           # Step 2.1: Build target for GoogleStore
+          if [ $USING_BUNDLE_GOOGLESTORE -eq 1 ]; then
+            gradleBuildKey="bundle"
+            flutterBuildKey="appbundle"
+            FILE_EXTENSION="aab"
+          fi
           if [ $isFlutterEnabled -eq 1 ]; then
             $FlutterBin pub get
 
             if test -z $FLUTTER_FLAG; then
-              $FlutterBin build apk --flavor ${GRADLE_TASK_GOOGLESTORE}
+              $FlutterBin build ${flutterBuildKey} --flavor ${GRADLE_TASK_GOOGLESTORE}
             else
-              $FlutterBin build apk --flavor ${GRADLE_TASK_GOOGLESTORE} ${FLUTTER_FLAG}
+              $FlutterBin build ${flutterBuildKey} --flavor ${GRADLE_TASK_GOOGLESTORE} ${FLUTTER_FLAG}
+            fi
+          elif [ $isReactNativeEnabled -eq 1 ]; then
+            if [ $USING_BUNDLE_GOOGLESTORE -eq 1 ]; then
+              $ReactNativeBin run android_prod_bundle
+            else
+              $ReactNativeBin run android_prod_apk
             fi
           else
-            ./gradlew "assemble${GRADLE_TASK_GOOGLESTORE}"
+            ./gradlew "${gradleBuildKey}${GRADLE_TASK_GOOGLESTORE}"
           fi
           if [ -d $OUTPUT_FOLDER_GOOGLESTORE -a -f $OUTPUT_FOLDER_GOOGLESTORE/output.json ]; then
             BUILD_APK_GOOGLESTORE=$(cat $OUTPUT_FOLDER_GOOGLESTORE/output.json | $JQ '.[0].apkData.outputFile' | tr -d '"')
@@ -576,7 +626,7 @@ if [[ "$INPUT_OS" == "android" ]]; then
             fi
           fi
           if [[ "${BUILD_APK_GOOGLESTORE}" == "" ]]; then
-            BUILD_APK_GOOGLESTORE=$(find ${OUTPUT_FOLDER_GOOGLESTORE} -name '*.apk' -exec basename {} \;)
+            BUILD_APK_GOOGLESTORE=$(find ${OUTPUT_FOLDER_GOOGLESTORE} -name "*.${FILE_EXTENSION}" -exec basename {} \;)
           fi
           if [ -f $OUTPUT_FOLDER_GOOGLESTORE/$BUILD_APK_GOOGLESTORE ]; then
             mv $OUTPUT_FOLDER_GOOGLESTORE/$BUILD_APK_GOOGLESTORE $OUTPUT_FOLDER/$APK_GOOGLESTORE
@@ -588,22 +638,33 @@ if [[ "$INPUT_OS" == "android" ]]; then
         ###################
         if [ $USING_ONESTORE -eq 1 ]; then
           # Step 2.2: Build target for OneStore
+          if [ $USING_BUNDLE_ONESTORE -eq 1 ]; then
+            gradleBuildKey="bundle"
+            flutterBuildKey="appbundle"
+            FILE_EXTENSION="aab"
+          fi
           if [ $isFlutterEnabled -eq 1 ]; then
             $FlutterBin pub get
 
             if test -z $FLUTTER_FLAG; then
-              $FlutterBin build apk --flavor ${GRADLE_TASK_ONESTORE}
+              $FlutterBin build ${flutterBuildKey} --flavor ${GRADLE_TASK_ONESTORE}
             else
-              $FlutterBin build apk --flavor ${GRADLE_TASK_ONESTORE} ${FLUTTER_FLAG}
+              $FlutterBin build ${flutterBuildKey} --flavor ${GRADLE_TASK_ONESTORE} ${FLUTTER_FLAG}
+            fi
+          elif [ $isReactNativeEnabled -eq 1 ]; then
+            if [ $USING_BUNDLE_ONESTORE -eq 1 ]; then
+              $ReactNativeBin run android_prod_bundle
+            else
+              $ReactNativeBin run android_prod_apk
             fi
           else
-            ./gradlew "assemble${GRADLE_TASK_ONESTORE}"
+            ./gradlew "${gradleBuildKey}${GRADLE_TASK_ONESTORE}"
           fi
           if [ -d $OUTPUT_FOLDER_ONESTORE -a -f $OUTPUT_FOLDER_ONESTORE/output.json ]; then
             BUILD_APK_ONESTORE=$(cat $OUTPUT_FOLDER_ONESTORE/output.json | $JQ '.[0].apkData.outputFile' | tr -d '"')
           fi
           if [[ "${BUILD_APK_ONESTORE}" == "" ]]; then
-            BUILD_APK_ONESTORE=$(find ${OUTPUT_FOLDER_ONESTORE} -name '*.apk' -exec basename {} \;)
+            BUILD_APK_ONESTORE=$(find ${OUTPUT_FOLDER_ONESTORE} -name "*.${FILE_EXTENSION}" -exec basename {} \;)
           fi
           if [ -f $OUTPUT_FOLDER_ONESTORE/$BUILD_APK_ONESTORE ]; then
             mv $OUTPUT_FOLDER_ONESTORE/$BUILD_APK_ONESTORE $OUTPUT_FOLDER/$APK_ONESTORE
@@ -616,24 +677,33 @@ if [[ "$INPUT_OS" == "android" ]]; then
         ##########
         if [ $USING_LIVESERVER -eq 1 ]; then
           # Step 1.1: Build target for LiveServer
+          if [ $USING_BUNDLE_LIVESERVER -eq 1 ]; then
+            gradleBuildKey="bundle"
+            flutterBuildKey="appbundle"
+            FILE_EXTENSION="aab"
+          fi
           if [ $isFlutterEnabled -eq 1 ]; then
             $FlutterBin pub get
 
             if test -z $FLUTTER_FLAG; then
-              $FlutterBin build apk --flavor ${GRADLE_TASK_LIVESERVER}
+              $FlutterBin build ${flutterBuildKey} --flavor ${GRADLE_TASK_LIVESERVER}
             else
-              $FlutterBin build apk --flavor ${GRADLE_TASK_LIVESERVER} ${FLUTTER_FLAG}
+              $FlutterBin build ${flutterBuildKey} --flavor ${GRADLE_TASK_LIVESERVER} ${FLUTTER_FLAG}
             fi
           elif [ $isReactNativeEnabled -eq 1 ]; then
-            $ReactNativeBin run android_prod_apk
+            if [ $USING_BUNDLE_LIVESERVER -eq 1 ]; then
+              $ReactNativeBin run android_prod_bundle
+            else
+              $ReactNativeBin run android_prod_apk
+            fi
           else
-            ./gradlew "assemble${GRADLE_TASK_LIVESERVER}"
+            ./gradlew "${gradleBuildKey}${GRADLE_TASK_LIVESERVER}"
           fi
           if [ -d $OUTPUT_FOLDER_LIVESERVER -a -f $OUTPUT_FOLDER_LIVESERVER/output.json ]; then
             APK_LIVESERVER=$(cat $OUTPUT_FOLDER_LIVESERVER/output.json | $JQ '.[0].apkData.outputFile' | tr -d '"')
           fi
           if [[ $APK_LIVESERVER == "" ]]; then
-            APK_LIVESERVER=$(find ${OUTPUT_FOLDER_LIVESERVER} -name '*.apk' -exec basename {} \;)
+            APK_LIVESERVER=$(find ${OUTPUT_FOLDER_LIVESERVER} -name "*.${FILE_EXTENSION}" -exec basename {} \;)
           fi
           if [ -f $OUTPUT_FOLDER_LIVESERVER/$APK_LIVESERVER ]; then
             mv $OUTPUT_FOLDER_LIVESERVER/$APK_LIVESERVER $OUTPUT_FOLDER/$OUTPUT_APK_LIVESERVER
@@ -657,24 +727,33 @@ if [[ "$INPUT_OS" == "android" ]]; then
               fi
             fi
           fi
+          if [ $USING_BUNDLE_TESTSERVER -eq 1 ]; then
+            gradleBuildKey="bundle"
+            flutterBuildKey="appbundle"
+            FILE_EXTENSION="aab"
+          fi
           if [ $isFlutterEnabled -eq 1 ]; then
             $FlutterBin pub get
 
             if test -z $FLUTTER_FLAG; then
-              $FlutterBin build apk --flavor ${GRADLE_TASK_TESTSERVER}
+              $FlutterBin build ${flutterBuildKey} --flavor ${GRADLE_TASK_TESTSERVER}
             else
-              $FlutterBin build apk --flavor ${GRADLE_TASK_TESTSERVER} ${FLUTTER_FLAG}
+              $FlutterBin build ${flutterBuildKey} --flavor ${GRADLE_TASK_TESTSERVER} ${FLUTTER_FLAG}
             fi
           elif [ $isReactNativeEnabled -eq 1 ]; then
-            $ReactNativeBin run android_tb_apk
+            if [ $USING_BUNDLE_TESTSERVER -eq 1 ]; then
+              $ReactNativeBin run android_tb_bundle
+            else
+              $ReactNativeBin run android_tb_apk
+            fi
           else
-            ./gradlew "assemble${GRADLE_TASK_TESTSERVER}"
+            ./gradlew "${gradleBuildKey}${GRADLE_TASK_TESTSERVER}"
           fi
           if [ -d $OUTPUT_FOLDER_TESTSERVER -a -f $OUTPUT_FOLDER_TESTSERVER/output.json ]; then
             APK_TESTSERVER=$(cat $OUTPUT_FOLDER_TESTSERVER/output.json | $JQ '.[0].apkData.outputFile' | tr -d '"')
           fi
           if [[ $APK_TESTSERVER == "" ]]; then
-            APK_TESTSERVER=$(find ${OUTPUT_FOLDER_TESTSERVER} -name '*.apk' -exec basename {} \;)
+            APK_TESTSERVER=$(find ${OUTPUT_FOLDER_TESTSERVER} -name "*.${FILE_EXTENSION}" -exec basename {} \;)
           fi
           if [ -f $OUTPUT_FOLDER_TESTSERVER/$APK_TESTSERVER ]; then
             mv $OUTPUT_FOLDER_TESTSERVER/$APK_TESTSERVER $OUTPUT_FOLDER/$OUTPUT_APK_TESTSERVER
