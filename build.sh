@@ -476,21 +476,26 @@ if [[ "$INPUT_OS" == "android" ]]; then
       APK_OUTPUT_PATH="${ANDROID_APP_PATH}/build/outputs"
     fi
     if [ $IS_RELEASE -eq 1 ]; then
+      APK_FILE_TITLE="${OUTPUT_PREFIX}${APP_VERSION}(${BUILD_VERSION})_${FILE_TODAY}"
+
       if [ $USING_BUNDLE_GOOGLESTORE -eq 1 ]; then
         FILE_EXTENSION="aab"
         OUTPUT_FOLDER_GOOGLESTORE="${WORKSPACE}/${APK_OUTPUT_PATH}/bundle/${GRADLE_TASK_GOOGLESTORE}Release"
       else
+        FILE_EXTENSION="apk"
         OUTPUT_FOLDER_GOOGLESTORE="${WORKSPACE}/${APK_OUTPUT_PATH}/apk/${GRADLE_TASK_GOOGLESTORE}/release"
       fi
+      APK_GOOGLESTORE="${APK_FILE_TITLE}${outputGoogleStoreSuffix%.*}.${FILE_EXTENSION}"
+
       if [ $USING_BUNDLE_ONESTORE -eq 1 ]; then
         FILE_EXTENSION="aab"
         OUTPUT_FOLDER_ONESTORE="${WORKSPACE}/${APK_OUTPUT_PATH}/bundle/${GRADLE_TASK_ONESTORE}Release"
       else
+        FILE_EXTENSION="apk"
         OUTPUT_FOLDER_ONESTORE="${WORKSPACE}/${APK_OUTPUT_PATH}/apk/${GRADLE_TASK_ONESTORE}/release"
       fi
-      APK_FILE_TITLE="${OUTPUT_PREFIX}${APP_VERSION}(${BUILD_VERSION})_${FILE_TODAY}"
-      APK_GOOGLESTORE="${APK_FILE_TITLE}${outputGoogleStoreSuffix%.*}.${FILE_EXTENSION}"
       APK_ONESTORE="${APK_FILE_TITLE}${outputOneStoreSuffix%.*}.${FILE_EXTENSION}"
+
       Obfuscation_SCREENSHOT="${OUTPUT_PREFIX}${APP_VERSION}(${BUILD_VERSION})_${FILE_TODAY}_Obfuscation.png"
       Obfuscation_OUTPUT_FILE="${OUTPUT_PREFIX}${APP_VERSION}(${BUILD_VERSION})_${FILE_TODAY}_file.png"
     else
@@ -499,30 +504,36 @@ if [[ "$INPUT_OS" == "android" ]]; then
           FILE_EXTENSION="aab"
           OUTPUT_FOLDER_LIVESERVER="${WORKSPACE}/${APK_OUTPUT_PATH}/bundle/release"
         else
+          FILE_EXTENSION="apk"
           OUTPUT_FOLDER_LIVESERVER="${WORKSPACE}/${APK_OUTPUT_PATH}/apk/release"
         fi
+        OUTPUT_APK_LIVESERVER="${OUTPUT_PREFIX}${APP_VERSION}.${BUILD_VERSION}_${FILE_TODAY}-${GRADLE_TASK_LIVESERVER}-release.${FILE_EXTENSION}"
+
         if [ $USING_BUNDLE_TESTSERVER -eq 1 ]; then
           FILE_EXTENSION="aab"
           OUTPUT_FOLDER_TESTSERVER="${WORKSPACE}/${APK_OUTPUT_PATH}/bundle/debug"
         else
+          FILE_EXTENSION="apk"
           OUTPUT_FOLDER_TESTSERVER="${WORKSPACE}/${APK_OUTPUT_PATH}/apk/debug"
         fi
-        OUTPUT_APK_LIVESERVER="${OUTPUT_PREFIX}${APP_VERSION}.${BUILD_VERSION}_${FILE_TODAY}-${GRADLE_TASK_LIVESERVER}-release.${FILE_EXTENSION}"
         OUTPUT_APK_TESTSERVER="${OUTPUT_PREFIX}${APP_VERSION}.${BUILD_VERSION}_${FILE_TODAY}-${GRADLE_TASK_TESTSERVER}-debug.${FILE_EXTENSION}"
       else
         if [ $USING_BUNDLE_LIVESERVER -eq 1 ]; then
           FILE_EXTENSION="aab"
           OUTPUT_FOLDER_LIVESERVER="${WORKSPACE}/${APK_OUTPUT_PATH}/bundle/${GRADLE_TASK_LIVESERVER}Debug"
         else
+          FILE_EXTENSION="apk"
           OUTPUT_FOLDER_LIVESERVER="${WORKSPACE}/${APK_OUTPUT_PATH}/apk/${GRADLE_TASK_LIVESERVER}/debug"
         fi
+        OUTPUT_APK_LIVESERVER="${OUTPUT_PREFIX}${APP_VERSION}.${BUILD_VERSION}_${FILE_TODAY}-${GRADLE_TASK_LIVESERVER}-debug.${FILE_EXTENSION}"
+
         if [ $USING_BUNDLE_TESTSERVER -eq 1 ]; then
           FILE_EXTENSION="aab"
           OUTPUT_FOLDER_TESTSERVER="${WORKSPACE}/${APK_OUTPUT_PATH}/bundle/${GRADLE_TASK_TESTSERVER}/debug"
         else
+          FILE_EXTENSION="apk"
           OUTPUT_FOLDER_TESTSERVER="${WORKSPACE}/${APK_OUTPUT_PATH}/apk/${GRADLE_TASK_TESTSERVER}/debug"
         fi
-        OUTPUT_APK_LIVESERVER="${OUTPUT_PREFIX}${APP_VERSION}.${BUILD_VERSION}_${FILE_TODAY}-${GRADLE_TASK_LIVESERVER}-debug.${FILE_EXTENSION}"
         OUTPUT_APK_TESTSERVER="${OUTPUT_PREFIX}${APP_VERSION}.${BUILD_VERSION}_${FILE_TODAY}-${GRADLE_TASK_TESTSERVER}-debug.${FILE_EXTENSION}"
       fi
     fi
@@ -896,6 +907,7 @@ elif [[ "$INPUT_OS" == "ios" ]]; then
       $FlutterBin build ios
     elif [ $isReactNativeEnabled -eq 1 ]; then
       cd ${WORKSPACE}
+      $ReactNativeBin install --legacy-peer-deps
       $ReactNativeBin run build
     fi
     if test ! -z $(grep 'CFBundleShortVersionString' "${WORKSPACE}/${INFO_PLIST}"); then
