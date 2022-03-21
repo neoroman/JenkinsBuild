@@ -455,21 +455,20 @@ if [[ "$INPUT_OS" == "android" ]]; then
     ###################
     USING_GOOGLESTORE=$(test $(cat $jsonConfig | $JQ '.android.GoogleStore.enabled') = true && echo 1 || echo 0)
     GRADLE_TASK_GOOGLESTORE=$(cat $jsonConfig | $JQ '.android.GoogleStore.taskName' | tr -d '"')
-    USING_BUNDLE_GOOGLESTORE=$(test $(cat $jsonConfig | $JQ '.android.GoogleStore.usingBudleAAB') = true && echo 1 || echo 0)
+    USING_BUNDLE_GOOGLESTORE=$(test $(cat $jsonConfig | $JQ '.android.GoogleStore.usingBundleAAB') = true && echo 1 || echo 0)
     ###
     USING_ONESTORE=$(test $(cat $jsonConfig | $JQ '.android.OneStore.enabled') = true && echo 1 || echo 0)
     GRADLE_TASK_ONESTORE=$(cat $jsonConfig | $JQ '.android.OneStore.taskName' | tr -d '"')
-    USING_BUNDLE_ONESTORE=$(test $(cat $jsonConfig | $JQ '.android.OneStore.usingBudleAAB') = true && echo 1 || echo 0)
+    USING_BUNDLE_ONESTORE=$(test $(cat $jsonConfig | $JQ '.android.OneStore.usingBundleAAB') = true && echo 1 || echo 0)
     ###
     USING_LIVESERVER=$(test $(cat $jsonConfig | $JQ '.android.LiveServer.enabled') = true && echo 1 || echo 0)
     GRADLE_TASK_LIVESERVER=$(cat $jsonConfig | $JQ '.android.LiveServer.taskName' | tr -d '"')
-    USING_BUNDLE_LIVESERVER=$(test $(cat $jsonConfig | $JQ '.android.LiveServer.usingBudleAAB') = true && echo 1 || echo 0)
+    USING_BUNDLE_LIVESERVER=$(test $(cat $jsonConfig | $JQ '.android.LiveServer.usingBundleAAB') = true && echo 1 || echo 0)
     ###
     USING_TESTSERVER=$(test $(cat $jsonConfig | $JQ '.android.TestServer.enabled') = true && echo 1 || echo 0)
     GRADLE_TASK_TESTSERVER=$(cat $jsonConfig | $JQ '.android.TestServer.taskName' | tr -d '"')
-    USING_BUNDLE_TESTSERVER=$(test $(cat $jsonConfig | $JQ '.android.TestServer.usingBudleAAB') = true && echo 1 || echo 0)
+    USING_BUNDLE_TESTSERVER=$(test $(cat $jsonConfig | $JQ '.android.TestServer.usingBundleAAB') = true && echo 1 || echo 0)
     ###################
-    FILE_EXTENSION="apk"
     if [ $isFlutterEnabled -eq 1 ]; then
       APK_OUTPUT_PATH="build/app/outputs"
     else
@@ -663,11 +662,12 @@ if [[ "$INPUT_OS" == "android" ]]; then
               $FlutterBin build ${flutterBuildKey} --flavor ${GRADLE_TASK_ONESTORE} ${FLUTTER_FLAG}
             fi
           elif [ $isReactNativeEnabled -eq 1 ]; then
-            if [ $USING_BUNDLE_ONESTORE -eq 1 ]; then
-              $ReactNativeBin run android_prod_bundle
-            else
-              $ReactNativeBin run android_prod_apk
-            fi
+            # if [ $USING_BUNDLE_ONESTORE -eq 1 ]; then
+            #   $ReactNativeBin run android_prod_bundle
+            # else
+            #   $ReactNativeBin run android_prod_apk
+            # fi
+            ./android/gradlew "${gradleBuildKey}${GRADLE_TASK_GOOGLESTORE}"
           else
             ./gradlew "${gradleBuildKey}${GRADLE_TASK_ONESTORE}"
           fi
