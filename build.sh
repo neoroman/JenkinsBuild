@@ -561,6 +561,11 @@ if [[ "$INPUT_OS" == "android" ]]; then
     if [ -f ${WORKSPACE}/gradlew ]; then
       chmod +x ${WORKSPACE}/gradlew
     fi
+    if [ $isReactNativeEnabled -eq 1 ]; then
+      cd ${WORKSPACE}
+      $ReactNativeBin install --legacy-peer-deps
+      $ReactNativeBin run build
+    fi
     ###################
     # Step 1.1: Check 'allatori' 난독화 실행 여부
     if [ $IS_RELEASE -eq 1 -a $USING_ALLATORI -eq 1 ]; then
@@ -662,12 +667,11 @@ if [[ "$INPUT_OS" == "android" ]]; then
               $FlutterBin build ${flutterBuildKey} --flavor ${GRADLE_TASK_ONESTORE} ${FLUTTER_FLAG}
             fi
           elif [ $isReactNativeEnabled -eq 1 ]; then
-            # if [ $USING_BUNDLE_ONESTORE -eq 1 ]; then
-            #   $ReactNativeBin run android_prod_bundle
-            # else
-            #   $ReactNativeBin run android_prod_apk
-            # fi
-            ./android/gradlew "${gradleBuildKey}${GRADLE_TASK_GOOGLESTORE}"
+            if [ $USING_BUNDLE_ONESTORE -eq 1 ]; then
+              $ReactNativeBin run android_prod_bundle
+            else
+              $ReactNativeBin run android_prod_apk
+            fi
           else
             ./gradlew "${gradleBuildKey}${GRADLE_TASK_ONESTORE}"
           fi
