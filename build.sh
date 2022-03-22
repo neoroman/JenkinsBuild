@@ -477,23 +477,43 @@ if [[ "$INPUT_OS" == "android" ]]; then
     if [ $IS_RELEASE -eq 1 ]; then
       APK_FILE_TITLE="${OUTPUT_PREFIX}${APP_VERSION}(${BUILD_VERSION})_${FILE_TODAY}"
 
-      if [ $USING_BUNDLE_GOOGLESTORE -eq 1 ]; then
-        FILE_EXTENSION="aab"
-        OUTPUT_FOLDER_GOOGLESTORE="${WORKSPACE}/${APK_OUTPUT_PATH}/bundle/${GRADLE_TASK_GOOGLESTORE}Release"
-      else
-        FILE_EXTENSION="apk"
-        OUTPUT_FOLDER_GOOGLESTORE="${WORKSPACE}/${APK_OUTPUT_PATH}/apk/${GRADLE_TASK_GOOGLESTORE}/release"
-      fi
-      APK_GOOGLESTORE="${APK_FILE_TITLE}${outputGoogleStoreSuffix%.*}.${FILE_EXTENSION}"
+      if [ $isReactNativeEnabled -eq 1 ]; then
+        if [ $USING_BUNDLE_GOOGLESTORE -eq 1 ]; then
+          FILE_EXTENSION="aab"
+          OUTPUT_FOLDER_GOOGLESTORE="${WORKSPACE}/${APK_OUTPUT_PATH}/bundle/release"
+        else
+          FILE_EXTENSION="apk"
+          OUTPUT_FOLDER_GOOGLESTORE="${WORKSPACE}/${APK_OUTPUT_PATH}/apk/release"
+        fi
+        APK_GOOGLESTORE="${APK_FILE_TITLE}${outputGoogleStoreSuffix%.*}.${FILE_EXTENSION}"
 
-      if [ $USING_BUNDLE_ONESTORE -eq 1 ]; then
-        FILE_EXTENSION="aab"
-        OUTPUT_FOLDER_ONESTORE="${WORKSPACE}/${APK_OUTPUT_PATH}/bundle/${GRADLE_TASK_ONESTORE}Release"
+        if [ $USING_BUNDLE_ONESTORE -eq 1 ]; then
+          FILE_EXTENSION="aab"
+          OUTPUT_FOLDER_ONESTORE="${WORKSPACE}/${APK_OUTPUT_PATH}/bundle/release"
+        else
+          FILE_EXTENSION="apk"
+          OUTPUT_FOLDER_ONESTORE="${WORKSPACE}/${APK_OUTPUT_PATH}/apk/release"
+        fi
+        APK_ONESTORE="${APK_FILE_TITLE}${outputOneStoreSuffix%.*}.${FILE_EXTENSION}"
       else
-        FILE_EXTENSION="apk"
-        OUTPUT_FOLDER_ONESTORE="${WORKSPACE}/${APK_OUTPUT_PATH}/apk/${GRADLE_TASK_ONESTORE}/release"
+        if [ $USING_BUNDLE_GOOGLESTORE -eq 1 ]; then
+          FILE_EXTENSION="aab"
+          OUTPUT_FOLDER_GOOGLESTORE="${WORKSPACE}/${APK_OUTPUT_PATH}/bundle/${GRADLE_TASK_GOOGLESTORE}Release"
+        else
+          FILE_EXTENSION="apk"
+          OUTPUT_FOLDER_GOOGLESTORE="${WORKSPACE}/${APK_OUTPUT_PATH}/apk/${GRADLE_TASK_GOOGLESTORE}/release"
+        fi
+        APK_GOOGLESTORE="${APK_FILE_TITLE}${outputGoogleStoreSuffix%.*}.${FILE_EXTENSION}"
+
+        if [ $USING_BUNDLE_ONESTORE -eq 1 ]; then
+          FILE_EXTENSION="aab"
+          OUTPUT_FOLDER_ONESTORE="${WORKSPACE}/${APK_OUTPUT_PATH}/bundle/${GRADLE_TASK_ONESTORE}Release"
+        else
+          FILE_EXTENSION="apk"
+          OUTPUT_FOLDER_ONESTORE="${WORKSPACE}/${APK_OUTPUT_PATH}/apk/${GRADLE_TASK_ONESTORE}/release"
+        fi
+        APK_ONESTORE="${APK_FILE_TITLE}${outputOneStoreSuffix%.*}.${FILE_EXTENSION}"
       fi
-      APK_ONESTORE="${APK_FILE_TITLE}${outputOneStoreSuffix%.*}.${FILE_EXTENSION}"
 
       Obfuscation_SCREENSHOT="${OUTPUT_PREFIX}${APP_VERSION}(${BUILD_VERSION})_${FILE_TODAY}_Obfuscation.png"
       Obfuscation_OUTPUT_FILE="${OUTPUT_PREFIX}${APP_VERSION}(${BUILD_VERSION})_${FILE_TODAY}_file.png"
@@ -636,11 +656,13 @@ if [[ "$INPUT_OS" == "android" ]]; then
           fi
           if [ -d $OUTPUT_FOLDER_GOOGLESTORE -a -f $OUTPUT_FOLDER_GOOGLESTORE/output.json ]; then
             BUILD_APK_GOOGLESTORE=$(cat $OUTPUT_FOLDER_GOOGLESTORE/output.json | $JQ '.[0].apkData.outputFile' | tr -d '"')
-            if [[ "$BUILD_APK_GOOGLESTORE" == "null" ]]; then
-              BUILD_APK_GOOGLESTORE=$(cat $OUTPUT_FOLDER_GOOGLESTORE/output.json | $JQ '.[0].apkInfo.outputFile' | tr -d '"')
+          fi
+          if test -z "$BUILD_APK_GOOGLESTORE"; then
+            if [ -d $OUTPUT_FOLDER_GOOGLESTORE -a -f $OUTPUT_FOLDER_GOOGLESTORE/output-metadata.json ]; then
+              BUILD_APK_GOOGLESTORE=$(cat $OUTPUT_FOLDER_GOOGLESTORE/output-metadata.json | $JQ '.elements[0].outputFile' | tr -d '"')
             fi
           fi
-          if [[ "${BUILD_APK_GOOGLESTORE}" == "" ]]; then
+          if test -z "$BUILD_APK_GOOGLESTORE"; then
             BUILD_APK_GOOGLESTORE=$(find ${OUTPUT_FOLDER_GOOGLESTORE} -name "*.${FILE_EXTENSION}" -exec basename {} \;)
           fi
           if [ -f $OUTPUT_FOLDER_GOOGLESTORE/$BUILD_APK_GOOGLESTORE ]; then
@@ -678,7 +700,13 @@ if [[ "$INPUT_OS" == "android" ]]; then
           if [ -d $OUTPUT_FOLDER_ONESTORE -a -f $OUTPUT_FOLDER_ONESTORE/output.json ]; then
             BUILD_APK_ONESTORE=$(cat $OUTPUT_FOLDER_ONESTORE/output.json | $JQ '.[0].apkData.outputFile' | tr -d '"')
           fi
-          if [[ "${BUILD_APK_ONESTORE}" == "" ]]; then
+          if test -z "$BUILD_APK_ONESTORE"; then
+            if [ -d $OUTPUT_FOLDER_ONESTORE -a -f $OUTPUT_FOLDER_ONESTORE/output-metadata.json ]; then
+
+              BUILD_APK_ONESTORE=$(cat $OUTPUT_FOLDER_ONESTORE/output-metadata.json | $JQ '.elements[0].outputFile' | tr -d '"')
+            fi
+          fi
+          if test -z "$BUILD_APK_ONESTORE"; then
             BUILD_APK_ONESTORE=$(find ${OUTPUT_FOLDER_ONESTORE} -name "*.${FILE_EXTENSION}" -exec basename {} \;)
           fi
           if [ -f $OUTPUT_FOLDER_ONESTORE/$BUILD_APK_ONESTORE ]; then
