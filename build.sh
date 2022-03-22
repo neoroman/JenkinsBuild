@@ -864,12 +864,12 @@ if [[ "$INPUT_OS" == "android" ]]; then
         if [ -f ${OUTPUT_FOLDER}/${APK_GOOGLESTORE} -a -f ${OUTPUT_FOLDER}/${APK_ONESTORE} ]; then
           if [ -f $WORKSPACE/${ANDROID_APP_PATH}/check.sh -a $IS_RELEASE -eq 1 ]; then
             chmod +x $WORKSPACE/${ANDROID_APP_PATH}/check.sh
-            cd $WORKSPACE/app && echo "appdevteam@DESKTOP-ONE NIMGW32 ${WORKSPACE} (${GIT_BRANCH})" >merong.txt
-            cd $WORKSPACE/app && echo "$ ./check.sh -a src" >>merong.txt
-            cd $WORKSPACE/app && ./check.sh -a src >>merong.txt
-            cd $WORKSPACE/app && cat merong.txt | $A2PS -=book -B -q --medium=A4dj --borders=no -o out1.ps && $GS -sDEVICE=png256 -dNOPAUSE -dBATCH -dSAFER -dTextAlphaBits=4 -q -r300x300 -sOutputFile=out2.png out1.ps &&
-              cd $WORKSPACE/app && $CONVERT -trim out2.png $OUTPUT_FOLDER/$Obfuscation_SCREENSHOT
-            cd $WORKSPACE/app && rm -f out[12].png out[12].ps merong.txt
+            cd $WORKSPACE/${ANDROID_APP_PATH} && echo "appdevteam@DESKTOP-ONE NIMGW32 ${WORKSPACE} (${GIT_BRANCH})" >merong.txt
+            cd $WORKSPACE/${ANDROID_APP_PATH} && echo "$ ./check.sh -a src" >>merong.txt
+            cd $WORKSPACE/${ANDROID_APP_PATH} && ./check.sh -a src >>merong.txt
+            cd $WORKSPACE/${ANDROID_APP_PATH} && cat merong.txt | $A2PS -=book -B -q --medium=A4dj --borders=no -o out1.ps && $GS -sDEVICE=png256 -dNOPAUSE -dBATCH -dSAFER -dTextAlphaBits=4 -q -r300x300 -sOutputFile=out2.png out1.ps &&
+            cd $WORKSPACE/${ANDROID_APP_PATH} && $CONVERT -trim out2.png $OUTPUT_FOLDER/$Obfuscation_SCREENSHOT
+            cd $WORKSPACE/${ANDROID_APP_PATH} && rm -f out[12].png out[12].ps merong.txt
 
             if [ -f $APP_HTML/$Obfuscation_INPUT_FILE ]; then
               cp -f $APP_HTML/$Obfuscation_INPUT_FILE $OUTPUT_FOLDER/$Obfuscation_OUTPUT_FILE
