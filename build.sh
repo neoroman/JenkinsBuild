@@ -671,12 +671,20 @@ if [[ "$INPUT_OS" == "android" ]]; then
             SLACK_TEXT="${SLACK_TEXT}${HOSTNAME} > ${GRADLE_TASK_GOOGLESTORE} 배포용 다운로드(${SIZE_GOOGLE_APP_FILE}B): ${HTTPS_PREFIX}${APK_GOOGLESTORE}\n"
             MAIL_TEXT="${MAIL_TEXT}${GRADLE_TASK_GOOGLESTORE} 배포용 다운로드(${SIZE_GOOGLE_APP_FILE}B): <a href=${HTTPS_PREFIX}${APK_GOOGLESTORE}>${HTTPS_PREFIX}${APK_GOOGLESTORE}</a><br />"
             if [ $USING_BUNDLE_GOOGLESTORE -eq 1 ]; then
-              BUNDLE_TOOL=$(which bundletool)
               if test -z $BUNDLE_TOOL; then
                 BUNDLE_TOOL="/opt/homebrew/bin/bundletool"
               fi
-              BUNDLE_APK_FILE="$OUTPUT_FOLDER/${APK_GOOGLESTORE%.aab}.apk"
+              BUNDLE_APK_FILE="$OUTPUT_FOLDER/${APK_GOOGLESTORE%.aab}.apks"
               $BUNDLE_TOOL build-apks --bundle="$OUTPUT_FOLDER/$APK_GOOGLESTORE" --output="$BUNDLE_APK_FILE" --mode=universal
+              BUNDLE_APK2ZIP="${BUNDLE_APK_FILE%.apks}.zip"
+              mv "${BUNDLE_APK_FILE}" "${BUNDLE_APK2ZIP}"
+              unzip "${BUNDLE_APK2ZIP}"
+              if [ -f universal.apk ]; then
+                mv universal.apk "$OUTPUT_FOLDER/${APK_GOOGLESTORE%.aab}.apk"
+                if [ -f toc.pd ]; then
+                  rm toc.pd
+                fi
+              fi
               SIZE_GOOGLE_APP_FILE=$(du -sh ${BUNDLE_APK_FILE} | awk '{print $1}')
             fi
           fi
@@ -723,12 +731,20 @@ if [[ "$INPUT_OS" == "android" ]]; then
             SLACK_TEXT="${SLACK_TEXT}${HOSTNAME} > ${GRADLE_TASK_ONESTORE} 배포용 다운로드(${SIZE_ONE_APP_FILE}B): ${HTTPS_PREFIX}${APK_ONESTORE}\n"
             MAIL_TEXT="${MAIL_TEXT}${GRADLE_TASK_ONESTORE} 배포용 다운로드(${SIZE_ONE_APP_FILE}B): <a href=${HTTPS_PREFIX}${APK_ONESTORE}>${HTTPS_PREFIX}${APK_ONESTORE}</a><br />"
             if [ $USING_BUNDLE_ONESTORE -eq 1 ]; then
-              BUNDLE_TOOL=$(which bundletool)
               if test -z $BUNDLE_TOOL; then
                 BUNDLE_TOOL="/opt/homebrew/bin/bundletool"
               fi
-              BUNDLE_APK_FILE="$OUTPUT_FOLDER/${APK_ONESTORE%.aab}.apk"
+              BUNDLE_APK_FILE="$OUTPUT_FOLDER/${APK_ONESTORE%.aab}.apks"
               $BUNDLE_TOOL build-apks --bundle="$OUTPUT_FOLDER/$APK_ONESTORE" --output="$BUNDLE_APK_FILE" --mode=universal
+              BUNDLE_APK2ZIP="${BUNDLE_APK_FILE%.apks}.zip"
+              mv "${BUNDLE_APK_FILE}" "${BUNDLE_APK2ZIP}"
+              unzip "${BUNDLE_APK2ZIP}"
+              if [ -f universal.apk ]; then
+                mv universal.apk "$OUTPUT_FOLDER/${APK_GOOGLESTORE%.aab}.apk"
+                if [ -f toc.pd ]; then
+                  rm toc.pd
+                fi
+              fi
               SIZE_ONE_APP_FILE=$(du -sh ${BUNDLE_APK_FILE} | awk '{print $1}')
             fi
           fi
@@ -771,12 +787,20 @@ if [[ "$INPUT_OS" == "android" ]]; then
             SLACK_TEXT="${SLACK_TEXT}${HOSTNAME} > ${GRADLE_TASK_LIVESERVER}(debug)(${SIZE_LIVE_APP_FILE}B): ${HTTPS_PREFIX}${OUTPUT_APK_LIVESERVER}\n"
             MAIL_TEXT="${MAIL_TEXT}${GRADLE_TASK_LIVESERVER}(debug)(${SIZE_LIVE_APP_FILE}B): <a href=${HTTPS_PREFIX}${OUTPUT_APK_LIVESERVER}>${HTTPS_PREFIX}${OUTPUT_APK_LIVESERVER}</a><br />"
             if [ $USING_BUNDLE_LIVESERVER -eq 1 ]; then
-              BUNDLE_TOOL=$(which bundletool)
               if test -z $BUNDLE_TOOL; then
                 BUNDLE_TOOL="/opt/homebrew/bin/bundletool"
               fi
-              BUNDLE_APK_FILE="$OUTPUT_FOLDER/${OUTPUT_APK_LIVESERVER%.aab}.apk"
+              BUNDLE_APK_FILE="$OUTPUT_FOLDER/${OUTPUT_APK_LIVESERVER%.aab}.apks"
               $BUNDLE_TOOL build-apks --bundle="$OUTPUT_FOLDER/$OUTPUT_APK_LIVESERVER" --output="$BUNDLE_APK_FILE" --mode=universal
+              BUNDLE_APK2ZIP="${BUNDLE_APK_FILE%.apks}.zip"
+              mv "${BUNDLE_APK_FILE}" "${BUNDLE_APK2ZIP}"
+              unzip "${BUNDLE_APK2ZIP}"
+              if [ -f universal.apk ]; then
+                mv universal.apk "$OUTPUT_FOLDER/${APK_GOOGLESTORE%.aab}.apk"
+                if [ -f toc.pd ]; then
+                  rm toc.pd
+                fi
+              fi
               SIZE_LIVE_APP_FILE=$(du -sh ${BUNDLE_APK_FILE} | awk '{print $1}')
             fi
           fi
@@ -830,12 +854,20 @@ if [[ "$INPUT_OS" == "android" ]]; then
             SLACK_TEXT="${SLACK_TEXT}${HOSTNAME} > ${GRADLE_TASK_TESTSERVER}(debug)(${SIZE_TEST_APP_FILE}B): ${HTTPS_PREFIX}${OUTPUT_APK_TESTSERVER}\n"
             MAIL_TEXT="${MAIL_TEXT}${GRADLE_TASK_TESTSERVER}(debug)(${SIZE_TEST_APP_FILE}B): <a href=${HTTPS_PREFIX}${OUTPUT_APK_TESTSERVER}>${HTTPS_PREFIX}${OUTPUT_APK_TESTSERVER}</a><br />"
             if [ $USING_BUNDLE_TESTSERVER -eq 1 ]; then
-              BUNDLE_TOOL=$(which bundletool)
               if test -z $BUNDLE_TOOL; then
                 BUNDLE_TOOL="/opt/homebrew/bin/bundletool"
               fi
-              BUNDLE_APK_FILE="$OUTPUT_FOLDER/${OUTPUT_APK_TESTSERVER%.aab}.apk"
+              BUNDLE_APK_FILE="$OUTPUT_FOLDER/${OUTPUT_APK_TESTSERVER%.aab}.apks"
               $BUNDLE_TOOL build-apks --bundle="$OUTPUT_FOLDER/$OUTPUT_APK_TESTSERVER" --output="$BUNDLE_APK_FILE" --mode=universal
+              BUNDLE_APK2ZIP="${BUNDLE_APK_FILE%.apks}.zip"
+              mv "${BUNDLE_APK_FILE}" "${BUNDLE_APK2ZIP}"
+              unzip "${BUNDLE_APK2ZIP}"
+              if [ -f universal.apk ]; then
+                mv universal.apk "$OUTPUT_FOLDER/${APK_GOOGLESTORE%.aab}.apk"
+                if [ -f toc.pd ]; then
+                  rm toc.pd
+                fi
+              fi
               SIZE_TEST_APP_FILE=$(du -sh ${BUNDLE_APK_FILE} | awk '{print $1}')
             fi
           fi
