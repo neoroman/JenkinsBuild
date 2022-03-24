@@ -670,6 +670,15 @@ if [[ "$INPUT_OS" == "android" ]]; then
             SIZE_GOOGLE_APP_FILE=$(du -sh ${OUTPUT_FOLDER}/${APK_GOOGLESTORE} | awk '{print $1}')
             SLACK_TEXT="${SLACK_TEXT}${HOSTNAME} > ${GRADLE_TASK_GOOGLESTORE} 배포용 다운로드(${SIZE_GOOGLE_APP_FILE}B): ${HTTPS_PREFIX}${APK_GOOGLESTORE}\n"
             MAIL_TEXT="${MAIL_TEXT}${GRADLE_TASK_GOOGLESTORE} 배포용 다운로드(${SIZE_GOOGLE_APP_FILE}B): <a href=${HTTPS_PREFIX}${APK_GOOGLESTORE}>${HTTPS_PREFIX}${APK_GOOGLESTORE}</a><br />"
+            if [ $USING_BUNDLE_GOOGLESTORE -eq 1 ]; then
+              BUNDLE_TOOL=$(which bundletool)
+              if test -z $BUNDLE_TOOL; then
+                BUNDLE_TOOL="/opt/homebrew/bin/bundletool"
+              fi
+              BUNDLE_APK_FILE="$OUTPUT_FOLDER/${APK_GOOGLESTORE%.aab}.apk"
+              $BUNDLE_TOOL build-apks --bundle="$OUTPUT_FOLDER/$APK_GOOGLESTORE" --output="$BUNDLE_APK_FILE" --mode=universal
+              SIZE_GOOGLE_APP_FILE=$(du -sh ${BUNDLE_APK_FILE} | awk '{print $1}')
+            fi
           fi
         fi
         ###################
@@ -702,7 +711,6 @@ if [[ "$INPUT_OS" == "android" ]]; then
           fi
           if test -z "$BUILD_APK_ONESTORE"; then
             if [ -d $OUTPUT_FOLDER_ONESTORE -a -f $OUTPUT_FOLDER_ONESTORE/output-metadata.json ]; then
-
               BUILD_APK_ONESTORE=$(cat $OUTPUT_FOLDER_ONESTORE/output-metadata.json | $JQ '.elements[0].outputFile' | tr -d '"')
             fi
           fi
@@ -714,6 +722,15 @@ if [[ "$INPUT_OS" == "android" ]]; then
             SIZE_ONE_APP_FILE=$(du -sh ${OUTPUT_FOLDER}/${APK_ONESTORE} | awk '{print $1}')
             SLACK_TEXT="${SLACK_TEXT}${HOSTNAME} > ${GRADLE_TASK_ONESTORE} 배포용 다운로드(${SIZE_ONE_APP_FILE}B): ${HTTPS_PREFIX}${APK_ONESTORE}\n"
             MAIL_TEXT="${MAIL_TEXT}${GRADLE_TASK_ONESTORE} 배포용 다운로드(${SIZE_ONE_APP_FILE}B): <a href=${HTTPS_PREFIX}${APK_ONESTORE}>${HTTPS_PREFIX}${APK_ONESTORE}</a><br />"
+            if [ $USING_BUNDLE_ONESTORE -eq 1 ]; then
+              BUNDLE_TOOL=$(which bundletool)
+              if test -z $BUNDLE_TOOL; then
+                BUNDLE_TOOL="/opt/homebrew/bin/bundletool"
+              fi
+              BUNDLE_APK_FILE="$OUTPUT_FOLDER/${APK_ONESTORE%.aab}.apk"
+              $BUNDLE_TOOL build-apks --bundle="$OUTPUT_FOLDER/$APK_ONESTORE" --output="$BUNDLE_APK_FILE" --mode=universal
+              SIZE_ONE_APP_FILE=$(du -sh ${BUNDLE_APK_FILE} | awk '{print $1}')
+            fi
           fi
         fi
       else
@@ -753,6 +770,15 @@ if [[ "$INPUT_OS" == "android" ]]; then
             SIZE_LIVE_APP_FILE=$(du -sh ${OUTPUT_FOLDER}/${OUTPUT_APK_LIVESERVER} | awk '{print $1}')
             SLACK_TEXT="${SLACK_TEXT}${HOSTNAME} > ${GRADLE_TASK_LIVESERVER}(debug)(${SIZE_LIVE_APP_FILE}B): ${HTTPS_PREFIX}${OUTPUT_APK_LIVESERVER}\n"
             MAIL_TEXT="${MAIL_TEXT}${GRADLE_TASK_LIVESERVER}(debug)(${SIZE_LIVE_APP_FILE}B): <a href=${HTTPS_PREFIX}${OUTPUT_APK_LIVESERVER}>${HTTPS_PREFIX}${OUTPUT_APK_LIVESERVER}</a><br />"
+            if [ $USING_BUNDLE_LIVESERVER -eq 1 ]; then
+              BUNDLE_TOOL=$(which bundletool)
+              if test -z $BUNDLE_TOOL; then
+                BUNDLE_TOOL="/opt/homebrew/bin/bundletool"
+              fi
+              BUNDLE_APK_FILE="$OUTPUT_FOLDER/${OUTPUT_APK_LIVESERVER%.aab}.apk"
+              $BUNDLE_TOOL build-apks --bundle="$OUTPUT_FOLDER/$OUTPUT_APK_LIVESERVER" --output="$BUNDLE_APK_FILE" --mode=universal
+              SIZE_LIVE_APP_FILE=$(du -sh ${BUNDLE_APK_FILE} | awk '{print $1}')
+            fi
           fi
         fi
         ##########
@@ -803,6 +829,15 @@ if [[ "$INPUT_OS" == "android" ]]; then
             SIZE_TEST_APP_FILE=$(du -sh ${OUTPUT_FOLDER}/${OUTPUT_APK_TESTSERVER} | awk '{print $1}')
             SLACK_TEXT="${SLACK_TEXT}${HOSTNAME} > ${GRADLE_TASK_TESTSERVER}(debug)(${SIZE_TEST_APP_FILE}B): ${HTTPS_PREFIX}${OUTPUT_APK_TESTSERVER}\n"
             MAIL_TEXT="${MAIL_TEXT}${GRADLE_TASK_TESTSERVER}(debug)(${SIZE_TEST_APP_FILE}B): <a href=${HTTPS_PREFIX}${OUTPUT_APK_TESTSERVER}>${HTTPS_PREFIX}${OUTPUT_APK_TESTSERVER}</a><br />"
+            if [ $USING_BUNDLE_TESTSERVER -eq 1 ]; then
+              BUNDLE_TOOL=$(which bundletool)
+              if test -z $BUNDLE_TOOL; then
+                BUNDLE_TOOL="/opt/homebrew/bin/bundletool"
+              fi
+              BUNDLE_APK_FILE="$OUTPUT_FOLDER/${OUTPUT_APK_TESTSERVER%.aab}.apk"
+              $BUNDLE_TOOL build-apks --bundle="$OUTPUT_FOLDER/$OUTPUT_APK_TESTSERVER" --output="$BUNDLE_APK_FILE" --mode=universal
+              SIZE_TEST_APP_FILE=$(du -sh ${BUNDLE_APK_FILE} | awk '{print $1}')
+            fi
           fi
         fi
       fi
