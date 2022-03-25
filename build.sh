@@ -558,7 +558,6 @@ if [[ "$INPUT_OS" == "android" ]]; then
     fi
     SLACK_TEXT=""
     MAIL_TEXT=""
-    FCM_CONFIG_JSON_PATH="${WORKSPACE}/${ANDROID_APP_PATH}/google-services.json"
     ###################
     if [ ! -d $APP_ROOT ]; then
       mkdir -p $APP_ROOT
