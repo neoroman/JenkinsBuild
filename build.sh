@@ -875,7 +875,7 @@ if [[ "$INPUT_OS" == "android" ]]; then
             if [ $USING_BUNDLE_TESTSERVER -eq 1 ]; then
               $ReactNativeBin run android_tb_bundle
             else
-              $ReactNativeBin run android_tb_apk
+              $ReactNativeBin run android_debug_apk
             fi
           else
             ./gradlew "${gradleBuildKey}${GRADLE_TASK_TESTSERVER}"
