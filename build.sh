@@ -584,6 +584,7 @@ if [[ "$INPUT_OS" == "android" ]]; then
       cd ${WORKSPACE}
       $ReactNativeBin install --legacy-peer-deps
       $ReactNativeBin run build
+      $ReactNativeBin run build:android
     fi
     ###################
     # Step 1.1: Check 'allatori' 난독화 실행 여부
