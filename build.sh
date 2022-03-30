@@ -1515,7 +1515,7 @@ else
   HTML_TITLE="테스트 버전"
 fi
 ##############
-lastJsonFile=$(find ${APP_ROOT} -name "*.json" -and -not -name "${OUTPUT_FILENAME_ONLY}.json" -exec grep -l '"releaseType": "'${RELEASE_TYPE}'"' {} \; | sort -r | uniq | head -1)
+lastJsonFile=$(find ${APP_ROOT} -name "*.json" -and -not -name "${OUTPUT_FILENAME_ONLY}.json" -exec grep -l '"releaseType": "'${RELEASE_TYPE}'"' {} \; | xargs ls -lt | head -1 | awk '{ print $9 }')
 if [ -z $lastBuildDate ]; then
   lastBuildDate="10.day"
 fi
