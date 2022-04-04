@@ -1974,14 +1974,14 @@ if [ -f $OUTPUT_FOLDER/$OUTPUT_FILENAME_JSON ]; then
     SITE_ID_PW="app/qwer1234"
     QC_ID_PW="qc/insu1234"
   fi
-  OTHER_BUILE_ENV=""
+  OTHER_BUILD_ENV=""
   if [ $isFlutterEnabled -eq 1 ]; then
     BUILD_COMMAND=$FlutterBin
   elif [ $isReactNativeEnabled -eq 1 ]; then
     BUILD_COMMAND="./android/gradlew"
-    OTHER_BUILE_ENV="node "$(node --version)
-    OTHER_BUILE_ENV="${OTHER_BUILE_ENV}\nnpm v"$(npm --version)
-    OTHER_BUILE_ENV="${OTHER_BUILE_ENV}\n"
+    OTHER_BUILD_ENV="node "$(node --version)
+    OTHER_BUILD_ENV="${OTHER_BUILD_ENV}\nnpm v"$(npm --version)
+    OTHER_BUILD_ENV="${OTHER_BUILD_ENV}\n"
   else
     BUILD_COMMAND="./gradlew"
   fi
@@ -2140,7 +2140,7 @@ if [ -f $OUTPUT_FOLDER/$OUTPUT_FILENAME_JSON ]; then
                     \"type\": \"section\",
                     \"text\": {
                         \"type\": \"mrkdwn\",
-                        \"text\": \"빌드 환경: ${OTHER_BUILE_ENV}$($XCODE -version | tr -d '\n'), CocoaPod $($POD --version)\"
+                        \"text\": \"빌드 환경: ${OTHER_BUILD_ENV}$($XCODE -version | tr -d '\n'), CocoaPod $($POD --version)\"
                     }
                 }, 
                 {
@@ -2300,7 +2300,7 @@ if [ -f $OUTPUT_FOLDER/$OUTPUT_FILENAME_JSON ]; then
                     \"type\": \"section\",
                     \"text\": {
                         \"type\": \"mrkdwn\",
-                        \"text\": \"빌드 환경: ${OTHER_BUILE_ENV}$(cd ${WORKSPACE} && $BUILD_COMMAND --version | sed -e 's/$/\\n/g' | tr -d '\n')\"
+                        \"text\": \"빌드 환경: ${OTHER_BUILD_ENV}$(cd ${WORKSPACE} && $BUILD_COMMAND --version | sed -e 's/$/\\n/g' | tr -d '\n')\"
                     }
                 }, 
                 {
@@ -2415,7 +2415,7 @@ if [ -f $OUTPUT_FOLDER/$OUTPUT_FILENAME_JSON ]; then
                           \"value\": \"내부 QA 사이트 [바로가기](${FRONTEND_POINT}/${TOP_PATH}/ios/dist_ios.php) (ID/PW: ${QC_ID_PW})\"
                   }, {
                           \"name\": \"빌드 환경\",
-                          \"value\": \"<pre>${OTHER_BUILE_ENV}$($XCODE -version)\nCocoaPod $($POD --version)</pre>\"
+                          \"value\": \"<pre>${OTHER_BUILD_ENV}$($XCODE -version)\nCocoaPod $($POD --version)</pre>\"
                   }, {
                           \"name\": \"Jenkin 작업 결과\",
                           \"value\": \"Jenkin 사이트 [바로가기](${BUILD_URL})\"
@@ -2426,7 +2426,7 @@ if [ -f $OUTPUT_FOLDER/$OUTPUT_FILENAME_JSON ]; then
       $CURL -H "Content-Type: application/json" -d "${JSON_ALL}" $TEAMS_WEBHOOK
     fi
     if [ $USING_MAIL -eq 1 ]; then
-      OTHER_BUILE_ENV=${OTHER_BUILE_ENV//\n/"<BR \/>"}
+      OTHER_BUILD_ENV=${OTHER_BUILD_ENV//\\n/"<BR \/>"}
       MAIL_APPSTORE_DOWN_STR=""
       MAIL_APPSTORE_ATTACH_STR=""
       if [ $USING_APPSTORE -eq 1 ]; then
@@ -2449,7 +2449,7 @@ if [ -f $OUTPUT_FOLDER/$OUTPUT_FILENAME_JSON ]; then
         $CURL --data-urlencode "subject1=[iOS ${APP_NAME}.app > ${HOSTNAME}] Jenkins(${BUILD_NUMBER}) ${DEBUG_MSG} -" \
           --data-urlencode "subject2=iOS ${GIT_BRANCH} - ${CHANGE_TITLE}(commit: ${GIT_COMMIT})" \
           --data-urlencode "message_header=${MAIL_APPSTORE_DOWN_STR}${MAIL_ADHOC_DOWN_STR}${MAIL_ENTER_DOWN_STR}${MAIL_APPSTORE_ATTACH_STR}" \
-          --data-urlencode "message_description=${SHORT_GIT_LOG}<br />${GIT_LAST_LOG}<br />${MAIL_ADHOC_ITMS_STR}${MAIL_ENTER_ITMS_STR}<br /><br /><br /><pre>${OTHER_BUILE_ENV}$($XCODE -version)</pre><br /><br /><a href=${BUILD_URL}>${BUILD_URL}</a>" \
+          --data-urlencode "message_description=${SHORT_GIT_LOG}<br />${GIT_LAST_LOG}<br />${MAIL_ADHOC_ITMS_STR}${MAIL_ENTER_ITMS_STR}<br /><br /><br /><pre>${OTHER_BUILD_ENV}$($XCODE -version)</pre><br /><br /><a href=${BUILD_URL}>${BUILD_URL}</a>" \
           --data-urlencode "message_attachment=난독화스크립트 - ${OUTPUT_FILENAME_APPSTORE_IX_SHIELD_CHECK}" \
           --data-urlencode "attachment_path=$OUTPUT_FOLDER/$OUTPUT_FILENAME_APPSTORE_IX_SHIELD_CHECK" \
           ${FRONTEND_POINT}/${TOP_PATH}/sendmail_domestic.php
@@ -2457,13 +2457,13 @@ if [ -f $OUTPUT_FOLDER/$OUTPUT_FILENAME_JSON ]; then
         $CURL --data-urlencode "subject1=[iOS ${APP_NAME}.app > ${HOSTNAME}] Jenkins(${BUILD_NUMBER}) ${DEBUG_MSG} -" \
           --data-urlencode "subject2=iOS ${GIT_BRANCH} - ${CHANGE_TITLE}(commit: ${GIT_COMMIT})" \
           --data-urlencode "message_header=${MAIL_APPSTORE_DOWN_STR}${MAIL_ADHOC_DOWN_STR}${MAIL_ENTER_DOWN_STR}첨부파일: 없음" \
-          --data-urlencode "message_description=${SHORT_GIT_LOG}<br />${GIT_LAST_LOG}<br />${MAIL_ADHOC_ITMS_STR}${MAIL_ENTER_ITMS_STR}<br /><br /><br /><pre>${OTHER_BUILE_ENV}$($XCODE -version)</pre><br /><br /><a href=${BUILD_URL}>${BUILD_URL}</a>" \
+          --data-urlencode "message_description=${SHORT_GIT_LOG}<br />${GIT_LAST_LOG}<br />${MAIL_ADHOC_ITMS_STR}${MAIL_ENTER_ITMS_STR}<br /><br /><br /><pre>${OTHER_BUILD_ENV}$($XCODE -version)</pre><br /><br /><a href=${BUILD_URL}>${BUILD_URL}</a>" \
           ${FRONTEND_POINT}/${TOP_PATH}/sendmail_domestic.php
       else
         $CURL --data-urlencode "subject1=[iOS ${APP_NAME}.app > ${HOSTNAME}] Jenkins(${BUILD_NUMBER}) ${DEBUG_MSG} -" \
           --data-urlencode "subject2=iOS ${GIT_BRANCH} - ${CHANGE_TITLE}(commit: ${GIT_COMMIT})" \
           --data-urlencode "message_header=iOS 테스트 ${APP_NAME} 전달합니다.<br /><br />${MAIL_ADHOC_DOWN_STR}${MAIL_ENTER_DOWN_STR}" \
-          --data-urlencode "message_description=${SHORT_GIT_LOG}<br />${GIT_LAST_LOG}<br />${MAIL_ADHOC_ITMS_STR}${MAIL_ENTER_ITMS_STR}<br /><br /><br /><pre>${OTHER_BUILE_ENV}$($XCODE -version)</pre><br /><br /><a href=${BUILD_URL}>${BUILD_URL}</a>" \
+          --data-urlencode "message_description=${SHORT_GIT_LOG}<br />${GIT_LAST_LOG}<br />${MAIL_ADHOC_ITMS_STR}${MAIL_ENTER_ITMS_STR}<br /><br /><br /><pre>${OTHER_BUILD_ENV}$($XCODE -version)</pre><br /><br /><a href=${BUILD_URL}>${BUILD_URL}</a>" \
           ${FRONTEND_POINT}/${TOP_PATH}/sendmail_domestic.php
       fi
     fi
@@ -2552,7 +2552,7 @@ if [ -f $OUTPUT_FOLDER/$OUTPUT_FILENAME_JSON ]; then
                             \"value\": \"내부 QA 사이트 [바로가기](${FRONTEND_POINT}/${TOP_PATH}/android/dist_android.php) (ID/PW: ${QC_ID_PW})\"
                     }, {
                             \"name\": \"빌드 환경\",
-                            \"value\": \"<pre>${OTHER_BUILE_ENV}$(cd ${WORKSPACE} && $BUILD_COMMAND --version)</pre>\"
+                            \"value\": \"<pre>${OTHER_BUILD_ENV}$(cd ${WORKSPACE} && $BUILD_COMMAND --version)</pre>\"
                     }, {
                             \"name\": \"Jenkin 작업 결과\",
                             \"value\": \"Jenkin 사이트 [바로가기](${BUILD_URL})\"
@@ -2564,7 +2564,7 @@ if [ -f $OUTPUT_FOLDER/$OUTPUT_FILENAME_JSON ]; then
     fi # Android
     
     if [ $USING_MAIL -eq 1 ]; then
-      OTHER_BUILE_ENV=${OTHER_BUILE_ENV//\n/"<BR \/>"}
+      OTHER_BUILD_ENV=${OTHER_BUILD_ENV//\\n/"<BR \/>"}
       if [ -f $OUTPUT_FOLDER/$Obfuscation_OUTPUT_FILE -a $IS_RELEASE -eq 1 ]; then
         ATTACHMENT_DOWN=""
         ATTACHMENT_STR=""
@@ -2575,7 +2575,7 @@ if [ -f $OUTPUT_FOLDER/$OUTPUT_FILENAME_JSON ]; then
         $CURL --data-urlencode "subject1=[AOS ${APP_NAME}.app > ${HOSTNAME}] Jenkins(${BUILD_NUMBER}) 자동빌드 -" \
           --data-urlencode "subject2=Android ${GIT_BRANCH} - ${CHANGE_TITLE}(commit: ${GIT_COMMIT})" \
           --data-urlencode "message_header=안드로이드 1차 난독화 버전 전달합니다.<br /><br /><br />${MAIL_TEXT}<br /><br />${ATTACHMENT_DOWN}" \
-          --data-urlencode "message_description=${SHORT_GIT_LOG}<br />${GIT_LAST_LOG}<br /><br /><br /><pre>${OTHER_BUILE_ENV}$(cd ${WORKSPACE} && $BUILD_COMMAND --version)</pre><br /><br /><a href=${BUILD_URL}>${BUILD_URL}</a>" \
+          --data-urlencode "message_description=${SHORT_GIT_LOG}<br />${GIT_LAST_LOG}<br /><br /><br /><pre>${OTHER_BUILD_ENV}$(cd ${WORKSPACE} && $BUILD_COMMAND --version)</pre><br /><br /><a href=${BUILD_URL}>${BUILD_URL}</a>" \
           --data-urlencode "${ATTACHMENT_STR}" \
           --data-urlencode "attachment_path=$OUTPUT_FOLDER/$Obfuscation_OUTPUT_FILE;$OUTPUT_FOLDER/$Obfuscation_SCREENSHOT" \
           ${FRONTEND_POINT}/${TOP_PATH}/sendmail_domestic.php
@@ -2583,7 +2583,7 @@ if [ -f $OUTPUT_FOLDER/$OUTPUT_FILENAME_JSON ]; then
         $CURL --data-urlencode "subject1=[AOS ${APP_NAME}.app > ${HOSTNAME}] Jenkins(${BUILD_NUMBER}) 자동빌드 -" \
           --data-urlencode "subject2=Android ${GIT_BRANCH} - ${CHANGE_TITLE}(commit: ${GIT_COMMIT})" \
           --data-urlencode "message_header=안드로이드 테스트 ${APP_NAME} 전달합니다.<br /><br /><br />${MAIL_TEXT}<br />" \
-          --data-urlencode "message_description=$(echo ${GIT_LAST_LOG} | sed -e 's/\[uDev\]/<br \/>\&nbsp;\&nbsp;\&nbsp;/g' | sed -e 's/\\n/<br \/>\&nbsp;\&nbsp;\&nbsp;/g')<br /><br /><br /><br /><pre>${OTHER_BUILE_ENV}$(cd ${WORKSPACE} && $BUILD_COMMAND --version)</pre><br /><a href=${BUILD_URL}>${BUILD_URL}</a>" \
+          --data-urlencode "message_description=$(echo ${GIT_LAST_LOG} | sed -e 's/\[uDev\]/<br \/>\&nbsp;\&nbsp;\&nbsp;/g' | sed -e 's/\\n/<br \/>\&nbsp;\&nbsp;\&nbsp;/g')<br /><br /><br /><br /><pre>${OTHER_BUILD_ENV}$(cd ${WORKSPACE} && $BUILD_COMMAND --version)</pre><br /><a href=${BUILD_URL}>${BUILD_URL}</a>" \
           ${FRONTEND_POINT}/${TOP_PATH}/sendmail_domestic.php
       fi
     fi
