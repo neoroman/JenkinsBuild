@@ -1271,8 +1271,8 @@ elif [[ "$INPUT_OS" == "ios" ]]; then
               sed -e 's/ix_set_debug/IX_SET_DEBUG/g' $SPLASH_VIEW >$SPLASH_TEMP
               mv -f $SPLASH_TEMP $SPLASH_VIEW
 
-              cd $WORKSPACE && echo "MacBook-Pro:ios appDevTeam$ ./IxShieldCheck.sh -i ./${PROJECT_NAME}" >merong.txt
-              cd $WORKSPACE && ./IxShieldCheck.sh -i . >>merong.txt
+              cd $WORKSPACE && echo "MacStudio:ios appDevTeam$ ./IxShieldCheck.sh -i ./${PROJECT_NAME}" >merong.txt
+              cd $WORKSPACE && ./IxShieldCheck.sh -i ./${PROJECT_NAME} >>merong.txt
               cd $WORKSPACE && cat merong.txt | $A2PS -=book -B -q --medium=A4dj --borders=no -o out1.ps && $GS -sDEVICE=png256 -dNOPAUSE -dBATCH -dSAFER -dTextAlphaBits=4 -q -r300x300 -sOutputFile=out2.png out1.ps &&
               cd $WORKSPACE && $CONVERT -trim out2.png $OUTPUT_FOLDER/$OUTPUT_FILENAME_APPSTORE_IX_SHIELD_CHECK
               cd $WORKSPACE && rm -f out[12].png out[12].ps merong.txt
