@@ -2426,6 +2426,7 @@ if [ -f $OUTPUT_FOLDER/$OUTPUT_FILENAME_JSON ]; then
       $CURL -H "Content-Type: application/json" -d "${JSON_ALL}" $TEAMS_WEBHOOK
     fi
     if [ $USING_MAIL -eq 1 ]; then
+      OTHER_BUILE_ENV=${OTHER_BUILE_ENV//\n/"<BR \/>"}
       MAIL_APPSTORE_DOWN_STR=""
       MAIL_APPSTORE_ATTACH_STR=""
       if [ $USING_APPSTORE -eq 1 ]; then
@@ -2466,7 +2467,7 @@ if [ -f $OUTPUT_FOLDER/$OUTPUT_FILENAME_JSON ]; then
           ${FRONTEND_POINT}/${TOP_PATH}/sendmail_domestic.php
       fi
     fi
-  else # iOS
+  else # Android from here
     ###########
     if [ $USING_TEAMS_WEBHOOK -eq 1 ]; then
       GIT_BROWSER_URL=$(cat $jsonConfig | $JQ '.android.gitBrowseUrl' | tr -d '"')
@@ -2563,6 +2564,7 @@ if [ -f $OUTPUT_FOLDER/$OUTPUT_FILENAME_JSON ]; then
     fi # Android
     
     if [ $USING_MAIL -eq 1 ]; then
+      OTHER_BUILE_ENV=${OTHER_BUILE_ENV//\n/"<BR \/>"}
       if [ -f $OUTPUT_FOLDER/$Obfuscation_OUTPUT_FILE -a $IS_RELEASE -eq 1 ]; then
         ATTACHMENT_DOWN=""
         ATTACHMENT_STR=""
