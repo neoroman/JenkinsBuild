@@ -685,15 +685,13 @@ if [[ "$INPUT_OS" == "android" ]]; then
                 $BUNDLE_TOOL build-apks --bundle="$OUTPUT_FOLDER/$APK_GOOGLESTORE" --output="$BUNDLE_APK_FILE" --mode=universal
               fi
               BUNDLE_APK2ZIP="${BUNDLE_APK_FILE%.apks}.zip"
-              mv "${BUNDLE_APK_FILE}" "${BUNDLE_APK2ZIP}"
-              unzip "${BUNDLE_APK2ZIP}"
+              mv -f "${BUNDLE_APK_FILE}" "${BUNDLE_APK2ZIP}"
+              unzip -o "${BUNDLE_APK2ZIP}"
               BUNDLE_APK_FILE="$OUTPUT_FOLDER/${APK_GOOGLESTORE%.aab}.apk"
               if [ -f universal.apk ]; then
                 touch universal.apk
-                mv universal.apk "$BUNDLE_APK_FILE"
-                if [ -f toc.pd ]; then
-                  rm toc.pd
-                fi
+                mv -f universal.apk "$BUNDLE_APK_FILE"
+                find . -name 'toc.*' -exec rm {} \;
                 if [ -f $BUNDLE_APK2ZIP ]; then
                   rm $BUNDLE_APK2ZIP
                 fi
