@@ -117,6 +117,7 @@ while [[ $# -gt 0 ]]; do
     $GIT config core.autocrlf false
     $GIT fetch --prune
     CURRENT_BRANCH=$($GIT rev-parse --abbrev-ref HEAD)
+    CURRENT_BRANCH=${CURRENT_BRANCH#"heads/"}
     $GIT branch -r | grep -v '\->' | grep -v 'external/' | grep -v ${CURRENT_BRANCH} | while read remote; do $GIT branch --track "${remote#origin/}" "$remote" --force >/dev/null; done
     $GIT fetch --all
     LAST_TAG=$($GIT describe --tags)
@@ -978,7 +979,7 @@ if [[ "$INPUT_OS" == "android" ]]; then
     if [ $DEBUGGING -eq 0 ]; then
       USING_OBFUSCATION=$(test $(cat $jsonConfig | $JQ '.android.usingObfuscation') = true && echo 1 || echo 0)
       if [ $USING_OBFUSCATION -eq 1 ]; then
-        if [ -f ${OUTPUT_FOLDER}/${APK_GOOGLESTORE} -a -f ${OUTPUT_FOLDER}/${APK_ONESTORE} ]; then
+        if [ -f ${OUTPUT_FOLDER}/${APK_GOOGLESTORE} ]; then
           if [ -f $WORKSPACE/${ANDROID_APP_PATH}/check.sh -a $IS_RELEASE -eq 1 ]; then
             chmod +x $WORKSPACE/${ANDROID_APP_PATH}/check.sh
             cd $WORKSPACE/${ANDROID_APP_PATH} && echo "appdevteam@DESKTOP-ONE NIMGW32 ${WORKSPACE} (${GIT_BRANCH})" >merong.txt
