@@ -1223,8 +1223,10 @@ elif [[ "$INPUT_OS" == "ios" ]]; then
     fi
     ###################
     # Step 2.0: Prepare
-    if [ $APP_VERSION != "" ]; then
-      VERSION_STRING="${APP_VERSION}(${BUILD_VERSION})"
+    if [ $IS_RELEASE -eq 1 ]; then
+      VERSION_STRING="v${APP_VERSION}(${BUILD_VERSION})"
+    elif [ "$APP_VERSION" != "" ]; then
+      VERSION_STRING="v${APP_VERSION}.${BUILD_VERSION}"
     else
       VERSION_STRING=""
     fi
