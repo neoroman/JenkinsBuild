@@ -1,0 +1,50 @@
+#!/bin/sh
+#
+##
+# Shell Environment
+export ANDROID_HOME="/Users/${jenkinsUser}/Library/Android/sdk"
+#
+##
+# System account
+sudoPassword="qwer1234"
+jenkinsUser="jenkinsUser"
+systemName="MacStudio"
+#
+##
+# Git
+GIT_USER="AppDevTeam"
+GIT_EMAIL="app.support@company.com"
+#
+##
+# Teams
+teamWebHook_debug="https://webhook.office.com/webhookb1/57dae0bf-abb2-43df-b7c1-73121c5a75a4@13a84ba8-5a74-4cdf-a639-57395cf71a8f/IncomingWebhook/abb12c1b7cb74044b535c2dfa5031729/a9b785d5-fbf6-4857-add7-dc64d1dd64c1"
+teamWebHook="https://webhook.office.com/webhookb2/57dae0bf-abb2-43df-b7c1-73121c5a75a4@13a84ba8-5a74-4cdf-a639-57395cf71a8f/IncomingWebhook/abb12c1b7cb74044b535c2dfa5031729/a9b785d5-fbf6-4857-add7-dc64d1dd64c1"
+#
+##
+# Web FrontEnd Point
+frontEndPointUrl="https://macmini.company.com"
+appRootPrefix="/Library/WebServer/Documents"
+siteRepositoryUrl="https://github.com/neoroman/JenkinsAppDistTemplate.git"
+#
+##
+# Variables Initialize
+DEBUG_WORKSPACE_IOS="/Users/Company/Projects/app-ios"
+DEBUG_WORKSPACE_ANDROID="/Users/Company/Projects/app-android"
+SLACK="/usr/local/bin/slack"
+SLACK_CHANNEL="#app-distribution"
+APP_BUNDLE_IDENTIFIER_ANDROID="com.company.mobile"
+OUTPUT_PREFIX="AppProject_"
+Obfuscation_INPUT_FILE="Obfuscation_File.png"
+outputGoogleStoreSuffix="-GoogleStore-release.apk"
+outputOneStoreSuffix="-OneStore-release.apk"
+INFO_PLIST="Projects/Info.plist"
+USING_SCP=0
+GIT=$(which git)
+########
+SCRIPT_NAME=$(basename $0)
+DEBUGGING=0
+PRODUCE_OUTPUT_USE=1 # Exit if output not using for distribution, maybe it's for SonarQube
+USING_MAIL=0
+WITH_TAG_PUSH=1
+#
+##

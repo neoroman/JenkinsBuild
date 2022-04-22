@@ -8,7 +8,9 @@
 *.app
 ##
 # PNG
-*.png
+*_file.png
+*_Obfuscation.png
+*IxShieldCheck.png
 ##
 # Log
 *.log

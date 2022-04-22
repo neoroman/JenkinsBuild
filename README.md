@@ -3,13 +3,17 @@ Language: BASH Shell Script
 
 
 ## Requirements (based on macOS machine)
-- Jenkins server on any mac machine
-- Install ``Xcode`` command line tools from "https://developer.apple.com/download/more/" for only iOS
-- Install ``slack`` from "https://github.com/rockymadden/slack-cli" (also use "brew install rockymadden/rockymadden/slack-cli"), run "slack init", and Enter Slack API token from https://api.slack.com/custom-integrations/legacy-tokens
-- Install ``jq`` path with "/usr/local/bin/jq" in "/usr/local/bin/slac"
-- Install ``a2ps`` via HomeBrew, brew install a2ps
-- Install ``gs`` via HomeBrew, brew install gs
-- Install ``convert``(ImageMagick) via HomeBrew, brew install imagemagick
+- Jenkins server on any macOS machine
+-  0. (Mandatory) Install ``Xcode`` command line tools from "https://developer.apple.com/download/more/" for only iOS
+-  1. (Mandatory) Install ``jq`` via HomeBrew, brew install jq
+-  2. (Mandatory) Install ``bundletool`` for Android AAB output since 2021 Aug, brew install bundletool
+-  3. (Optional) Install ``slack`` from "https://github.com/rockymadden/slack-cli"
+      (also use "brew install rockymadden/rockymadden/slack-cli"),
+      run "slack init", and Enter Slack API token from https://api.slack.com/custom-integrations/legacy-tokens
+-  4. (Optional) Install ``jq`` path with "/usr/local/bin/jq" in "/usr/local/bin/slac"
+-  5. (Optional) Install ``a2ps`` via HomeBrew, brew install a2ps
+-  6. (Optional) Install ``gs`` via HomeBrew, brew install gs
+-  7. (Optional) Install ``convert``(ImageMagick) via HomeBrew, brew install imagemagick
 
 
 ## Installation

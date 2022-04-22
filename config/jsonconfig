@@ -1,0 +1,50 @@
+#!/bin/sh
+#
+##
+jsonConfig="${APP_ROOT_PREFIX}/${TOP_PATH}/config/config.json"
+installedOrNot="${APP_ROOT_PREFIX}/${TOP_PATH}/config/.install_not_finished"
+if [ -f $jsonConfig ]; then
+  if [ $DEBUGGING -eq 1 ]; then
+    config=$(cat $jsonConfig | $JQ '.development')
+    DEBUG_WORKSPACE_IOS=$(cat $jsonConfig | $JQ '.ios.jenkinsWorkspace' | tr -d '"')
+    DEBUG_WORKSPACE_ANDROID=$(cat $jsonConfig | $JQ '.android.jenkinsWorkspace' | tr -d '"')
+  else
+    config=$(cat $jsonConfig | $JQ '.production')
+  fi
+  if [ ${TOP_PATH%"$TOP_PATH_NAME"} == ${TOP_PATH} ]; then
+    TOP_PATH=$(echo $config | $JQ '.topPath' | tr -d '"')
+  fi
+  OUTPUT_PREFIX=$(echo $config | $JQ '.outputPrefix' | tr -d '"')
+  ANDROID_HOME=$(cat $jsonConfig | $JQ '.android.androidHome' | tr -d '"')
+  USING_SLACK=$(test $(cat $jsonConfig | $JQ '.slack.enabled') = true && echo 1 || echo 0)
+  SLACK_CHANNEL=$(cat $jsonConfig | $JQ '.slack.channel' | tr -d '"')
+  USING_TEAMS_WEBHOOK=$(test $(cat $jsonConfig | $JQ '.teams.enabled') = true && echo 1 || echo 0)
+  TEAMS_WEBHOOK=$(cat $jsonConfig | $JQ '.teams.webhook' | tr -d '"')
+  APP_BUNDLE_IDENTIFIER_ANDROID=$(cat $jsonConfig | $JQ '.android.packageId' | tr -d '"')
+  Obfuscation_INPUT_FILE=$(cat $jsonConfig | $JQ '.android.obfuscationInputFile' | tr -d '"')
+  outputGoogleStoreSuffix=$(cat $jsonConfig | $JQ '.android.outputGoogleStoreSuffix' | tr -d '"')
+  outputOneStoreSuffix=$(cat $jsonConfig | $JQ '.android.outputOneStoreSuffix' | tr -d '"')
+  INFO_PLIST=$(cat $jsonConfig | $JQ '.ios.InfoPlist' | tr -d '"')
+  USING_SCP=$(test $(cat $jsonConfig | $JQ '.ssh.enabled') = true && echo 1 || echo 0)
+  frontEndPoint=$(echo $config | $JQ '.frontEndPoint' | tr -d '"')
+  frontEndProtocol=$(echo $config | $JQ '.frontEndProtocol' | tr -d '"')
+  FRONTEND_POINT="$frontEndProtocol://$frontEndPoint"
+  ConfigJavaHome=$(cat $jsonConfig | $JQ '.android.javaHome' | tr -d '"')
+  USING_MAIL=$(test $(cat $jsonConfig | $JQ '.mail.domesticEnabled') = true && echo 1 || echo 0)
+  PROJECT_NAME=$(cat $jsonConfig | $JQ '.ios.projectName' | tr -d '"')
+  POD_FILE=$(cat $jsonConfig | $JQ '.ios.podFile' | tr -d '"')
+  sudoPassword=$(cat $jsonConfig | $JQ '.ios.sudoPassword' | tr -d '"')
+  jenkinsUser=$(cat $jsonConfig | $JQ '.ios.jenkinsUser' | tr -d '"')
+  isFlutterEnabled=$(test $(cat $jsonConfig | $JQ '.Flutter.enabled') = true && echo 1 || echo 0)
+  FlutterBin=$(cat $jsonConfig | $JQ '.Flutter.path' | tr -d '"')
+  ANDROID_APP_PATH=$(cat $jsonConfig | $JQ '.android.appPath' | tr -d '"')
+  isReactNativeEnabled=$(test $(cat $jsonConfig | $JQ '.ReactNative.enabled') = true && echo 1 || echo 0)
+  if [ $isReactNativeEnabled -eq 1 ]; then
+    NodePath=$(cat $jsonConfig | $JQ '.ReactNative.path' | tr -d '"')
+    ReactNativeBin="${NodePath}/npm"
+    export PATH=${NodePath}:$PATH
+  else
+    NodePath=""
+    ReactNativeBin=""
+  fi
+fi

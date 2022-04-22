@@ -1,0 +1,191 @@
+#!/bin/sh
+##
+if [ $USING_TEAMS_WEBHOOK -eq 1 ]; then
+        BINARY_FACTS=""
+        if [[ "$INPUT_OS" == "ios" ]]; then
+        GIT_BROWSER_URL=$(cat $jsonConfig | $JQ '.ios.gitBrowseUrl' | tr -d '"')
+        ########
+        if [ $IS_RELEASE -eq 1 ]; then
+        BINARY_TITLE="iOS 검증용"
+        if [ $USING_APPSTORE -eq 1 ]; then
+                BINARY_FACTS="${BINARY_FACTS}{
+                                \"name\": \"${APPSTORE_TITLE}\",
+                                \"value\": \"${VERSION_STRING}[${APPSTORE_TITLE}.ipa 다운로드](${HTTPS_PREFIX}${OUTPUT_FILENAME_APPSTORE_IPA}) (${SIZE_STORE_APP_FILE}B)\"
+                        }"
+        fi
+        if [ $USING_ADHOC -eq 1 ]; then
+                if [[ "$BINARY_FACTS" != "" ]]; then
+                BINARY_FACTS="${BINARY_FACTS}, "
+                fi
+                BINARY_FACTS="${BINARY_FACTS}{
+                                \"name\": \"${ADHOC_TITLE}\",
+                                \"value\": \"${VERSION_STRING}[${ADHOC_TITLE}.ipa 다운로드](${HTTPS_PREFIX}${OUTPUT_FILENAME_ADHOC_IPA}) (${SIZE_ADHOC_APP_FILE}B)\"
+                        }"
+        fi
+        if [ $USING_ENTERPRISE -eq 1 ]; then
+                if [[ "$BINARY_FACTS" != "" ]]; then
+                BINARY_FACTS="${BINARY_FACTS}, "
+                fi
+                BINARY_FACTS="${BINARY_FACTS}{
+                                \"name\": \"${ENTER_TITLE}\",
+                                \"value\": \"${VERSION_STRING}[${ENTER_TITLE}.ipa 다운로드](${HTTPS_PREFIX}${OUTPUT_FILENAME_ENTER_IPA}) (${SIZE_ENTER_APP_FILE}B)\"
+                        }"
+        fi
+        if [ $USING_APPSTORE -eq 1 ]; then
+                if [[ "$BINARY_FACTS" != "" ]]; then
+                BINARY_FACTS="${BINARY_FACTS}, "
+                fi
+                BINARY_FACTS="${BINARY_FACTS}{
+                                \"name\": \"IxShieldCheck (PNG)\",
+                                \"value\": \"${VERSION_STRING}[IxShield.png 다운로드](${HTTPS_PREFIX}${OUTPUT_FILENAME_APPSTORE_IX_SHIELD_CHECK})\"
+                        }"
+        fi
+        else
+        BINARY_TITLE="iOS 테스트"
+        if [ $USING_ADHOC -eq 1 ]; then
+                if [[ "$BINARY_FACTS" != "" ]]; then
+                BINARY_FACTS="${BINARY_FACTS}, "
+                fi
+                BINARY_FACTS="${BINARY_FACTS}{
+                                \"name\": \"${ADHOC_TITLE}\",
+                                \"value\": \"${VERSION_STRING}[${ADHOC_TITLE}.ipa 다운로드](${HTTPS_PREFIX}${OUTPUT_FILENAME_ADHOC_IPA}) (${SIZE_ADHOC_APP_FILE}B)\"
+                        }"
+        fi
+        if [ $USING_ENTERPRISE -eq 1 ]; then
+                if [[ "$BINARY_FACTS" != "" ]]; then
+                BINARY_FACTS="${BINARY_FACTS}, "
+                fi
+                BINARY_FACTS="${BINARY_FACTS}{
+                                \"name\": \"${ENTER_TITLE}\",
+                                \"value\": \"${VERSION_STRING}[${ENTER_TITLE}.ipa 다운로드](${HTTPS_PREFIX}${OUTPUT_FILENAME_ENTER_IPA}) (${SIZE_ENTER_APP_FILE}B)\"
+                        }"
+        fi
+        fi
+        ########
+        JSON_ALL="{
+                \"@type\": \"MessageCard\",
+                \"@context\": \"${FRONTEND_POINT}/${TOP_PATH}/dist_uaqa.php\",
+                \"themeColor\": \"${THEME_COLOR}\",
+                \"summary\": \"Jenkins build completed\",
+                \"sections\": [
+                {
+                        \"heroImage\": {
+                        \"image\": \"${FRONTEND_POINT}/${TOP_PATH}/${ICON}\"
+                        }
+                },
+                {
+                        \"activityTitle\": \"${HOSTNAME} > ${BINARY_TITLE} ${APP_NAME}.App\",
+                        \"activitySubtitle\": \"$(/bin/date '+%Y.%m.%d %H:%M') by ${BUILD_TAG}\",
+                        \"activityImage\": \"${FRONTEND_POINT}/${TOP_PATH}/${ICON}\",
+                        \"text\": \"${CLIENT_NAME} ${APP_NAME} 앱: Jenkins(${BUILD_NUMBER}) - ${GIT_BRANCH} (commit: [${GIT_COMMIT}](${GIT_BROWSER_URL}/${GIT_COMMIT}))\",
+                        \"facts\": [${BINARY_FACTS}, {
+                                \"name\": \"설치 및 다운로드 사이트\",
+                                \"value\": \"${CLIENT_TITLE} [${SITE_URL}](${SITE_URL}) (ID/PW: ${SITE_ID_PW})\"
+                        }, {
+                                \"name\": \"배포 웹사이트 (내부 QA용)\",
+                                \"value\": \"내부 QA 사이트 [바로가기](${FRONTEND_POINT}/${TOP_PATH}/ios/dist_ios.php) (ID/PW: ${QC_ID_PW})\"
+                        }, {
+                                \"name\": \"빌드 환경\",
+                                \"value\": \"<pre>${OTHER_BUILD_ENV}$($XCODE -version)\nCocoaPod $($POD --version)</pre>\"
+                        }, {
+                                \"name\": \"Jenkin 작업 결과\",
+                                \"value\": \"Jenkin 사이트 [바로가기](${BUILD_URL})\"
+                        }],
+                        \"markdown\": true
+                }]
+        }"
+        else # Android from here
+        GIT_BROWSER_URL=$(cat $jsonConfig | $JQ '.android.gitBrowseUrl' | tr -d '"')
+        ########
+        if [ $IS_RELEASE -eq 1 ]; then
+        BINARY_TITLE="Android 검증용"
+        if [ $USING_GOOGLESTORE -eq 1 ]; then
+                if [[ "$BINARY_FACTS" != "" ]]; then
+                BINARY_FACTS="${BINARY_FACTS}, "
+                fi
+                BINARY_FACTS="${BINARY_FACTS}{
+                                \"name\": \"${GOOGLE_TITLE} 배포용\",
+                                \"value\": \"${VERSION_STRING}[${GRADLE_TASK_GOOGLESTORE} 다운로드](${HTTPS_PREFIX}${APK_GOOGLESTORE}) (${SIZE_GOOGLE_APP_FILE}B)\"
+                        }"
+        fi
+        if [ $USING_ONESTORE -eq 1 ]; then
+                if [[ "$BINARY_FACTS" != "" ]]; then
+                BINARY_FACTS="${BINARY_FACTS}, "
+                fi
+                BINARY_FACTS="${BINARY_FACTS}{
+                                \"name\": \"${ONE_TITLE} 배포용\",
+                                \"value\": \"${VERSION_STRING}[${GRADLE_TASK_ONESTORE} 다운로드](${HTTPS_PREFIX}${APK_ONESTORE}) (${SIZE_ONE_APP_FILE}B)\"
+                        }"
+        fi
+        if [ $USING_OBFUSCATION -eq 1 ]; then
+                if [[ "$BINARY_FACTS" != "" ]]; then
+                BINARY_FACTS="${BINARY_FACTS}, "
+                fi
+                BINARY_FACTS="${BINARY_FACTS}{
+                                \"name\": \"난독화증적파일 스크린샷 (PNG)\",
+                                \"value\": \"${VERSION_STRING}[난독화증적파일 스크린샷 다운로드](${HTTPS_PREFIX}${Obfuscation_OUTPUT_FILE})\"
+                        }, "
+                BINARY_FACTS="${BINARY_FACTS}{
+                                \"name\": \"난독화스크립트 캡쳐 (PNG)\",
+                                \"value\": \"${VERSION_STRING}[난독화스크립트 캡쳐 다운로드](${HTTPS_PREFIX}${Obfuscation_SCREENSHOT})\"
+                        }"
+        fi
+        else
+        BINARY_TITLE="Android 테스트"
+        if [ $USING_TESTSERVER -eq 1 ]; then
+                if [[ "$BINARY_FACTS" != "" ]]; then
+                BINARY_FACTS="${BINARY_FACTS}, "
+                fi
+                BINARY_FACTS="${BINARY_FACTS}{
+                                \"name\": \"${GRADLE_TASK_TESTSERVER}(TB)\",
+                                \"value\": \"${VERSION_STRING}[${GRADLE_TASK_TESTSERVER}.apk 다운로드](${HTTPS_PREFIX}${OUTPUT_APK_TESTSERVER}) (${SIZE_TEST_APP_FILE}B)\"
+                        }"
+        fi
+        if [ $USING_LIVESERVER -eq 1 ]; then
+                if [[ "$BINARY_FACTS" != "" ]]; then
+                BINARY_FACTS="${BINARY_FACTS}, "
+                fi
+                BINARY_FACTS="${BINARY_FACTS}{
+                                \"name\": \"${GRADLE_TASK_LIVESERVER}\",
+                                \"value\": \"${VERSION_STRING}[${GRADLE_TASK_LIVESERVER}.apk 다운로드](${HTTPS_PREFIX}${OUTPUT_APK_LIVESERVER}) (${SIZE_LIVE_APP_FILE}B)\"
+                        }"
+        fi
+        fi
+        ########
+        ICON=$(cat $jsonConfig | $JQ '.teams.iconImage' | tr -d '"')
+        JSON_ALL="{
+                \"@type\": \"MessageCard\",
+                \"@context\": \"${FRONTEND_POINT}/${TOP_PATH}/dist_uaqa.php\",
+                \"themeColor\": \"${THEME_COLOR}\",
+                \"summary\": \"Jenkins build completed\",
+                \"sections\": [
+                {
+                        \"heroImage\": {
+                        \"image\": \"${FRONTEND_POINT}/${TOP_PATH}/${ICON}\"
+                        }
+                },
+                {
+                        \"activityTitle\": \"${HOSTNAME} > ${BINARY_TITLE} ${APP_NAME}.App\",
+                        \"activitySubtitle\": \"$(/bin/date '+%Y.%m.%d %H:%M') by ${BUILD_TAG}\",
+                        \"activityImage\": \"${FRONTEND_POINT}/${TOP_PATH}/${ICON}\",
+                        \"text\": \"${CLIENT_NAME} ${APP_NAME} 앱: Jenkins(${BUILD_NUMBER}) - ${GIT_BRANCH} (commit: [${GIT_COMMIT}](${GIT_BROWSER_URL}/${GIT_COMMIT}))\",
+                        \"facts\": [${BINARY_FACTS}, {
+                                \"name\": \"설치 및 다운로드 사이트\",
+                                \"value\": \"${CLIENT_NAME} [${SITE_URL}](${SITE_URL}) (ID/PW: ${SITE_ID_PW})\"
+                        }, {
+                                \"name\": \"배포 웹사이트 (내부 QA용)\",
+                                \"value\": \"내부 QA 사이트 [바로가기](${FRONTEND_POINT}/${TOP_PATH}/android/dist_android.php) (ID/PW: ${QC_ID_PW})\"
+                        }, {
+                                \"name\": \"빌드 환경\",
+                                \"value\": \"<pre>${OTHER_BUILD_ENV}$(cd ${WORKSPACE} && $BUILD_COMMAND --version)</pre>\"
+                        }, {
+                                \"name\": \"Jenkin 작업 결과\",
+                                \"value\": \"Jenkin 사이트 [바로가기](${BUILD_URL})\"
+                        }],
+                        \"markdown\": true
+                }]
+                }"
+        fi
+
+        $CURL -H "Content-Type: application/json" -d "${JSON_ALL}" $TEAMS_WEBHOOK
+fi
