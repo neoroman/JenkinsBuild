@@ -1,0 +1,315 @@
+#!/bin/sh
+##
+if [ $APP_VERSION != "" ]; then
+  if [ $IS_RELEASE -eq 1 ]; then
+    VERSION_STRING="${APP_VERSION}(${BUILD_VERSION})"
+  else
+    VERSION_STRING="${APP_VERSION}.${BUILD_VERSION}"
+  fi
+else
+  VERSION_STRING=""
+fi  
+OUTPUT_FILENAME_ONLY="${OUTPUT_PREFIX}${VERSION_STRING}_${FILE_TODAY}"
+OUTPUT_FILENAME_HTML="${OUTPUT_FILENAME_ONLY}.html"
+TODAY=$(/bin/date "+%Y.%m.%d")
+HTML_INDEX_FILE=${APP_HTML}/index.html
+if [[ "$INPUT_OS" == "ios" ]]; then
+  HTML_DIST_FILE=${APP_HTML}/dist_ios.html
+else
+  HTML_DIST_FILE=${APP_HTML}/dist_android.html
+fi
+if [ $IS_RELEASE -eq 1 ]; then
+  VERSION_FOR_HTML="<font color=red>(검증버전)</font>"
+  HTML_TITLE="$(/bin/date "+%m")월 검증 버전"
+else
+  VERSION_FOR_HTML="<font color=red>(테스트버전)</font>"
+  HTML_TITLE="테스트 버전"
+fi
+##############
+lastJsonFile=$(find ${APP_ROOT} -name "*.json" -and -not -name "${OUTPUT_FILENAME_ONLY}.json" -exec grep -l '"releaseType": "'${RELEASE_TYPE}'"' {} \; | xargs ls -lt | head -1 | awk '{ print $9 }')
+if [ -z $lastBuildDate ]; then
+  lastBuildDate="10.day"
+fi
+if [[ "$lastJsonFile" != "" ]]; then
+  if [ -f $lastJsonFile ]; then
+    #####################
+    appVersion=$(cat $lastJsonFile | $JQ '.appVersion ' | tr -d '"')
+    buildVersion=$(cat $lastJsonFile | $JQ '.buildVersion ' | tr -d '"')
+    buildTime=$(cat $lastJsonFile | $JQ '.buildTime' | tr -d '"')
+    lastBuildDate=$(cat $lastJsonFile | $JQ '.buildTime' | tr -d '"' | sed -e 's/\(.*\) .*/\1/g')
+    jenkinsBuildNumber=$(cat $lastJsonFile | $JQ '.buildNumber' | tr -d '"')
+    if [[ "$INPUT_OS" == "ios" ]]; then
+      gitBrowseUrl=$(cat $jsonConfig | $JQ '.ios.gitBrowseUrl' | tr -d '"')
+    else
+      gitBrowseUrl=$(cat $jsonConfig | $JQ '.android.gitBrowseUrl' | tr -d '"')
+    fi
+    if [ ${gitBrowseUrl%"/"} == ${gitBrowseUrl} ]; then
+      gitBrowseUrl="${gitBrowseUrl}/"
+    fi
+    gitUrl=$(echo ${gitBrowseUrl} | sed -e 's/\//\\\//g' | sed -e 's/\./\\./g')
+    jiraBrowseUrl=$(cat $jsonConfig | $JQ '.jira.url' | tr -d '"')
+    if [ ${jiraBrowseUrl%"/"} == ${jiraBrowseUrl} ]; then
+      jiraBrowseUrl="${jiraBrowseUrl}/"
+    fi
+    jiraUrl=$(echo ${jiraBrowseUrl} | sed -e 's/\//\\\//g' | sed -e 's/\./\\./g')
+    jiraProjectKey=$(cat $jsonConfig | $JQ '.jira.projectKey' | tr -d '"')
+    #####################
+    if [ $IS_RELEASE -eq 1 ]; then
+      GIT_LAST_LOG_ORG=$(cd ${WORKSPACE} && $GIT log --date=format:"%Y%m%d" --pretty=format:"<li><span class=\"tit\">%ad</span><p class=\"txt\">%s</p></li>" --no-merges ${GIT_BRANCH} --since="${lastBuildDate}" | sort -r | uniq)
+      GIT_LAST_LOG=$(echo ${GIT_LAST_LOG_ORG} | sed -e "s/\(${jiraProjectKey}-[0-9]*\)/<a href=${jiraUrl}\1>\1<\/a>/g")
+    else
+      if [[ "$INPUT_OS" == "ios" ]]; then
+        GIT_LAST_LOG_ORG=$(cd ${WORKSPACE} && $GIT log --pretty=format:"<li><span class=\"tit\">%h▶︎</span><p class=\"txt\">%s by %cn</p></li>" --no-merges ${GIT_BRANCH} --since="${lastBuildDate}")
+        GIT_LAST_LOG=$(echo ${GIT_LAST_LOG_ORG} | sed -e "s/\([0-9A-Za-z]*\)▶︎/<a href=${gitUrl}\1>\1<\/a>/g")
+        GIT_LAST_LOG=$(echo ${GIT_LAST_LOG} | sed -e "s/\(${jiraProjectKey}-[0-9]*\)/<a href=${jiraUrl}\1>\1<\/a>/g")
+      else
+        GIT_LAST_LOG_ORG=$(cd ${WORKSPACE} && $GIT log --pretty=format:"<li><span class=\"tit\">%h▶︎</span><p class=\"txt\">%s by %cn</p></li>" --no-merges ${GIT_BRANCH} --since="${lastBuildDate}")
+        GIT_LAST_LOG=$(echo ${GIT_LAST_LOG_ORG} | sed -e "s/\([0-9A-Za-z]*\)▶︎/<a href=${gitUrl}\1>\1<\/a>/g")
+        GIT_LAST_LOG=$(echo ${GIT_LAST_LOG} | sed -e "s/\(${jiraProjectKey}-[0-9]*\)/<a href=${jiraUrl}\1>\1<\/a>/g")
+      fi
+    fi
+  fi
+fi
+if test -z $GIT_LAST_LOG ; then
+  if test -z $lastBuildDate; then
+    lastBuildDate="10.day"
+  fi
+  GIT_LAST_LOG=$(cd ${WORKSPACE} && $GIT log -3 --pretty=%s --no-merges ${GIT_BRANCH} --since="${lastBuildDate}" | sort | uniq | sed -e 's/\[feature development\]//g' | awk '{printf("&nbsp;&nbsp;&nbsp; %s<br \/>\n", $0)}')
+fi
+BUILD_TIME=$(/bin/date "+%Y.%m.%d %H:%M")
+##################################
+# Step 6
+##### JSON Generation START ######
+if [ -f $JQ -a $USING_JSON -eq 1 ]; then
+  OUTPUT_FILENAME_JSON="${OUTPUT_FILENAME_ONLY}.json"
+
+  if [[ "$INPUT_OS" == "ios" ]]; then
+    if [ $IS_RELEASE -eq 1 ]; then
+      if [ $USING_APPSTORE -eq 1 ]; then
+        file1Title="${APPSTORE_TITLE}"
+        file1Size="${SIZE_STORE_APP_FILE}B"
+        file1Binary="${OUTPUT_FILENAME_APPSTORE_IPA}"
+        file1Plist=""
+      else
+        file1Title=""
+        file1Size=""
+        file1Binary=""
+        file1Plist=""
+      fi
+      if [ $USING_ADHOC -eq 1 ]; then
+        file2Title="${ADHOC_TITLE}"
+        file2Size="${SIZE_ADHOC_APP_FILE}B"
+        file2Binary="${OUTPUT_FILENAME_ADHOC_IPA}"
+        file2Plist="${ADHOC_PLIST_ITMS_URL}"
+      else
+        file2Title=""
+        file2Size=""
+        file2Binary=""
+        file2Plist=""
+      fi
+      if [ $USING_ENTERPRISE -eq 1 ]; then
+        file3Title="${ENTER_TITLE}"
+        file3Size="${SIZE_ENTER_APP_FILE}B"
+        file3Binary="${OUTPUT_FILENAME_ENTER_IPA}"
+        file3Plist="${ENTER_PLIST_ITMS_URL}"
+      else
+        file3Title=""
+        file3Size=""
+        file3Binary=""
+        file3Plist=""
+      fi
+      if [ -f $OUTPUT_FOLDER/$OUTPUT_FILENAME_APPSTORE_IX_SHIELD_CHECK ]; then
+        file4Title="IxShieldCheck 화면캡처"
+        file4Size="PNG"
+        file4Binary="${OUTPUT_FILENAME_APPSTORE_IX_SHIELD_CHECK}"
+      else
+        file4Title=""
+        file4Size=""
+        file4Binary=""
+      fi
+      file4Plist=""
+      file5Title=""
+      file5Size=""
+      file5Binary=""
+      file5Plist=""
+    else
+      if [ $USING_ADHOC -eq 1 ]; then
+        file1Title="${ADHOC_TITLE}"
+        file1Size="${SIZE_ADHOC_APP_FILE}B"
+        file1Binary="${OUTPUT_FILENAME_ADHOC_IPA}"
+        file1Plist="${ADHOC_PLIST_ITMS_URL}"
+      else
+        file1Title=""
+        file1Size=""
+        file1Binary=""
+        file1Plist=""
+      fi
+      if [ $USING_ENTERPRISE -eq 1 ]; then
+        file2Title="${ENTER_TITLE}"
+        file2Size="${SIZE_ENTER_APP_FILE}B"
+        file2Binary="${OUTPUT_FILENAME_ENTER_IPA}"
+        file2Plist="${ENTER_PLIST_ITMS_URL}"
+      else
+        file2Title=""
+        file2Size=""
+        file2Binary=""
+        file2Plist=""
+      fi
+      if [ $USING_ENTER4WEB -eq 1 ]; then
+        file3Title="${ENTER4WEB_TITLE}"
+        file3Size="${SIZE_ENTER4WEB_APP_FILE}B"
+        file3Binary="${OUTPUT_FILENAME_ENTER4WEB_IPA}"
+        file3Plist="${ENTER4WEB_PLIST_ITMS_URL}"
+      else
+        file3Title=""
+        file3Size=""
+        file3Binary=""
+        file3Plist=""
+      fi
+      file4Title=""
+      file4Size=""
+      file4Binary=""
+      file4Plist=""
+      file5Title=""
+      file5Size=""
+      file5Binary=""
+      file5Plist=""
+    fi
+  else
+    if [ $IS_RELEASE -eq 1 ]; then
+      GOOGLE_TITLE=$(cat $jsonConfig | $JQ '.android.GoogleStore.title' | tr -d '"')
+      ONE_TITLE=$(cat $jsonConfig | $JQ '.android.OneStore.title' | tr -d '"')
+
+      if [ $USING_GOOGLESTORE -eq 1 ]; then
+        file1Title="${GOOGLE_TITLE}"
+        file1Size="${SIZE_GOOGLE_APP_FILE}B"
+        file1Binary="${APK_GOOGLESTORE}"
+        file1Plist=""
+      else
+        file1Title=""
+        file1Size=""
+        file1Binary=""
+        file1Plist=""
+      fi
+      if [ $USING_ONESTORE -eq 1 ]; then
+        file2Title="${ONE_TITLE}"
+        file2Size="${SIZE_ONE_APP_FILE}B"
+        file2Binary="${APK_ONESTORE}"
+        file2Plist=""
+      else
+        file2Title=""
+        file2Size=""
+        file2Binary=""
+        file2Plist=""
+      fi
+      if [ $USING_OBFUSCATION -eq 1 ]; then
+        file3Title="난독화파일_스크린샷"
+        file3Size="PNG"
+        file3Binary="${Obfuscation_OUTPUT_FILE}"
+        file3Plist=""
+        file4Title="난독화스크립트_증적자료"
+        file4Size="PNG"
+        file4Binary="${Obfuscation_SCREENSHOT}"
+        file4Plist=""
+        file5Title="2차 난독화 APK Signing"
+        file5Size="unsigned 버전 업로드 필요"
+        file5Binary="android_signing.php?title=${APK_FILE_TITLE}"
+        file5Plist=""
+      else
+        file3Title=""
+        file3Size=""
+        file3Binary=""
+        file3Plist=""
+        file4Title=""
+        file4Size=""
+        file4Binary=""
+        file4Plist=""
+        file5Title=""
+        file5Size=""
+        file5Binary=""
+        file5Plist=""
+      fi
+    else
+      LIVE_TITLE=$(cat $jsonConfig | $JQ '.android.LiveServer.title' | tr -d '"')
+      TEST_TITLE=$(cat $jsonConfig | $JQ '.android.TestServer.title' | tr -d '"')
+
+      file1Title="${LIVE_TITLE}"
+      file1Size="${SIZE_LIVE_APP_FILE}B"
+      file1Binary="${OUTPUT_APK_LIVESERVER}"
+      file1Plist=""
+      file2Title="${TEST_TITLE}"
+      file2Size="${SIZE_TEST_APP_FILE}B"
+      file2Binary="${OUTPUT_APK_TESTSERVER}"
+      file2Plist=""
+      file3Title=""
+      file3Size=""
+      file3Binary=""
+      file3Plist=""
+      file4Title=""
+      file4Size=""
+      file4Binary=""
+      file4Plist=""
+      file5Title=""
+      file5Size=""
+      file5Binary=""
+      file5Plist=""
+    fi
+  fi
+
+  JSON_STRING=$($JQ -n \
+    --arg title "${HTML_TITLE}" \
+    --arg av "${APP_VERSION}" \
+    --arg bv "${BUILD_VERSION}" \
+    --arg bn "${BUILD_NUMBER}" \
+    --arg bt "${BUILD_TIME}" \
+    --arg vk "${VERSION_KEY}" \
+    --arg rt "${RELEASE_TYPE}" \
+    --arg url_prefix "${HTTPS_PREFIX}" \
+    --arg file1_title "${file1Title}" \
+    --arg file1_size "${file1Size}" \
+    --arg file1_binary "${file1Binary}" \
+    --arg file1_plist "${file1Plist}" \
+    --arg file2_title "${file2Title}" \
+    --arg file2_size "${file2Size}" \
+    --arg file2_binary "${file2Binary}" \
+    --arg file2_plist "${file2Plist}" \
+    --arg file3_title "${file3Title}" \
+    --arg file3_size "${file3Size}" \
+    --arg file3_binary "${file3Binary}" \
+    --arg file3_plist "${file3Plist}" \
+    --arg file4_title "${file4Title}" \
+    --arg file4_size "${file4Size}" \
+    --arg file4_binary "${file4Binary}" \
+    --arg file4_plist "${file4Plist}" \
+    --arg file5_title "${file5Title}" \
+    --arg file5_size "${file5Size}" \
+    --arg file5_binary "${file5Binary}" \
+    --arg file5_plist "${file5Plist}" \
+    --arg git_last_log "${GIT_LAST_LOG}" \
+'{"title": $title, "appVersion": $av, "buildVersion": $bv, "versionKey": $vk, '\
+'"buildNumber": $bn, "buildTime": $bt, "urlPrefix": $url_prefix, "releaseType": $rt, '\
+'"files": [ '\
+'{ "title": $file1_title, "size": $file1_size, "file": $file1_binary, "plist": $file1_plist }, '\
+'{ "title": $file2_title, "size": $file2_size, "file": $file2_binary, "plist": $file2_plist }, '\
+'{ "title": $file3_title, "size": $file3_size, "file": $file3_binary, "plist": $file3_plist }, '\
+'{ "title": $file4_title, "size": $file4_size, "file": $file4_binary, "plist": $file4_plist }, '\
+'{ "title": $file5_title, "size": $file5_size, "file": $file5_binary, "plist": $file5_plist } ], '\
+'"gitLastLog": $git_last_log}')
+
+  echo "${JSON_STRING}" >$OUTPUT_FOLDER/$OUTPUT_FILENAME_JSON
+  chmod 777 $OUTPUT_FOLDER/$OUTPUT_FILENAME_JSON
+
+fi
+
+##################################
+if [ $USING_SCP -eq 1 ]; then
+  # Step 7: Send JSON file to NAS(app.company.com)
+  if [ $DEBUGGING -eq 0 ]; then
+    if [ -f ${OUTPUT_FOLDER}/${OUTPUT_FILENAME_JSON} ]; then
+      if [ $(sendFile ${OUTPUT_FOLDER}/${OUTPUT_FILENAME_JSON} ${NEO2UA_OUTPUT_FOLDER}) -eq 0 ]; then
+        #   echo "Failed to send file"
+        echo "TODO: **NEED** to resend this file => ${OUTPUT_FOLDER}/${OUTPUT_FILENAME_JSON} to ${NEO2UA_OUTPUT_FOLDER}"
+      fi
+    fi
+  fi
+fi

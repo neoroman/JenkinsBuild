@@ -1,0 +1,182 @@
+#!/bin/sh
+##
+## Parsing arguments, https://stackoverflow.com/a/14203146
+while [[ $# -gt 0 ]]; do
+  key="$1"
+  case $key in
+  -p | --platform)
+    INPUT_OS="$2"
+    shift # past argument
+    shift # past value
+    ;;
+  -x | --xcode)
+    XCODE_DEVELOPER="$2"
+    shift # past argument
+    shift # past value
+    ;;
+  -tp | --toppath)
+    TOP_PATH="$2"
+    shift # past argument
+    shift # past value
+    ;;
+  -dr | --docroot)
+    APP_ROOT_PREFIX="$2"
+    shift # past argument
+    shift # past value
+    ;;
+  -ff | --flutterflag)
+    FLUTTER_FLAG="$2"
+    shift # past argument
+    shift # past value
+    ;;
+  -r | --release)
+    IS_RELEASE=1
+    RELEASE_TYPE="release"
+    shift # past argument
+    ;;
+  -d | --debug)
+    DEBUGGING=1
+    shift # past argument
+    ;;
+  no-output)
+    PRODUCE_OUTPUT_USE=0
+    shift # past argument
+    ;;
+  output-exit)
+    PRODUCE_OUTPUT_USE=0
+    OUTPUT_AND_EXIT_USE=1
+    shift # past argument
+    ;;
+  -ctb | --current-tag-branch)
+    LAST_TAG=$($GIT describe --tags)
+    if [ -z $LAST_TAG ]; then
+      LAST_TAG="master"
+    fi
+    $GIT fetch --prune
+    $GIT branch -r | grep -v '\->' | grep -v 'external/' | while read remote; do $GIT branch --track "${remote#origin/}" "$remote" --force >/dev/null; done
+    $GIT fetch --all
+    SYNC_TO_BE=$($GIT branch --contains tags/${LAST_TAG} | grep -vi 'head' | tail -1 | tr -d ' *')
+    $GIT checkout ${SYNC_TO_BE}
+    exit
+    ;;
+  --without-tag-push)
+    WITH_TAG_PUSH=0
+    shift # past argument
+    ;;
+  -pu | --push-to-upstream)
+    upstreamUrl="$2"
+    if [[ "${upstreamUrl#https://}" != "${upstreamUrl}" ]]; then
+      upstreamProtocol="https://"
+      tempUrl="${upstreamUrl#https://}"
+    elif [[ "${upstreamUrl#http://}" != "${upstreamUrl}" ]]; then
+      upstreamProtocol="http://"
+      tempUrl="${upstreamUrl#http://}"
+    fi
+    if [[ "${tempUrl#*:*@}" != "${tempUrl}" ]]; then
+      tempAccount="${tempUrl#*:*@}"
+      upstreamAccount="${tempUrl#@${tempAccount}}"
+      tempUrl="${tempUrl#*:*@}"
+    else
+      exit 1
+    fi
+    if [[ "${tempUrl%%/*}" != "${tempUrl}" ]]; then
+      upstreamDomain="${tempUrl%%/*}"
+    fi
+    if [ $($GIT remote -v | grep "${upstreamDomain}" >/dev/null && [ $? -eq 0 ] && echo 1 || echo 0) -eq 0 ]; then
+      $GIT remote add external $upstreamUrl
+    fi
+    $GIT config user.name $GIT_USER
+    $GIT config user.email $GIT_EMAIL
+    $GIT config core.autocrlf false
+    $GIT fetch --prune
+    CURRENT_BRANCH=$($GIT rev-parse --abbrev-ref HEAD)
+    CURRENT_BRANCH=${CURRENT_BRANCH#"heads/"}
+    $GIT branch -r | grep -v '\->' | grep -v 'external/' | grep -v ${CURRENT_BRANCH} | while read remote; do $GIT branch --track "${remote#origin/}" "$remote" --force >/dev/null; done
+    $GIT fetch --all
+    LAST_TAG=$($GIT describe --tags)
+    if [ -z $LAST_TAG ]; then
+      LAST_TAG="master"
+      SYNC_TO_BE=${LAST_TAG}
+    else
+      SYNC_TO_BE=$($GIT branch --contains tags/${LAST_TAG} | grep -v 'head' | tail -1 | tr -d ' *')
+    fi
+    if [[ ! -z "$SYNC_TO_BE" ]]; then
+      $GIT checkout ${SYNC_TO_BE}
+      $GIT push -u external ${SYNC_TO_BE}
+    fi
+    if [ $WITH_TAG_PUSH -eq 1 ]; then
+      $GIT push -u external --tags -f
+    fi
+    exit
+    ;;
+  * | -h | --help) # unknown option
+    shift          # past argument
+    echo "Usage: $SCRIPT_NAME -p {ios|android} -d"
+    echo ""
+    echo "optional arguments:"
+    echo "   -h, --help        show this help message and exit:"
+    echo "   -p, --platform   {ios,android}"
+    echo "                     assign platform as iOS or Android to processing"
+    echo "   -tp, --toppath   {TOP_PATH}"
+    echo "                     assign TOP_PATH to installing output of iOS or Android"
+    echo "   -d, --debug       debugging mode"
+    exit
+    ;;
+  esac
+done
+################################################################################
+if test -z $TOP_PATH; then
+  TOP_PATH="Company/Projects"
+fi
+USING_SLACK=0
+### Using Teams or Not, 0=Not Using, 1=Using Teams
+USING_TEAMS_WEBHOOK=0
+if test -z $APP_ROOT_PREFIX; then
+  APP_ROOT_PREFIX="${appRootPrefix}"
+fi
+if [ $DEBUGGING -eq 1 ]; then
+  FRONTEND_POINT="http://127.0.0.1"
+  TEAMS_WEBHOOK="${teamWebHook_debug}"
+else
+  FRONTEND_POINT="${frontEndPointUrl}"
+  TEAMS_WEBHOOK="${teamWebHook}"
+fi
+if [ ! -d ${APP_ROOT_PREFIX}/${TOP_PATH} ]; then
+  CURRENT_PATH=$PWD
+  mkdir -p ${APP_ROOT_PREFIX}/${TOP_PATH}
+  if [ -d ${APP_ROOT_PREFIX}/${TOP_PATH} ]; then
+    cd ${APP_ROOT_PREFIX}/${TOP_PATH}
+    TOP_PATH_NAME=$(basename $PWD)
+    cd ..
+    rm -rf $TOP_PATH_NAME
+    $GIT clone ${siteRepositoryUrl} $TOP_PATH_NAME
+    chmod 777 ${APP_ROOT_PREFIX}/${TOP_PATH}
+  fi
+  cd $CURRENT_PATH
+fi
+################################################################################
+if [ ! -d ${APP_ROOT_PREFIX}/${TOP_PATH} ]; then
+  echo ""
+  echo "Error: please make distribution site, like following:"
+  echo "       mkdir -p ${APP_ROOT_PREFIX}/${TOP_PATH}"
+  echo ""
+  exit 2
+fi
+################################################################################
+# JQ=$(which jq)
+if [[ "$JQ" == "" ]]; then
+  if [ -f "/usr/local/bin/jq" ]; then
+    JQ="/usr/local/bin/jq"
+  elif [ -f "/usr/bin/jq" ]; then
+    JQ="/usr/bin/jq"
+  else
+    JQ="/bin/jq"
+  fi
+  if [ ! -f $JQ ]; then
+    echo ""
+    echo "Error: please install `jq` via Homebrew on macOS"
+    echo "       brew install jq"
+    echo "       `jq` is Lightweight and flexible command-line JSON processor"
+    exit
+  fi
+fi

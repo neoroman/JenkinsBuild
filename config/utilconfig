@@ -1,0 +1,40 @@
+#!/bin/sh
+##
+if test -z "${INPUT_OS}"; then
+    ./$SCRIPT_NAME -h
+    exit
+fi
+if [ $DEBUGGING -eq 1 ]; then
+  if test -z $WORKSPACE; then
+    if [[ "$INPUT_OS" == "ios" ]]; then
+      WORKSPACE=$DEBUG_WORKSPACE_IOS
+    else
+      WORKSPACE=$DEBUG_WORKSPACE_ANDROID
+    fi
+  fi
+elif test -z $WORKSPACE; then
+  WORKSPACE="."
+fi
+###################
+if test -z $IS_RELEASE; then
+  if [ -d ".git" ]; then
+    GIT_LAST_TAG=$(cd $WORKSPACE && $GIT describe --tags)
+    if [[ $GIT_LAST_TAG == R* ]]; then
+      IS_RELEASE=1
+      RELEASE_TYPE="release"
+    else
+      IS_RELEASE=0
+      RELEASE_TYPE="develop"
+    fi
+  fi
+fi
+###################
+HOSTNAME=$(hostname)
+A2PS="/usr/local/bin/a2ps"
+GS="/usr/local/bin/gs"
+CONVERT="/usr/local/bin/convert"
+CURL="/usr/bin/curl"
+USING_JSON=1
+###################
+FILE_TODAY=$(/bin/date "+%y%m%d")
+###################

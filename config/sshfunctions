@@ -1,0 +1,69 @@
+#!/bin/sh
+#
+##
+if [ $USING_SCP -eq 1 ]; then
+  SSH=$(which ssh)
+  SCP=$(which scp)
+  SFTP_PORT=$(cat $jsonConfig | $JQ '.ssh.port' | tr -d '"')
+  SFTP_ENDPOINT=$(cat $jsonConfig | $JQ '.ssh.endpoint' | tr -d '"')
+  SFTP_TARGET=$(cat $jsonConfig | $JQ '.ssh.target' | tr -d '"')
+  function checkDirExist() {
+    DIR="$1"
+    $SSH -p ${SFTP_PORT} ${SFTP_ENDPOINT} test -d ${SFTP_TARGET}/${DIR} && echo 1 || echo 0
+    ## Example
+    # if [ $(checkDirExist ios_distributions) -eq 1 ]; then
+    #   echo "Dir exist: ios_distributions"
+    # else
+    #   echo "Dir **NOT** exist: ios_distributions"
+    # fi
+  }
+  function checkFileExist() {
+    FILE="$1"
+    $SSH -p ${SFTP_PORT} ${SFTP_ENDPOINT} test -f ${SFTP_TARGET}/${FILE} && echo 1 || echo 0
+    ## Example
+    # if [ $(checkFileExist ios_distributions/ExportOptions.plist) -eq 1 ]; then
+    #   echo "File exist: ios_distributions/ExportOptions.plist"
+    # else
+    #   echo "File **NOT** exist: ios_distributions/ExportOptions.plist"
+    # fi
+  }
+  function sendFile() {
+    FILE="$1"
+    DEST="$2"
+    $SCP -pq -P ${SFTP_PORT} ${FILE} ${SFTP_ENDPOINT}:${SFTP_TARGET}/${DEST}/ && echo 1 || echo 0
+    ## Example
+    # if [ $(sendFile $0 ios_distributions) -eq 1 ]; then
+    #   echo "Successfully send file $0 to ios_distributions"
+    # else
+    #   echo "Failed to send file"
+    # fi
+  }
+  function removeFile() {
+    FILE="$1"
+    if [ $(checkFileExist ${FILE}) -eq 1 ]; then
+      $SSH -p ${SFTP_PORT} ${SFTP_ENDPOINT} rm ${SFTP_TARGET}/${FILE} && echo 1 || echo 0
+    else
+      echo 0
+    fi
+    ## Example
+    # if [ $(removeFile ios_distributions/$0) -eq 1 ]; then
+    #   echo "Successfully remove $0"
+    # else
+    #   echo "Fail to remove $0"
+    # fi
+  }
+  function makeDir() {
+    DIR="$1"
+    if [ $(checkDirExist ${DIR}) -eq 0 ]; then
+      $SSH -p ${SFTP_PORT} ${SFTP_ENDPOINT} mkdir ${SFTP_TARGET}/${DIR} && echo 1 || echo 0
+    else
+      echo 1
+    fi
+    ## Example
+    # if [ $(makeDir ios_distributions/abc) -eq 1 ]; then
+    #   echo "Successfully make dir ios_distributions/abc"
+    # else
+    #   echo "Fail to make dir ios_distributions/abc"
+    # fi
+  }
+fi

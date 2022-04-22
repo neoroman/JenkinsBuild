@@ -1,0 +1,138 @@
+#!/bin/sh
+##
+#
+USING_HTML=$(test $(echo $config | $JQ '.usingHTML') = true && echo 1 || echo 0)
+if [ -d $APP_HTML -a $USING_HTML -eq 1 ]; then
+  HTML_OUTPUT="
+
+
+    <"'!'"-- ${APP_VERSION}(${BUILD_VERSION}) jenkins(${BUILD_NUMBER}) START -->
+    <div class=\"large-4 columns\"><a href=\"../remove_html_snippet.php?os=ios&title=${APP_VERSION}($BUILD_VERSION)%20${VERSION_FOR_HTML}%20jenkins(${BUILD_NUMBER})\"><img src=\"../../../download-res/img/mainBtnClose.png\" style=\"position: relative;margin-top: -15px;margin-right: 10px;right: 0px;float: right;\"></a>
+    <ul class=\"pricing-table\">
+    <li class=\"price\" style=\"background-color:lightblue!important\"><div class=\"rTable\">
+      <div class=\"rTableRow\" style=\"display: table-row;margin:0px;\">
+      <div class=\"rTableCell\" style=\"display: table-cell;margin-top:0px;text-align: center;vertical-align:center;\"><font color=\"#3083FB\">GApp <b>iOS</b></font> v${APP_VERSION}(${BUILD_VERSION})<br />(<font color=red>검증버전</font>)<br /><font size=1>(${BUILD_TIME})</font></div>
+      <div class=\"rTableCell\" style=\"display: table-cell;margin-top:0px;text-align: center;vertical-align:center;\">
+        <"'!'"-- RELEASE:::${file1Title} (${file1Size}B): ${HTTPS_PREFIX}${file1Binary} -->
+        <span style=\"position: relative;margin: 0px;right: 0px;float: center;font-size:0.5em;\"><a class=\"button secondary radius\" style=\"white-space:nowrap; height:25px; padding-left:10px; padding-right:10px;\" 
+        href=\"${HTTPS_PREFIX}${file1Binary}\">$file1Title (${file1Size}B)<img src=\"../../../download-res/img/icons8-downloading_updates.png\" style=\"position: relative;margin-top: -6px;margin-left: 18px;right: 0px;float: right;width:auto;height:1.5em\"></a></span>
+        <"'!'"-- RELEASE:::${file2Title} (${file2Size}B): ${HTTPS_PREFIX}${file2Binary} -->
+        <span style=\"position: relative;margin: 0px;right: 0px;float: center;font-size:0.5em;\"><a class=\"button secondary radius\" style=\"white-space:nowrap; height:25px; padding-left:10px; padding-right:10px;\" 
+        href=\"javascript:appDownloader('${ITMS_PREFIX}${file2Plist}');\">${VERSION_FOR_HTML} $file2Title (${file2Size}B)<img src=\"../../../download-res/img/icons8-downloading_updates.png\" style=\"position: relative;margin-top: -6px;margin-left: 18px;right: 0px;float: right;width:auto;height:1.5em\"></a></span>
+        <"'!'"-- RELEASE:::${file3Title} (${file3Size}B): ${HTTPS_PREFIX}${file3Binary} -->
+        <span style=\"position: relative;margin: 0px;right: 0px;float: center;font-size:0.5em;\"><a class=\"button secondary radius\" style=\"white-space:nowrap; height:25px; padding-left:20px; padding-right:20px;\" 
+        href=\"javascript:appDownloader('${ITMS_PREFIX}${file3Plist}');\">${VERSION_FOR_HTML} Enterprise (${file3Size}B)<img src=\"../../../download-res/img/icons8-downloading_updates.png\" style=\"position: relative;margin-top: -6px;margin-left: 18px;right: 0px;float: right;width:auto;height:1.5em\"></a></span>
+        <"'!'"-- RELEASE:::${file4Title} (PNG): ${HTTPS_PREFIX}${file4Binary} -->
+        <span style=\"position: relative;margin: 0px;right: 0px;float: center;font-size:0.5em;\"><a class=\"button secondary radius\" style=\"white-space:nowrap; height:25px; padding-left:10px; padding-right:10px;\"
+        href=\"${HTTPS_PREFIX}${file4Binary}\" download=\"${file4Binary}\">${file4Title} (PNG)<img src=\"../../../download-res/img/icons8-downloading_updates.png\" style=\"position: relative;margin-top: -6px;margin-left: 18px;right: 0px;float: right;width:auto;height:1.5em\"></a></span>
+        <"'!'"-- PRERELEASE_${APP_VERSION}.${BUILD_VERSION}_$(/bin/date "+%y%m%d")_FOR_SAM_LOG -->
+      </div>
+      </div>
+      </div>
+    </li>
+    <a class=\"price-table-toggle\">+ Show History</a>
+    <ul class=\"price-table-features\">
+      <li class=\"none\"><div align=left>
+      <div align=center><font color=\"#34bebe\"><b>iOS</b></font>&nbsp;&nbsp;v${APP_VERSION}(${BUILD_VERSION}): ${HTML_TITLE}<br />(${BUILD_TIME})</div>
+        <hr />
+        <br />${GIT_LAST_LOG}
+        </div>
+      </li>
+    </ul>
+    </ul>
+    </div>
+    <"'!'"-- ${APP_VERSION}(${BUILD_VERSION}) jenkins(${BUILD_NUMBER}) END -->
+
+
+  "
+
+  if [ $IS_RELEASE -eq 1 ]; then
+    TEMP_FILE_BASENAME="temp_release"
+  else
+    TEMP_FILE_BASENAME="temp"
+  fi
+  echo "$HTML_OUTPUT" >$APP_HTML/$TEMP_FILE_BASENAME.html
+  if [ -f $HTML_INDEX_FILE ]; then
+    cp -f $HTML_INDEX_FILE $HTML_INDEX_FILE.bak
+    cat $HTML_INDEX_FILE.bak | sed $'s/^M/\\\n/g' >$HTML_INDEX_FILE
+    cp -f $HTML_DIST_FILE $HTML_DIST_FILE.bak
+    cat $HTML_DIST_FILE.bak | sed $'s/^M/\\\n/g' >$HTML_DIST_FILE
+
+    cd $APP_HTML
+    if [[ "$INPUT_OS" == "ios" ]]; then
+      if [ $IS_RELEASE -eq 1 ]; then
+        sed '/NEW_UPLOAD_COLUMN_HERE/r temp_release.html' dist_ios.html >dist_ios2.html
+      else
+        sed '/NEW_UPLOAD_COLUMN_HERE/r temp.html' dist_ios.html >dist_ios2.html
+      fi
+      mv -f dist_ios2.html dist_ios.html
+      chmod 777 index.html
+      chmod 777 dist_ios.html
+      if [ $USING_SCP -eq 1 ]; then
+        if [ $DEBUGGING -eq 0 ]; then
+          if [ $(sendFile ${APP_HTML}/dist_ios.html ${APP_PATH}) -eq 0 ]; then
+            #   echo "Failed to send file"
+            echo "TODO: **NEED** to resend this file => ${APP_HTML}/dist_ios.html to ${APP_PATH}"
+          fi
+        fi
+      fi
+    else
+      if [ $IS_RELEASE -eq 1 ]; then
+        sed '/NEW_UPLOAD_COLUMN_HERE/r temp_release.html' dist_android.html >dist_android2.html
+      else
+        sed '/NEW_UPLOAD_COLUMN_HERE/r temp.html' dist_android.html >dist_android2.html
+      fi
+      mv -f dist_android2.html dist_android.html
+      chmod 777 index.html
+      chmod 777 dist_android.html
+      if [ $USING_SCP -eq 1 ]; then
+        if [ $DEBUGGING -eq 0 ]; then
+          if [ $(sendFile ${APP_HTML}/dist_android.html ${APP_PATH}) -eq 0 ]; then
+            #   echo "Failed to send file"
+            echo "TODO: **NEED** to resend this file => ${APP_HTML}/dist_android.html to ${APP_PATH}"
+          fi
+        fi
+      fi
+    fi
+    ##################################
+    if [ $USING_SCP -eq 1 ]; then
+      if [ $DEBUGGING -eq 0 ]; then
+        if [ $(sendFile ${APP_HTML}/index.html ${APP_PATH}) -eq 0 ]; then
+          #   echo "Failed to send file"
+          echo "TODO: **NEED** to resend this file => ${APP_HTML}/index.html to ${APP_PATH}"
+        fi
+      fi
+    fi
+    if [ -f $TEMP_FILE_BASENAME.html ]; then
+      cp -f $TEMP_FILE_BASENAME.html $OUTPUT_FOLDER/zzz_$OUTPUT_FILENAME_HTML
+      ##################################
+      if [ $USING_SCP -eq 1 ]; then
+        if [ $DEBUGGING -eq 0 ]; then
+          if [ $(sendFile ${OUTPUT_FOLDER}/zzz_${OUTPUT_FILENAME_HTML} ${NEO2UA_OUTPUT_FOLDER}) -eq 0 ]; then
+            #   echo "Failed to send file"
+            echo "TODO: **NEED** to resend this file => ${OUTPUT_FOLDER}/zzz_${OUTPUT_FILENAME_HTML} to ${NEO2UA_OUTPUT_FOLDER}"
+          fi
+        fi
+      fi
+    fi
+  fi
+else
+  if [[ "$INPUT_OS" == "ios" ]]; then
+    touch $APP_HTML/dist_ios.html
+    chmod 777 $APP_HTML/dist_ios.html
+  else
+    touch $APP_HTML/dist_android.html
+    chmod 777 $APP_HTML/dist_android.html
+  fi
+  chmod 777 $APP_HTML/index.html
+  touch $OUTPUT_FOLDER/zzz_$OUTPUT_FILENAME_HTML
+  ##################################
+  if [ $USING_SCP -eq 1 ]; then
+    if [ $DEBUGGING -eq 0 ]; then
+      if [ $(sendFile ${OUTPUT_FOLDER}/zzz_${OUTPUT_FILENAME_HTML} ${NEO2UA_OUTPUT_FOLDER}) -eq 0 ]; then
+        #   echo "Failed to send file"
+        echo "TODO: **NEED** to resend this file => ${OUTPUT_FOLDER}/zzz_${OUTPUT_FILENAME_HTML} to ${NEO2UA_OUTPUT_FOLDER}"
+      fi
+    fi
+  fi
+fi
