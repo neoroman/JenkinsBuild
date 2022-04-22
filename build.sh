@@ -647,10 +647,12 @@ if [[ "$INPUT_OS" == "android" ]]; then
               $FlutterBin build ${flutterBuildKey} --flavor ${GRADLE_TASK_GOOGLESTORE} ${FLUTTER_FLAG}
             fi
           elif [ $isReactNativeEnabled -eq 1 ]; then
-            if [ $USING_BUNDLE_GOOGLESTORE -eq 1 ]; then
-              $ReactNativeBin run android_prod_bundle
+            if [ -d ${WORKSPACE}/android ]; then
+              cd ${WORKSPACE}/android
+              ./gradlew "${gradleBuildKey}Release"
+              cd ${WORKSPACE}
             else
-              $ReactNativeBin run android_prod_apk
+              ./gradlew "${gradleBuildKey}Release"
             fi
           else
             ./gradlew "${gradleBuildKey}${GRADLE_TASK_GOOGLESTORE}"
@@ -718,10 +720,12 @@ if [[ "$INPUT_OS" == "android" ]]; then
               $FlutterBin build ${flutterBuildKey} --flavor ${GRADLE_TASK_ONESTORE} ${FLUTTER_FLAG}
             fi
           elif [ $isReactNativeEnabled -eq 1 ]; then
-            if [ $USING_BUNDLE_ONESTORE -eq 1 ]; then
-              $ReactNativeBin run android_prod_bundle
+            if [ -d ${WORKSPACE}/android ]; then
+              cd ${WORKSPACE}/android
+              ./gradlew "${gradleBuildKey}Release"
+              cd ${WORKSPACE}
             else
-              $ReactNativeBin run android_prod_apk
+              ./gradlew "${gradleBuildKey}Release"
             fi
           else
             ./gradlew "${gradleBuildKey}${GRADLE_TASK_ONESTORE}"
@@ -792,10 +796,12 @@ if [[ "$INPUT_OS" == "android" ]]; then
               $FlutterBin build ${flutterBuildKey} --flavor ${GRADLE_TASK_LIVESERVER} ${FLUTTER_FLAG}
             fi
           elif [ $isReactNativeEnabled -eq 1 ]; then
-            if [ $USING_BUNDLE_LIVESERVER -eq 1 ]; then
-              $ReactNativeBin run android_prod_bundle
+            if [ -d ${WORKSPACE}/android ]; then
+              cd ${WORKSPACE}/android
+              ./gradlew "${gradleBuildKey}Release"
+              cd ${WORKSPACE}
             else
-              $ReactNativeBin run android_prod_apk
+              ./gradlew "${gradleBuildKey}Release"
             fi
           else
             ./gradlew "${gradleBuildKey}${GRADLE_TASK_LIVESERVER}"
@@ -872,10 +878,12 @@ if [[ "$INPUT_OS" == "android" ]]; then
               $FlutterBin build ${flutterBuildKey} --flavor ${GRADLE_TASK_TESTSERVER} ${FLUTTER_FLAG}
             fi
           elif [ $isReactNativeEnabled -eq 1 ]; then
-            if [ $USING_BUNDLE_TESTSERVER -eq 1 ]; then
-              $ReactNativeBin run android_tb_bundle
+            if [ -d ${WORKSPACE}/android ]; then
+              cd ${WORKSPACE}/android
+              ./gradlew "${gradleBuildKey}Debug"
+              cd ${WORKSPACE}
             else
-              $ReactNativeBin run android_debug_apk
+              ./gradlew "${gradleBuildKey}Release"
             fi
           else
             ./gradlew "${gradleBuildKey}${GRADLE_TASK_TESTSERVER}"
