@@ -1,0 +1,46 @@
+#!/bin/sh
+##
+cd $APP_ROOT
+SHORT_GIT_LOG="${HTML_TITLE}"
+###########
+if [ $IS_RELEASE -eq 1 ]; then
+THEME_COLOR="619FFA"
+VERSION_STRING="v${APP_VERSION}(${BUILD_VERSION}) "
+else
+THEME_COLOR="5DF0D1"
+VERSION_STRING="v${APP_VERSION}.${BUILD_VERSION} "
+fi
+###########
+if [ -f "${APP_ROOT_PREFIX}/${TOP_PATH}/lang/default.json" ]; then
+language=$(cat "${APP_ROOT_PREFIX}/${TOP_PATH}/lang/default.json" | $JQ '.LANGUAGE' | tr -d '"')
+lang_file="${APP_ROOT_PREFIX}/${TOP_PATH}/lang/lang_${language}.json"
+CLIENT_NAME=$(cat $lang_file | $JQ '.client.title' | tr -d '"')
+APP_NAME=$(cat $lang_file | $JQ '.app.name' | tr -d '"')
+CLIENT_TITLE=$(cat $lang_file | $JQ '.title.h2_client' | tr -d '"')
+SITE_URL=$(cat $lang_file | $JQ '.client.short_url' | tr -d '"')
+SITE_ID=$(cat $jsonConfig | $JQ '.users.app.userId' | tr -d '"')
+SITE_PW=$(cat $jsonConfig | $JQ '.users.app.password' | tr -d '"')
+SITE_ID_PW="${SITE_ID}/${SITE_PW}"
+QC_ID=$(cat $jsonConfig | $JQ '.users.qc.userId' | tr -d '"')
+QC_PW=$(cat $jsonConfig | $JQ '.users.qc.password' | tr -d '"')
+QC_ID_PW="${QC_ID}/${QC_PW}"
+else
+CLIENT_NAME="Company Projects"
+APP_NAME="SomeApp"
+CLIENT_TITLE="{고객사} 앱 배포"
+SITE_URL="https://bit.ly/client_site"
+SITE_ID_PW="app/qwer1234"
+QC_ID_PW="qc/insu1234"
+fi
+OTHER_BUILD_ENV=""
+if [ $isFlutterEnabled -eq 1 ]; then
+BUILD_COMMAND=$FlutterBin
+elif [ $isReactNativeEnabled -eq 1 ]; then
+BUILD_COMMAND="./android/gradlew"
+OTHER_BUILD_ENV="node "$(node --version)
+OTHER_BUILD_ENV="${OTHER_BUILD_ENV}\nnpm v"$(npm --version)
+OTHER_BUILD_ENV="${OTHER_BUILD_ENV}\n"
+else
+BUILD_COMMAND="./gradlew"
+fi
+###########
