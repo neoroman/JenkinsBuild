@@ -4,7 +4,7 @@
 #
 if test -z $ConfigJavaHome; then
     export JAVA_HOME="/usr/local/opt/openjdk@8"
-else
+elif [[ "$ConfigJavaHome" != "null" ]]; then
     export JAVA_HOME="${ConfigJavaHome}"
 fi
 export ANDROID_SDK_ROOT="${ANDROID_HOME}"
