@@ -49,6 +49,9 @@ if [[ "${APP_VERSION}" == ".." ]]; then
     fi
     else
     APP_VERSION=$(grep 'versionName' ${BUILD_GRADLE_CONFIG} | sed -e 's/versionName "\(.*\)"/\1/' | tr -d ' ')
+    if [[ $APP_VERSION == "versionName"* ]]; then
+        APP_VERSION=$(grep 'versionName' ${BUILD_GRADLE_CONFIG} | sed -e "s/versionName '\(.*\)'/\1/" | tr -d ' ')
+    fi
     if [ $isReactNativeEnabled -eq 1 ]; then
         BUILD_VERSION=$(grep 'versionCode' ${BUILD_GRADLE_CONFIG} | head -1 | sed -e 's/versionCode \(.*\)$/\1/' | tr -d ' ')
     else
