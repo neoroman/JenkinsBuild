@@ -277,10 +277,14 @@ else
         elif [ $isReactNativeEnabled -eq 1 ]; then
             if [ -d ${WORKSPACE}/android ]; then
                 cd ${WORKSPACE}/android
-                ./gradlew "${gradleBuildKey}Release"
+            fi
+            GRADLE_TASK="${gradleBuildKey}Release"
+            if [[ $(./gradlew tasks 2>&1 | grep -v '^Warning' | grep "${gradleBuildKey}${GRADLE_TASK_GOOGLESTORE}" | awk '{print $1}' | tr -d ' ') == "${gradleBuildKey}${GRADLE_TASK_GOOGLESTORE}" ]]; then
+                GRADLE_TASK="${gradleBuildKey}${GRADLE_TASK_GOOGLESTORE}Release"
+            fi
+            ./gradlew "${GRADLE_TASK}"
+            if [ -d ${WORKSPACE}/android ]; then
                 cd ${WORKSPACE}
-            else
-                ./gradlew "${gradleBuildKey}Release"
             fi
         else
             ./gradlew "${gradleBuildKey}${GRADLE_TASK_GOOGLESTORE}"
@@ -350,10 +354,14 @@ else
         elif [ $isReactNativeEnabled -eq 1 ]; then
             if [ -d ${WORKSPACE}/android ]; then
                 cd ${WORKSPACE}/android
-                ./gradlew "${gradleBuildKey}Release"
+            fi
+            GRADLE_TASK="${gradleBuildKey}Release"
+            if [[ $(./gradlew tasks 2>&1 | grep -v '^Warning' | grep "${gradleBuildKey}${GRADLE_TASK_ONESTORE}" | awk '{print $1}' | tr -d ' ') == "${gradleBuildKey}${GRADLE_TASK_ONESTORE}" ]]; then
+                GRADLE_TASK="${gradleBuildKey}${GRADLE_TASK_ONESTORE}Release"
+            fi
+            ./gradlew "${GRADLE_TASK}"
+            if [ -d ${WORKSPACE}/android ]; then
                 cd ${WORKSPACE}
-            else
-                ./gradlew "${gradleBuildKey}Release"
             fi
         else
             ./gradlew "${gradleBuildKey}${GRADLE_TASK_ONESTORE}"
@@ -426,10 +434,14 @@ else
         elif [ $isReactNativeEnabled -eq 1 ]; then
             if [ -d ${WORKSPACE}/android ]; then
                 cd ${WORKSPACE}/android
-                ./gradlew "${gradleBuildKey}Release"
+            fi
+            GRADLE_TASK="${gradleBuildKey}Release"
+            if [[ $(./gradlew tasks 2>&1 | grep -v '^Warning' | grep "${gradleBuildKey}${GRADLE_TASK_LIVESERVER}" | awk '{print $1}' | tr -d ' ') == "${gradleBuildKey}${GRADLE_TASK_LIVESERVER}" ]]; then
+                GRADLE_TASK="${gradleBuildKey}${GRADLE_TASK_LIVESERVER}Release"
+            fi
+            ./gradlew "${GRADLE_TASK}"
+            if [ -d ${WORKSPACE}/android ]; then
                 cd ${WORKSPACE}
-            else
-                ./gradlew "${gradleBuildKey}Release"
             fi
         else
             ./gradlew "${gradleBuildKey}${GRADLE_TASK_LIVESERVER}"
@@ -508,10 +520,14 @@ else
         elif [ $isReactNativeEnabled -eq 1 ]; then
             if [ -d ${WORKSPACE}/android ]; then
                 cd ${WORKSPACE}/android
-                ./gradlew "${gradleBuildKey}Debug"
+            fi
+            GRADLE_TASK="${gradleBuildKey}Debug"
+            if [[ $(./gradlew tasks 2>&1 | grep -v '^Warning' | grep "${gradleBuildKey}${GRADLE_TASK_TESTSERVER}" | awk '{print $1}' | tr -d ' ') == "${gradleBuildKey}${GRADLE_TASK_TESTSERVER}" ]]; then
+                GRADLE_TASK="${gradleBuildKey}${GRADLE_TASK_TESTSERVER}Debug"
+            fi
+            ./gradlew "${GRADLE_TASK}"
+            if [ -d ${WORKSPACE}/android ]; then
                 cd ${WORKSPACE}
-            else
-                ./gradlew "${gradleBuildKey}Release"
             fi
         else
             ./gradlew "${gradleBuildKey}${GRADLE_TASK_TESTSERVER}"
