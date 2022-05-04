@@ -71,18 +71,22 @@ HTTPS_PREFIX="${FRONTEND_POINT}/${TOP_PATH}/${APP_ROOT_SUFFIX}/${APP_VERSION}/"
 USING_GOOGLESTORE=$(test $(cat $jsonConfig | $JQ '.android.GoogleStore.enabled') = true && echo 1 || echo 0)
 GRADLE_TASK_GOOGLESTORE=$(cat $jsonConfig | $JQ '.android.GoogleStore.taskName' | tr -d '"')
 USING_BUNDLE_GOOGLESTORE=$(test $(cat $jsonConfig | $JQ '.android.GoogleStore.usingBundleAAB') = true && echo 1 || echo 0)
+RELEASE_TYPE_GOOGLESTORE=$(cat $jsonConfig | $JQ '.android.GoogleStore.releasType' | tr -d '"')
 ###
 USING_ONESTORE=$(test $(cat $jsonConfig | $JQ '.android.OneStore.enabled') = true && echo 1 || echo 0)
 GRADLE_TASK_ONESTORE=$(cat $jsonConfig | $JQ '.android.OneStore.taskName' | tr -d '"')
 USING_BUNDLE_ONESTORE=$(test $(cat $jsonConfig | $JQ '.android.OneStore.usingBundleAAB') = true && echo 1 || echo 0)
+RELEASE_TYPE_ONESTORE=$(cat $jsonConfig | $JQ '.android.OneStore.releasType' | tr -d '"')
 ###
 USING_LIVESERVER=$(test $(cat $jsonConfig | $JQ '.android.LiveServer.enabled') = true && echo 1 || echo 0)
 GRADLE_TASK_LIVESERVER=$(cat $jsonConfig | $JQ '.android.LiveServer.taskName' | tr -d '"')
 USING_BUNDLE_LIVESERVER=$(test $(cat $jsonConfig | $JQ '.android.LiveServer.usingBundleAAB') = true && echo 1 || echo 0)
+RELEASE_TYPE_LIVESERVER=$(cat $jsonConfig | $JQ '.android.LiveServer.releasType' | tr -d '"')
 ###
 USING_TESTSERVER=$(test $(cat $jsonConfig | $JQ '.android.TestServer.enabled') = true && echo 1 || echo 0)
 GRADLE_TASK_TESTSERVER=$(cat $jsonConfig | $JQ '.android.TestServer.taskName' | tr -d '"')
 USING_BUNDLE_TESTSERVER=$(test $(cat $jsonConfig | $JQ '.android.TestServer.usingBundleAAB') = true && echo 1 || echo 0)
+RELEASE_TYPE_TESTSERVER=$(cat $jsonConfig | $JQ '.android.TestServer.releasType' | tr -d '"')
 ###################
 if [ $isFlutterEnabled -eq 1 ]; then
     APK_OUTPUT_PATH="build/app/outputs"
@@ -92,98 +96,48 @@ fi
 if [ $IS_RELEASE -eq 1 ]; then
     APK_FILE_TITLE="${OUTPUT_PREFIX}${APP_VERSION}(${BUILD_VERSION})_${FILE_TODAY}"
 
-    if [ $isReactNativeEnabled -eq 1 ]; then
     if [ $USING_BUNDLE_GOOGLESTORE -eq 1 ]; then
         FILE_EXTENSION="aab"
-        OUTPUT_FOLDER_GOOGLESTORE="${WORKSPACE}/${APK_OUTPUT_PATH}/bundle/release"
     else
         FILE_EXTENSION="apk"
-        OUTPUT_FOLDER_GOOGLESTORE="${WORKSPACE}/${APK_OUTPUT_PATH}/apk/release"
+    fi
+    if [[ "$RELEASE_TYPE_GOOGLESTORE" == "null" ]]; then
+        RELEASE_TYPE_GOOGLESTORE="release"
     fi
     APK_GOOGLESTORE="${APK_FILE_TITLE}${outputGoogleStoreSuffix%.*}.${FILE_EXTENSION}"
 
     if [ $USING_BUNDLE_ONESTORE -eq 1 ]; then
         FILE_EXTENSION="aab"
-        OUTPUT_FOLDER_ONESTORE="${WORKSPACE}/${APK_OUTPUT_PATH}/bundle/release"
     else
         FILE_EXTENSION="apk"
-        OUTPUT_FOLDER_ONESTORE="${WORKSPACE}/${APK_OUTPUT_PATH}/apk/release"
+    fi
+    if [[ "$RELEASE_TYPE_ONESTORE" == "null" ]]; then
+        RELEASE_TYPE_ONESTORE="release"
     fi
     APK_ONESTORE="${APK_FILE_TITLE}${outputOneStoreSuffix%.*}.${FILE_EXTENSION}"
-    else
-    if [ $USING_BUNDLE_GOOGLESTORE -eq 1 ]; then
-        FILE_EXTENSION="aab"
-        OUTPUT_FOLDER_GOOGLESTORE="${WORKSPACE}/${APK_OUTPUT_PATH}/bundle/${GRADLE_TASK_GOOGLESTORE}Release"
-    else
-        FILE_EXTENSION="apk"
-        OUTPUT_FOLDER_GOOGLESTORE="${WORKSPACE}/${APK_OUTPUT_PATH}/apk/${GRADLE_TASK_GOOGLESTORE}/release"
-    fi
-    APK_GOOGLESTORE="${APK_FILE_TITLE}${outputGoogleStoreSuffix%.*}.${FILE_EXTENSION}"
-
-    if [ $USING_BUNDLE_ONESTORE -eq 1 ]; then
-        FILE_EXTENSION="aab"
-        OUTPUT_FOLDER_ONESTORE="${WORKSPACE}/${APK_OUTPUT_PATH}/bundle/${GRADLE_TASK_ONESTORE}Release"
-    else
-        FILE_EXTENSION="apk"
-        OUTPUT_FOLDER_ONESTORE="${WORKSPACE}/${APK_OUTPUT_PATH}/apk/${GRADLE_TASK_ONESTORE}/release"
-    fi
-    APK_ONESTORE="${APK_FILE_TITLE}${outputOneStoreSuffix%.*}.${FILE_EXTENSION}"
-    fi
 
     Obfuscation_SCREENSHOT="${OUTPUT_PREFIX}${APP_VERSION}(${BUILD_VERSION})_${FILE_TODAY}_Obfuscation.png"
     Obfuscation_OUTPUT_FILE="${OUTPUT_PREFIX}${APP_VERSION}(${BUILD_VERSION})_${FILE_TODAY}_file.png"
 else
-    if [ $isReactNativeEnabled -eq 1 ]; then
-        if [ $USING_BUNDLE_LIVESERVER -eq 1 ]; then
-            FILE_EXTENSION="aab"
-            OUTPUT_FOLDER_LIVESERVER="${WORKSPACE}/${APK_OUTPUT_PATH}/bundle/release"
-        else
-            FILE_EXTENSION="apk"
-            OUTPUT_FOLDER_LIVESERVER="${WORKSPACE}/${APK_OUTPUT_PATH}/apk/release"
-        fi
-        OUTPUT_APK_LIVESERVER="${OUTPUT_PREFIX}${APP_VERSION}.${BUILD_VERSION}_${FILE_TODAY}-${GRADLE_TASK_LIVESERVER}-release.${FILE_EXTENSION}"
-
-        if [ $USING_BUNDLE_TESTSERVER -eq 1 ]; then
-            FILE_EXTENSION="aab"
-            OUTPUT_FOLDER_TESTSERVER="${WORKSPACE}/${APK_OUTPUT_PATH}/bundle/debug"
-        else
-            FILE_EXTENSION="apk"
-            OUTPUT_FOLDER_TESTSERVER="${WORKSPACE}/${APK_OUTPUT_PATH}/apk/debug"
-        fi
-        OUTPUT_APK_TESTSERVER="${OUTPUT_PREFIX}${APP_VERSION}.${BUILD_VERSION}_${FILE_TODAY}-${GRADLE_TASK_TESTSERVER}-debug.${FILE_EXTENSION}"
+    if [ $USING_BUNDLE_LIVESERVER -eq 1 ]; then
+        FILE_EXTENSION="aab"
     else
-        if [ $USING_BUNDLE_LIVESERVER -eq 1 ]; then
-            FILE_EXTENSION="aab"
-            OUTPUT_FOLDER_LIVESERVER="${WORKSPACE}/${APK_OUTPUT_PATH}/bundle/${GRADLE_TASK_LIVESERVER}Release"
-        elif [[ "$GRADLE_TASK_LIVESERVER" != *"elease" ]]; then
-            FILE_EXTENSION="apk"
-            OUTPUT_FOLDER_LIVESERVER="${WORKSPACE}/${APK_OUTPUT_PATH}/apk/${GRADLE_TASK_LIVESERVER}/release"
-        else
-            FILE_EXTENSION="apk"
-            OUTPUT_FOLDER_LIVESERVER="${WORKSPACE}/${APK_OUTPUT_PATH}/apk/release"
-        fi
-        if [[ "$GRADLE_TASK_LIVESERVER" != *"elease" ]]; then
-            OUTPUT_APK_LIVESERVER="${OUTPUT_PREFIX}${APP_VERSION}.${BUILD_VERSION}_${FILE_TODAY}-${GRADLE_TASK_LIVESERVER}-release.${FILE_EXTENSION}"
-        else
-            OUTPUT_APK_LIVESERVER="${OUTPUT_PREFIX}${APP_VERSION}.${BUILD_VERSION}_${FILE_TODAY}-release.${FILE_EXTENSION}"
-        fi
-
-        if [ $USING_BUNDLE_TESTSERVER -eq 1 ]; then
-            FILE_EXTENSION="aab"
-            OUTPUT_FOLDER_TESTSERVER="${WORKSPACE}/${APK_OUTPUT_PATH}/bundle/${GRADLE_TASK_TESTSERVER}Debug"
-        elif [[ "$GRADLE_TASK_LIVESERVER" != *"ebug" ]]; then
-            FILE_EXTENSION="apk"
-            OUTPUT_FOLDER_TESTSERVER="${WORKSPACE}/${APK_OUTPUT_PATH}/apk/${GRADLE_TASK_TESTSERVER}/debug"
-        else
-            FILE_EXTENSION="apk"
-            OUTPUT_FOLDER_TESTSERVER="${WORKSPACE}/${APK_OUTPUT_PATH}/apk/debug"
-        fi
-        if [[ "$GRADLE_TASK_LIVESERVER" != *"ebug" ]]; then
-            OUTPUT_APK_TESTSERVER="${OUTPUT_PREFIX}${APP_VERSION}.${BUILD_VERSION}_${FILE_TODAY}-${GRADLE_TASK_TESTSERVER}-debug.${FILE_EXTENSION}"
-        else
-            OUTPUT_APK_TESTSERVER="${OUTPUT_PREFIX}${APP_VERSION}.${BUILD_VERSION}_${FILE_TODAY}-debug.${FILE_EXTENSION}"
-        fi
+        FILE_EXTENSION="apk"
     fi
+    if [[ "$RELEASE_TYPE_LIVESERVER" == "null" ]]; then
+        RELEASE_TYPE_LIVESERVER="release"
+    fi
+    OUTPUT_APK_LIVESERVER="${OUTPUT_PREFIX}${APP_VERSION}.${BUILD_VERSION}_${FILE_TODAY}-${GRADLE_TASK_LIVESERVER}-${RELEASE_TYPE_LIVESERVER}.${FILE_EXTENSION}"
+
+    if [ $USING_BUNDLE_TESTSERVER -eq 1 ]; then
+        FILE_EXTENSION="aab"
+    else
+        FILE_EXTENSION="apk"
+    fi
+    if [[ "$RELEASE_TYPE_TESTSERVER" == "null" ]]; then
+        RELEASE_TYPE_TESTSERVER="debug"
+    fi
+    OUTPUT_APK_TESTSERVER="${OUTPUT_PREFIX}${APP_VERSION}.${BUILD_VERSION}_${FILE_TODAY}-${GRADLE_TASK_TESTSERVER}-${RELEASE_TYPE_LIVESERVER}.${FILE_EXTENSION}"
 fi
 SLACK_TEXT=""
 MAIL_TEXT=""
@@ -289,19 +243,32 @@ else
         else
             ./gradlew "${gradleBuildKey}${GRADLE_TASK_GOOGLESTORE}"
         fi
-        if [ -d $OUTPUT_FOLDER_GOOGLESTORE -a -f $OUTPUT_FOLDER_GOOGLESTORE/output.json ]; then
-            BUILD_APK_GOOGLESTORE=$(cat $OUTPUT_FOLDER_GOOGLESTORE/output.json | $JQ '.[0].apkData.outputFile' | tr -d '"')
-        fi
         if test -z "$BUILD_APK_GOOGLESTORE"; then
-            if [ -d $OUTPUT_FOLDER_GOOGLESTORE -a -f $OUTPUT_FOLDER_GOOGLESTORE/output-metadata.json ]; then
-                BUILD_APK_GOOGLESTORE=$(cat $OUTPUT_FOLDER_GOOGLESTORE/output-metadata.json | $JQ '.elements[0].outputFile' | tr -d '"')
+            LOWER_MODE_NAME="$(echo ${RELEASE_TYPE_GOOGLESTORE} | tr 'A-Z' 'a-z')"
+            LOWERCASE_TASK_NAME=$(echo ${GRADLE_TASK_GOOGLESTORE} | tr 'A-Z' 'a-z')
+            OUTPUT_JSON_LIST=$(find ${WORKSPACE}/${APK_OUTPUT_PATH} -name 'output*.json')
+            for x in $(find ${WORKSPACE}/${APK_OUTPUT_PATH} -name 'output*.json'); do
+                if [ $(echo $x | tr 'A-Z' 'a-z' | grep $LOWERCASE_TASK_NAME | grep $LOWER_MODE_NAME | wc -l | awk '{print $1}') -eq 1 ]; then
+                    OUTPUT_JSON_PATH=$x
+                fi
+            done
+            OUTPUT_JSON_FILE=$(basename ${OUTPUT_JSON_PATH})
+            if [[ "$OUTPUT_JSON_FILE" == "output-metadata.json" ]]; then
+                BUILD_APK_GOOGLESTORE=$(cat $OUTPUT_JSON_PATH | $JQ '.elements[0].outputFile' | tr -d '"')
+            elif  [[ "$OUTPUT_JSON_FILE" == "output.json" ]]; then
+                BUILD_APK_GOOGLESTORE=$(cat $OUTPUT_JSON_PATH | $JQ '.[0].apkData.outputFile' | tr -d '"')
             fi
+            if test -z "$BUILD_APK_GOOGLESTORE"; then
+                for x in $(find ${WORKSPACE}/${APK_OUTPUT_PATH} -name "*.${FILE_EXTENSION}"); do
+                    if [ $(echo $x | tr 'A-Z' 'a-z' | grep $LOWERCASE_TASK_NAME | grep $LOWER_MODE_NAME | wc -l | awk '{print $1}') -eq 1 ]; then
+                        BUILD_APK_GOOGLESTORE=$(basename $x)
+                    fi
+                done
+            fi
+            BUILD_OUTPUT_FOLDER=$(find ${WORKSPACE}/${APK_OUTPUT_PATH} -name "${BUILD_APK_GOOGLESTORE}" -exec dirname {} \;)
         fi
-        if test -z "$BUILD_APK_GOOGLESTORE"; then
-            BUILD_APK_GOOGLESTORE=$(find ${OUTPUT_FOLDER_GOOGLESTORE} -name "*.${FILE_EXTENSION}" -exec basename {} \;)
-        fi
-        if [ -f $OUTPUT_FOLDER_GOOGLESTORE/$BUILD_APK_GOOGLESTORE ]; then
-            mv $OUTPUT_FOLDER_GOOGLESTORE/$BUILD_APK_GOOGLESTORE $OUTPUT_FOLDER/$APK_GOOGLESTORE
+        if [ -f $BUILD_OUTPUT_FOLDER/$BUILD_APK_GOOGLESTORE ]; then
+            mv $BUILD_OUTPUT_FOLDER/$BUILD_APK_GOOGLESTORE $OUTPUT_FOLDER/$APK_GOOGLESTORE
             SIZE_GOOGLE_APP_FILE=$(du -sh ${OUTPUT_FOLDER}/${APK_GOOGLESTORE} | awk '{print $1}')
             SLACK_TEXT="${SLACK_TEXT}${HOSTNAME} > ${GRADLE_TASK_GOOGLESTORE} 배포용 다운로드(${SIZE_GOOGLE_APP_FILE}B): ${HTTPS_PREFIX}${APK_GOOGLESTORE}\n"
             MAIL_TEXT="${MAIL_TEXT}${GRADLE_TASK_GOOGLESTORE} 배포용 다운로드(${SIZE_GOOGLE_APP_FILE}B): <a href=${HTTPS_PREFIX}${APK_GOOGLESTORE}>${HTTPS_PREFIX}${APK_GOOGLESTORE}</a><br />"
@@ -366,19 +333,32 @@ else
         else
             ./gradlew "${gradleBuildKey}${GRADLE_TASK_ONESTORE}"
         fi
-        if [ -d $OUTPUT_FOLDER_ONESTORE -a -f $OUTPUT_FOLDER_ONESTORE/output.json ]; then
-            BUILD_APK_ONESTORE=$(cat $OUTPUT_FOLDER_ONESTORE/output.json | $JQ '.[0].apkData.outputFile' | tr -d '"')
-        fi
         if test -z "$BUILD_APK_ONESTORE"; then
-            if [ -d $OUTPUT_FOLDER_ONESTORE -a -f $OUTPUT_FOLDER_ONESTORE/output-metadata.json ]; then
-                BUILD_APK_ONESTORE=$(cat $OUTPUT_FOLDER_ONESTORE/output-metadata.json | $JQ '.elements[0].outputFile' | tr -d '"')
+            LOWER_MODE_NAME="$(echo ${RELEASE_TYPE_ONESTORE} | tr 'A-Z' 'a-z')"
+            LOWERCASE_TASK_NAME=$(echo ${GRADLE_TASK_ONESTORE} | tr 'A-Z' 'a-z')
+            OUTPUT_JSON_LIST=$(find ${WORKSPACE}/${APK_OUTPUT_PATH} -name 'output*.json')
+            for x in $(find ${WORKSPACE}/${APK_OUTPUT_PATH} -name 'output*.json'); do
+                if [ $(echo $x | tr 'A-Z' 'a-z' | grep $LOWERCASE_TASK_NAME | grep $LOWER_MODE_NAME | wc -l | awk '{print $1}') -eq 1 ]; then
+                    OUTPUT_JSON_PATH=$x
+                fi
+            done
+            OUTPUT_JSON_FILE=$(basename ${OUTPUT_JSON_PATH})
+            if [[ "$OUTPUT_JSON_FILE" == "output-metadata.json" ]]; then
+                BUILD_APK_ONESTORE=$(cat $OUTPUT_JSON_PATH | $JQ '.elements[0].outputFile' | tr -d '"')
+            elif  [[ "$OUTPUT_JSON_FILE" == "output.json" ]]; then
+                BUILD_APK_ONESTORE=$(cat $OUTPUT_JSON_PATH | $JQ '.[0].apkData.outputFile' | tr -d '"')
             fi
+            if test -z "$BUILD_APK_GOOGLESTORE"; then
+                for x in $(find ${WORKSPACE}/${APK_OUTPUT_PATH} -name "*.${FILE_EXTENSION}"); do
+                    if [ $(echo $x | tr 'A-Z' 'a-z' | grep $LOWERCASE_TASK_NAME | grep $LOWER_MODE_NAME | wc -l | awk '{print $1}') -eq 1 ]; then
+                        BUILD_APK_ONESTORE=$(basename $x)
+                    fi
+                done
+            fi
+            BUILD_OUTPUT_FOLDER=$(find ${WORKSPACE}/${APK_OUTPUT_PATH} -name "${BUILD_APK_ONESTORE}" -exec dirname {} \;)
         fi
-        if test -z "$BUILD_APK_ONESTORE"; then
-            BUILD_APK_ONESTORE=$(find ${OUTPUT_FOLDER_ONESTORE} -name "*.${FILE_EXTENSION}" -exec basename {} \;)
-            fi
-            if [ -f $OUTPUT_FOLDER_ONESTORE/$BUILD_APK_ONESTORE ]; then
-            mv $OUTPUT_FOLDER_ONESTORE/$BUILD_APK_ONESTORE $OUTPUT_FOLDER/$APK_ONESTORE
+        if [ -f $BUILD_OUTPUT_FOLDER/$BUILD_APK_ONESTORE ]; then
+            mv $BUILD_OUTPUT_FOLDER/$BUILD_APK_ONESTORE $OUTPUT_FOLDER/$APK_ONESTORE
             SIZE_ONE_APP_FILE=$(du -sh ${OUTPUT_FOLDER}/${APK_ONESTORE} | awk '{print $1}')
             SLACK_TEXT="${SLACK_TEXT}${HOSTNAME} > ${GRADLE_TASK_ONESTORE} 배포용 다운로드(${SIZE_ONE_APP_FILE}B): ${HTTPS_PREFIX}${APK_ONESTORE}\n"
             MAIL_TEXT="${MAIL_TEXT}${GRADLE_TASK_ONESTORE} 배포용 다운로드(${SIZE_ONE_APP_FILE}B): <a href=${HTTPS_PREFIX}${APK_ONESTORE}>${HTTPS_PREFIX}${APK_ONESTORE}</a><br />"
@@ -446,14 +426,32 @@ else
         else
             ./gradlew "${gradleBuildKey}${GRADLE_TASK_LIVESERVER}"
         fi
-        if [ -d $OUTPUT_FOLDER_LIVESERVER -a -f $OUTPUT_FOLDER_LIVESERVER/output.json ]; then
-            APK_LIVESERVER=$(cat $OUTPUT_FOLDER_LIVESERVER/output.json | $JQ '.[0].apkData.outputFile' | tr -d '"')
+        if test -z "$APK_LIVESERVER"; then
+            LOWER_MODE_NAME="$(echo ${RELEASE_TYPE_LIVESERVER} | tr 'A-Z' 'a-z')"
+            LOWERCASE_TASK_NAME=$(echo ${GRADLE_TASK_LIVESERVER} | tr 'A-Z' 'a-z')
+            OUTPUT_JSON_LIST=$(find ${WORKSPACE}/${APK_OUTPUT_PATH} -name 'output*.json')
+            for x in $(find ${WORKSPACE}/${APK_OUTPUT_PATH} -name 'output*.json'); do
+                if [ $(echo $x | tr 'A-Z' 'a-z' | grep $LOWERCASE_TASK_NAME | grep $LOWER_MODE_NAME | wc -l | awk '{print $1}') -eq 1 ]; then
+                    OUTPUT_JSON_PATH=$x
+                fi
+            done
+            OUTPUT_JSON_FILE=$(basename ${OUTPUT_JSON_PATH})
+            if [[ "$OUTPUT_JSON_FILE" == "output-metadata.json" ]]; then
+                APK_LIVESERVER=$(cat $OUTPUT_JSON_PATH | $JQ '.elements[0].outputFile' | tr -d '"')
+            elif  [[ "$OUTPUT_JSON_FILE" == "output.json" ]]; then
+                APK_LIVESERVER=$(cat $OUTPUT_JSON_PATH | $JQ '.[0].apkData.outputFile' | tr -d '"')
+            fi
+            if test -z "$BUILD_APK_GOOGLESTORE"; then
+                for x in $(find ${WORKSPACE}/${APK_OUTPUT_PATH} -name "*.${FILE_EXTENSION}"); do
+                    if [ $(echo $x | tr 'A-Z' 'a-z' | grep $LOWERCASE_TASK_NAME | grep $LOWER_MODE_NAME | wc -l | awk '{print $1}') -eq 1 ]; then
+                        APK_LIVESERVER=$(basename $x)
+                    fi
+                done
+            fi
+            BUILD_OUTPUT_FOLDER=$(find ${WORKSPACE}/${APK_OUTPUT_PATH} -name "${APK_LIVESERVER}" -exec dirname {} \;)
         fi
-        if [[ $APK_LIVESERVER == "" ]]; then
-            APK_LIVESERVER=$(find ${OUTPUT_FOLDER_LIVESERVER} -name "*.${FILE_EXTENSION}" -exec basename {} \;)
-        fi
-        if [ -f $OUTPUT_FOLDER_LIVESERVER/$APK_LIVESERVER ]; then
-            mv $OUTPUT_FOLDER_LIVESERVER/$APK_LIVESERVER $OUTPUT_FOLDER/$OUTPUT_APK_LIVESERVER
+        if [ -f $BUILD_OUTPUT_FOLDER/$APK_LIVESERVER ]; then
+            mv $BUILD_OUTPUT_FOLDER/$APK_LIVESERVER $OUTPUT_FOLDER/$OUTPUT_APK_LIVESERVER
             SIZE_LIVE_APP_FILE=$(du -sh ${OUTPUT_FOLDER}/${OUTPUT_APK_LIVESERVER} | awk '{print $1}')
             SLACK_TEXT="${SLACK_TEXT}${HOSTNAME} > ${GRADLE_TASK_LIVESERVER}(debug)(${SIZE_LIVE_APP_FILE}B): ${HTTPS_PREFIX}${OUTPUT_APK_LIVESERVER}\n"
             MAIL_TEXT="${MAIL_TEXT}${GRADLE_TASK_LIVESERVER}(debug)(${SIZE_LIVE_APP_FILE}B): <a href=${HTTPS_PREFIX}${OUTPUT_APK_LIVESERVER}>${HTTPS_PREFIX}${OUTPUT_APK_LIVESERVER}</a><br />"
@@ -532,14 +530,32 @@ else
         else
             ./gradlew "${gradleBuildKey}${GRADLE_TASK_TESTSERVER}"
         fi
-        if [ -d $OUTPUT_FOLDER_TESTSERVER -a -f $OUTPUT_FOLDER_TESTSERVER/output.json ]; then
-            APK_TESTSERVER=$(cat $OUTPUT_FOLDER_TESTSERVER/output.json | $JQ '.[0].apkData.outputFile' | tr -d '"')
+        if test -z "$APK_TESTSERVER"; then
+            LOWER_MODE_NAME="$(echo ${RELEASE_TYPE_TESTSERVER} | tr 'A-Z' 'a-z')"
+            LOWERCASE_TASK_NAME=$(echo ${GRADLE_TASK_TESTSERVER} | tr 'A-Z' 'a-z')
+            OUTPUT_JSON_LIST=$(find ${WORKSPACE}/${APK_OUTPUT_PATH} -name 'output*.json')
+            for x in $(find ${WORKSPACE}/${APK_OUTPUT_PATH} -name 'output*.json'); do
+                if [ $(echo $x | tr 'A-Z' 'a-z' | grep $LOWERCASE_TASK_NAME | grep $LOWER_MODE_NAME | wc -l | awk '{print $1}') -eq 1 ]; then
+                    OUTPUT_JSON_PATH=$x
+                fi
+            done
+            OUTPUT_JSON_FILE=$(basename ${OUTPUT_JSON_PATH})
+            if [[ "$OUTPUT_JSON_FILE" == "output-metadata.json" ]]; then
+                APK_TESTSERVER=$(cat $OUTPUT_JSON_PATH | $JQ '.elements[0].outputFile' | tr -d '"')
+            elif  [[ "$OUTPUT_JSON_FILE" == "output.json" ]]; then
+                APK_TESTSERVER=$(cat $OUTPUT_JSON_PATH | $JQ '.[0].apkData.outputFile' | tr -d '"')
+            fi
+            if test -z "$BUILD_APK_GOOGLESTORE"; then
+                for x in $(find ${WORKSPACE}/${APK_OUTPUT_PATH} -name "*.${FILE_EXTENSION}"); do
+                    if [ $(echo $x | tr 'A-Z' 'a-z' | grep $LOWERCASE_TASK_NAME | grep $LOWER_MODE_NAME | wc -l | awk '{print $1}') -eq 1 ]; then
+                        APK_TESTSERVER=$(basename $x)
+                    fi
+                done
+            fi
+            BUILD_OUTPUT_FOLDER=$(find ${WORKSPACE}/${APK_OUTPUT_PATH} -name "${APK_TESTSERVER}" -exec dirname {} \;)
         fi
-        if [[ $APK_TESTSERVER == "" ]]; then
-            APK_TESTSERVER=$(find ${OUTPUT_FOLDER_TESTSERVER} -name "*.${FILE_EXTENSION}" -exec basename {} \;)
-        fi
-        if [ -f $OUTPUT_FOLDER_TESTSERVER/$APK_TESTSERVER ]; then
-            mv $OUTPUT_FOLDER_TESTSERVER/$APK_TESTSERVER $OUTPUT_FOLDER/$OUTPUT_APK_TESTSERVER
+        if [ -f $BUILD_OUTPUT_FOLDER/$APK_TESTSERVER ]; then
+            mv $BUILD_OUTPUT_FOLDER/$APK_TESTSERVER $OUTPUT_FOLDER/$OUTPUT_APK_TESTSERVER
             SIZE_TEST_APP_FILE=$(du -sh ${OUTPUT_FOLDER}/${OUTPUT_APK_TESTSERVER} | awk '{print $1}')
             SLACK_TEXT="${SLACK_TEXT}${HOSTNAME} > ${GRADLE_TASK_TESTSERVER}(debug)(${SIZE_TEST_APP_FILE}B): ${HTTPS_PREFIX}${OUTPUT_APK_TESTSERVER}\n"
             MAIL_TEXT="${MAIL_TEXT}${GRADLE_TASK_TESTSERVER}(debug)(${SIZE_TEST_APP_FILE}B): <a href=${HTTPS_PREFIX}${OUTPUT_APK_TESTSERVER}>${HTTPS_PREFIX}${OUTPUT_APK_TESTSERVER}</a><br />"
