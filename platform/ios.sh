@@ -30,6 +30,7 @@ if test -z $PROJECT_NAME; then
 fi
 ###################
 if [ $isFlutterEnabled -eq 1 ]; then
+    export SDKROOT="/Applications/Xcode.app/Contents/Developer/Platforms/iPhoneOS.platform/Developer/SDKs/iPhoneOS.sdk"
     export LANG=en_US.UTF-8
     export GEM_PATH="/System/Library/Frameworks/Ruby.framework/Versions/2.6/usr/lib/ruby/gems/2.6.0"
     # $POD repo update
