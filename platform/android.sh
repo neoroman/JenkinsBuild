@@ -137,7 +137,7 @@ else
     if [[ "$RELEASE_TYPE_TESTSERVER" == "null" ]]; then
         RELEASE_TYPE_TESTSERVER="debug"
     fi
-    OUTPUT_APK_TESTSERVER="${OUTPUT_PREFIX}${APP_VERSION}.${BUILD_VERSION}_${FILE_TODAY}-${GRADLE_TASK_TESTSERVER}-${RELEASE_TYPE_LIVESERVER}.${FILE_EXTENSION}"
+    OUTPUT_APK_TESTSERVER="${OUTPUT_PREFIX}${APP_VERSION}.${BUILD_VERSION}_${FILE_TODAY}-${GRADLE_TASK_TESTSERVER}-${RELEASE_TYPE_TESTSERVER}.${FILE_EXTENSION}"
 fi
 SLACK_TEXT=""
 MAIL_TEXT=""
@@ -243,29 +243,12 @@ else
         else
             ./gradlew "${gradleBuildKey}${GRADLE_TASK_GOOGLESTORE}"
         fi
+
         if test -z "$BUILD_APK_GOOGLESTORE"; then
             LOWER_MODE_NAME="$(echo ${RELEASE_TYPE_GOOGLESTORE} | tr 'A-Z' 'a-z')"
-            LOWERCASE_TASK_NAME=$(echo ${GRADLE_TASK_GOOGLESTORE} | tr 'A-Z' 'a-z')
-            OUTPUT_JSON_LIST=$(find ${WORKSPACE}/${APK_OUTPUT_PATH} -name 'output*.json')
-            for x in $(find ${WORKSPACE}/${APK_OUTPUT_PATH} -name 'output*.json'); do
-                if [ $(echo $x | tr 'A-Z' 'a-z' | grep $LOWERCASE_TASK_NAME | grep $LOWER_MODE_NAME | wc -l | awk '{print $1}') -eq 1 ]; then
-                    OUTPUT_JSON_PATH=$x
-                fi
-            done
-            OUTPUT_JSON_FILE=$(basename ${OUTPUT_JSON_PATH})
-            if [[ "$OUTPUT_JSON_FILE" == "output-metadata.json" ]]; then
-                BUILD_APK_GOOGLESTORE=$(cat $OUTPUT_JSON_PATH | $JQ '.elements[0].outputFile' | tr -d '"')
-            elif  [[ "$OUTPUT_JSON_FILE" == "output.json" ]]; then
-                BUILD_APK_GOOGLESTORE=$(cat $OUTPUT_JSON_PATH | $JQ '.[0].apkData.outputFile' | tr -d '"')
-            fi
-            if test -z "$BUILD_APK_GOOGLESTORE"; then
-                for x in $(find ${WORKSPACE}/${APK_OUTPUT_PATH} -name "*.${FILE_EXTENSION}"); do
-                    if [ $(echo $x | tr 'A-Z' 'a-z' | grep $LOWERCASE_TASK_NAME | grep $LOWER_MODE_NAME | wc -l | awk '{print $1}') -eq 1 ]; then
-                        BUILD_APK_GOOGLESTORE=$(basename $x)
-                    fi
-                done
-            fi
-            BUILD_OUTPUT_FOLDER=$(find ${WORKSPACE}/${APK_OUTPUT_PATH} -name "${BUILD_APK_GOOGLESTORE}" -exec dirname {} \;)
+            LOWERCASE_TASK_NAME="$(echo ${GRADLE_TASK_GOOGLESTORE} | tr 'A-Z' 'a-z')"
+            makePathForAndroidOutput
+            BUILD_APK_GOOGLESTORE="$BUILD_APK_OUTPUT"
         fi
         if [ -f $BUILD_OUTPUT_FOLDER/$BUILD_APK_GOOGLESTORE ]; then
             mv $BUILD_OUTPUT_FOLDER/$BUILD_APK_GOOGLESTORE $OUTPUT_FOLDER/$APK_GOOGLESTORE
@@ -333,29 +316,12 @@ else
         else
             ./gradlew "${gradleBuildKey}${GRADLE_TASK_ONESTORE}"
         fi
+
         if test -z "$BUILD_APK_ONESTORE"; then
             LOWER_MODE_NAME="$(echo ${RELEASE_TYPE_ONESTORE} | tr 'A-Z' 'a-z')"
-            LOWERCASE_TASK_NAME=$(echo ${GRADLE_TASK_ONESTORE} | tr 'A-Z' 'a-z')
-            OUTPUT_JSON_LIST=$(find ${WORKSPACE}/${APK_OUTPUT_PATH} -name 'output*.json')
-            for x in $(find ${WORKSPACE}/${APK_OUTPUT_PATH} -name 'output*.json'); do
-                if [ $(echo $x | tr 'A-Z' 'a-z' | grep $LOWERCASE_TASK_NAME | grep $LOWER_MODE_NAME | wc -l | awk '{print $1}') -eq 1 ]; then
-                    OUTPUT_JSON_PATH=$x
-                fi
-            done
-            OUTPUT_JSON_FILE=$(basename ${OUTPUT_JSON_PATH})
-            if [[ "$OUTPUT_JSON_FILE" == "output-metadata.json" ]]; then
-                BUILD_APK_ONESTORE=$(cat $OUTPUT_JSON_PATH | $JQ '.elements[0].outputFile' | tr -d '"')
-            elif  [[ "$OUTPUT_JSON_FILE" == "output.json" ]]; then
-                BUILD_APK_ONESTORE=$(cat $OUTPUT_JSON_PATH | $JQ '.[0].apkData.outputFile' | tr -d '"')
-            fi
-            if test -z "$BUILD_APK_GOOGLESTORE"; then
-                for x in $(find ${WORKSPACE}/${APK_OUTPUT_PATH} -name "*.${FILE_EXTENSION}"); do
-                    if [ $(echo $x | tr 'A-Z' 'a-z' | grep $LOWERCASE_TASK_NAME | grep $LOWER_MODE_NAME | wc -l | awk '{print $1}') -eq 1 ]; then
-                        BUILD_APK_ONESTORE=$(basename $x)
-                    fi
-                done
-            fi
-            BUILD_OUTPUT_FOLDER=$(find ${WORKSPACE}/${APK_OUTPUT_PATH} -name "${BUILD_APK_ONESTORE}" -exec dirname {} \;)
+            LOWERCASE_TASK_NAME="$(echo ${GRADLE_TASK_ONESTORE} | tr 'A-Z' 'a-z')"
+            makePathForAndroidOutput
+            BUILD_APK_ONESTORE="$BUILD_APK_OUTPUT"
         fi
         if [ -f $BUILD_OUTPUT_FOLDER/$BUILD_APK_ONESTORE ]; then
             mv $BUILD_OUTPUT_FOLDER/$BUILD_APK_ONESTORE $OUTPUT_FOLDER/$APK_ONESTORE
@@ -426,29 +392,12 @@ else
         else
             ./gradlew "${gradleBuildKey}${GRADLE_TASK_LIVESERVER}"
         fi
+
         if test -z "$APK_LIVESERVER"; then
             LOWER_MODE_NAME="$(echo ${RELEASE_TYPE_LIVESERVER} | tr 'A-Z' 'a-z')"
-            LOWERCASE_TASK_NAME=$(echo ${GRADLE_TASK_LIVESERVER} | tr 'A-Z' 'a-z')
-            OUTPUT_JSON_LIST=$(find ${WORKSPACE}/${APK_OUTPUT_PATH} -name 'output*.json')
-            for x in $(find ${WORKSPACE}/${APK_OUTPUT_PATH} -name 'output*.json'); do
-                if [ $(echo $x | tr 'A-Z' 'a-z' | grep $LOWERCASE_TASK_NAME | grep $LOWER_MODE_NAME | wc -l | awk '{print $1}') -eq 1 ]; then
-                    OUTPUT_JSON_PATH=$x
-                fi
-            done
-            OUTPUT_JSON_FILE=$(basename ${OUTPUT_JSON_PATH})
-            if [[ "$OUTPUT_JSON_FILE" == "output-metadata.json" ]]; then
-                APK_LIVESERVER=$(cat $OUTPUT_JSON_PATH | $JQ '.elements[0].outputFile' | tr -d '"')
-            elif  [[ "$OUTPUT_JSON_FILE" == "output.json" ]]; then
-                APK_LIVESERVER=$(cat $OUTPUT_JSON_PATH | $JQ '.[0].apkData.outputFile' | tr -d '"')
-            fi
-            if test -z "$BUILD_APK_GOOGLESTORE"; then
-                for x in $(find ${WORKSPACE}/${APK_OUTPUT_PATH} -name "*.${FILE_EXTENSION}"); do
-                    if [ $(echo $x | tr 'A-Z' 'a-z' | grep $LOWERCASE_TASK_NAME | grep $LOWER_MODE_NAME | wc -l | awk '{print $1}') -eq 1 ]; then
-                        APK_LIVESERVER=$(basename $x)
-                    fi
-                done
-            fi
-            BUILD_OUTPUT_FOLDER=$(find ${WORKSPACE}/${APK_OUTPUT_PATH} -name "${APK_LIVESERVER}" -exec dirname {} \;)
+            LOWERCASE_TASK_NAME="$(echo ${GRADLE_TASK_LIVESERVER} | tr 'A-Z' 'a-z')"
+            makePathForAndroidOutput
+            APK_LIVESERVER="$BUILD_APK_OUTPUT"
         fi
         if [ -f $BUILD_OUTPUT_FOLDER/$APK_LIVESERVER ]; then
             mv $BUILD_OUTPUT_FOLDER/$APK_LIVESERVER $OUTPUT_FOLDER/$OUTPUT_APK_LIVESERVER
@@ -530,35 +479,18 @@ else
         else
             ./gradlew "${gradleBuildKey}${GRADLE_TASK_TESTSERVER}"
         fi
+
         if test -z "$APK_TESTSERVER"; then
             LOWER_MODE_NAME="$(echo ${RELEASE_TYPE_TESTSERVER} | tr 'A-Z' 'a-z')"
-            LOWERCASE_TASK_NAME=$(echo ${GRADLE_TASK_TESTSERVER} | tr 'A-Z' 'a-z')
-            OUTPUT_JSON_LIST=$(find ${WORKSPACE}/${APK_OUTPUT_PATH} -name 'output*.json')
-            for x in $(find ${WORKSPACE}/${APK_OUTPUT_PATH} -name 'output*.json'); do
-                if [ $(echo $x | tr 'A-Z' 'a-z' | grep $LOWERCASE_TASK_NAME | grep $LOWER_MODE_NAME | wc -l | awk '{print $1}') -eq 1 ]; then
-                    OUTPUT_JSON_PATH=$x
-                fi
-            done
-            OUTPUT_JSON_FILE=$(basename ${OUTPUT_JSON_PATH})
-            if [[ "$OUTPUT_JSON_FILE" == "output-metadata.json" ]]; then
-                APK_TESTSERVER=$(cat $OUTPUT_JSON_PATH | $JQ '.elements[0].outputFile' | tr -d '"')
-            elif  [[ "$OUTPUT_JSON_FILE" == "output.json" ]]; then
-                APK_TESTSERVER=$(cat $OUTPUT_JSON_PATH | $JQ '.[0].apkData.outputFile' | tr -d '"')
-            fi
-            if test -z "$BUILD_APK_GOOGLESTORE"; then
-                for x in $(find ${WORKSPACE}/${APK_OUTPUT_PATH} -name "*.${FILE_EXTENSION}"); do
-                    if [ $(echo $x | tr 'A-Z' 'a-z' | grep $LOWERCASE_TASK_NAME | grep $LOWER_MODE_NAME | wc -l | awk '{print $1}') -eq 1 ]; then
-                        APK_TESTSERVER=$(basename $x)
-                    fi
-                done
-            fi
-            BUILD_OUTPUT_FOLDER=$(find ${WORKSPACE}/${APK_OUTPUT_PATH} -name "${APK_TESTSERVER}" -exec dirname {} \;)
+            LOWERCASE_TASK_NAME="$(echo ${GRADLE_TASK_TESTSERVER} | tr 'A-Z' 'a-z')"
+            makePathForAndroidOutput
+            APK_TESTSERVER="$BUILD_APK_OUTPUT"
         fi
         if [ -f $BUILD_OUTPUT_FOLDER/$APK_TESTSERVER ]; then
             mv $BUILD_OUTPUT_FOLDER/$APK_TESTSERVER $OUTPUT_FOLDER/$OUTPUT_APK_TESTSERVER
             SIZE_TEST_APP_FILE=$(du -sh ${OUTPUT_FOLDER}/${OUTPUT_APK_TESTSERVER} | awk '{print $1}')
-            SLACK_TEXT="${SLACK_TEXT}${HOSTNAME} > ${GRADLE_TASK_TESTSERVER}(debug)(${SIZE_TEST_APP_FILE}B): ${HTTPS_PREFIX}${OUTPUT_APK_TESTSERVER}\n"
-            MAIL_TEXT="${MAIL_TEXT}${GRADLE_TASK_TESTSERVER}(debug)(${SIZE_TEST_APP_FILE}B): <a href=${HTTPS_PREFIX}${OUTPUT_APK_TESTSERVER}>${HTTPS_PREFIX}${OUTPUT_APK_TESTSERVER}</a><br />"
+            SLACK_TEXT="${SLACK_TEXT}${HOSTNAME} > ${GRADLE_TASK_TESTSERVER}(${RELEASE_TYPE_TESTSERVER})(${SIZE_TEST_APP_FILE}B): ${HTTPS_PREFIX}${OUTPUT_APK_TESTSERVER}\n"
+            MAIL_TEXT="${MAIL_TEXT}${GRADLE_TASK_TESTSERVER}(${RELEASE_TYPE_TESTSERVER})(${SIZE_TEST_APP_FILE}B): <a href=${HTTPS_PREFIX}${OUTPUT_APK_TESTSERVER}>${HTTPS_PREFIX}${OUTPUT_APK_TESTSERVER}</a><br />"
             if [ $USING_BUNDLE_TESTSERVER -eq 1 ]; then
                 if test -z $BUNDLE_TOOL; then
                     BUNDLE_TOOL="/opt/homebrew/bin/bundletool"
@@ -629,7 +561,7 @@ elif [ $DEBUGGING -eq 0 ]; then
         fi
         if [ $USING_BUNDLE_GOOGLESTORE -eq 1 ]; then
             BUNDLE_APK_FILE="$OUTPUT_FOLDER/${APK_GOOGLESTORE%.aab}.apk"
-            if [ -f $BUNDLE_APK_FILE ]; then
+            if [ -f ${OUTPUT_FOLDER}/${BUNDLE_APK_FILE} ]; then
                 if [ $(sendFile ${OUTPUT_FOLDER}/${BUNDLE_APK_FILE} ${NEO2UA_OUTPUT_FOLDER}) -eq 0 ]; then
                     #   echo "Failed to send file"
                     echo "TODO: **NEED** to resend this file => ${OUTPUT_FOLDER}/${BUNDLE_APK_FILE} to ${NEO2UA_OUTPUT_FOLDER}"
