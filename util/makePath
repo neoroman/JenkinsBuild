@@ -1,0 +1,91 @@
+#!/bin/sh
+#
+# Written by Henry Kim on 2022.05.09
+#
+###############################################################################
+## Input Prerequisite variables
+###############################################################################
+# JQ
+# WORKSPACE
+# APK_OUTPUT_PATH
+# LOWER_MODE_NAME (from RELEASE_TYPE_XXXXXX, such as GOOGLESTORE, ONESTORE, LIVESERVER, TESTSERVER)
+# LOWERCASE_TASK_NAME from (GRADLE_TASK_XXXXXXX, such as GOOGLESTORE, ONESTORE, LIVESERVER, TESTSERVER)
+# FILE_EXTENSION
+###############################################################################
+## Output variables
+###############################################################################
+# BUILD_OUTPUT_FOLDER
+# BUILD_APK_OUTPUT
+###############################################################################
+function makePathForAndroidOutput() {
+    unset BUILD_APK_OUTPUT
+    unset BUILD_OUTPUT_FOLDER
+    unset OUTPUT_JSON_PATH
+    unset OUTPUT_JSON_FILE
+    OUTPUT_JSON_LIST=$(find ${WORKSPACE}/${APK_OUTPUT_PATH} -name 'output*.json')
+    for x in $OUTPUT_JSON_LIST; do
+        LOWERCASED_PATH=$( echo $x | tr 'A-Z' 'a-z')
+        if [[ "${LOWERCASED_PATH}" == *"${LOWER_MODE_NAME}"* ]]; then
+            if [[ "${LOWERCASED_PATH}" == *"${LOWERCASE_TASK_NAME}"* ]]; then
+                OUTPUT_JSON_PATH=$x
+            fi
+        fi
+        if test -z $OUTPUT_JSON_PATH; then
+            if [[ "${LOWERCASED_PATH}" == *"${LOWERCASE_TASK_NAME}"* ]]; then
+                OUTPUT_JSON_PATH=$x
+            fi
+        fi
+        if test -z $OUTPUT_JSON_PATH; then
+            if [[ "${LOWERCASED_PATH}" == *"${LOWER_MODE_NAME}"* ]]; then
+                OUTPUT_JSON_PATH=$x
+            fi
+        fi
+    done
+    if test ! -z ${OUTPUT_JSON_PATH}; then
+        OUTPUT_JSON_FILE=$(basename ${OUTPUT_JSON_PATH})
+        if [[ "$OUTPUT_JSON_FILE" == "output-metadata.json" ]]; then
+            BUILD_APK_OUTPUT=$(cat $OUTPUT_JSON_PATH | $JQ '.elements[0].outputFile' | tr -d '"')
+        elif  [[ "$OUTPUT_JSON_FILE" == "output.json" ]]; then
+            BUILD_APK_OUTPUT=$(cat $OUTPUT_JSON_PATH | $JQ '.[0].apkData.outputFile' | tr -d '"')
+        fi
+    fi
+    if test -z "$BUILD_APK_OUTPUT"; then
+        for x in $(find ${WORKSPACE}/${APK_OUTPUT_PATH} -name "*.${FILE_EXTENSION}"); do
+            LOWERCASED_PATH=$( echo $x | tr 'A-Z' 'a-z')
+            if [[ "${LOWERCASED_PATH}" == *"${LOWER_MODE_NAME}"* ]]; then
+                if [[ "${LOWERCASED_PATH}" == *"${LOWERCASE_TASK_NAME}"* ]]; then
+                    BUILD_APK_OUTPUT=$x
+                fi
+            fi
+            if test -z $BUILD_APK_OUTPUT; then
+                if [[ "${LOWERCASED_PATH}" == *"${LOWERCASE_TASK_NAME}"* ]]; then
+                    BUILD_APK_OUTPUT=$x
+                fi
+            fi
+            if test -z $BUILD_APK_OUTPUT; then
+                if [[ "${LOWERCASED_PATH}" == *"${LOWER_MODE_NAME}"* ]]; then
+                    BUILD_APK_OUTPUT=$x
+                fi
+            fi
+        done
+    fi
+    BUILD_APK_OUTPUT=$(basename $BUILD_APK_OUTPUT)
+    BUILD_OUTPUT_FOLDER=$(find ${WORKSPACE}/${APK_OUTPUT_PATH} -name "${BUILD_APK_OUTPUT}" -exec dirname {} \;)
+}
+
+###############################################################################
+## Example
+###############################################################################
+# JQ=`which jq`
+# WORKSPACE=..
+# APK_OUTPUT_PATH="android/app/build/outputs"
+# RELEASE_TYPE_LIVESERVER="Release"
+# GRADLE_TASK_LIVESERVER="LiveServer"
+# FILE_EXTENSION="apk"
+# if test -z "$APK_LIVESERVER"; then
+#     LOWER_MODE_NAME="$(echo ${RELEASE_TYPE_LIVESERVER} | tr 'A-Z' 'a-z')"
+#     LOWERCASE_TASK_NAME="$(echo ${GRADLE_TASK_LIVESERVER} | tr 'A-Z' 'a-z')"
+#     makePathForAndroidOutput
+#     APK_LIVESERVER="$BUILD_APK_OUTPUT"
+#     echo $BUILD_OUTPUT_FOLDER/$APK_LIVESERVER
+# fi
