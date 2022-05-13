@@ -71,22 +71,22 @@ HTTPS_PREFIX="${FRONTEND_POINT}/${TOP_PATH}/${APP_ROOT_SUFFIX}/${APP_VERSION}/"
 USING_GOOGLESTORE=$(test $(cat $jsonConfig | $JQ '.android.GoogleStore.enabled') = true && echo 1 || echo 0)
 GRADLE_TASK_GOOGLESTORE=$(cat $jsonConfig | $JQ '.android.GoogleStore.taskName' | tr -d '"')
 USING_BUNDLE_GOOGLESTORE=$(test $(cat $jsonConfig | $JQ '.android.GoogleStore.usingBundleAAB') = true && echo 1 || echo 0)
-RELEASE_TYPE_GOOGLESTORE=$(cat $jsonConfig | $JQ '.android.GoogleStore.releasType' | tr -d '"')
+RELEASE_TYPE_GOOGLESTORE=$(cat $jsonConfig | $JQ '.android.GoogleStore.releaseType' | tr -d '"')
 ###
 USING_ONESTORE=$(test $(cat $jsonConfig | $JQ '.android.OneStore.enabled') = true && echo 1 || echo 0)
 GRADLE_TASK_ONESTORE=$(cat $jsonConfig | $JQ '.android.OneStore.taskName' | tr -d '"')
 USING_BUNDLE_ONESTORE=$(test $(cat $jsonConfig | $JQ '.android.OneStore.usingBundleAAB') = true && echo 1 || echo 0)
-RELEASE_TYPE_ONESTORE=$(cat $jsonConfig | $JQ '.android.OneStore.releasType' | tr -d '"')
+RELEASE_TYPE_ONESTORE=$(cat $jsonConfig | $JQ '.android.OneStore.releaseType' | tr -d '"')
 ###
 USING_LIVESERVER=$(test $(cat $jsonConfig | $JQ '.android.LiveServer.enabled') = true && echo 1 || echo 0)
 GRADLE_TASK_LIVESERVER=$(cat $jsonConfig | $JQ '.android.LiveServer.taskName' | tr -d '"')
 USING_BUNDLE_LIVESERVER=$(test $(cat $jsonConfig | $JQ '.android.LiveServer.usingBundleAAB') = true && echo 1 || echo 0)
-RELEASE_TYPE_LIVESERVER=$(cat $jsonConfig | $JQ '.android.LiveServer.releasType' | tr -d '"')
+RELEASE_TYPE_LIVESERVER=$(cat $jsonConfig | $JQ '.android.LiveServer.releaseType' | tr -d '"')
 ###
 USING_TESTSERVER=$(test $(cat $jsonConfig | $JQ '.android.TestServer.enabled') = true && echo 1 || echo 0)
 GRADLE_TASK_TESTSERVER=$(cat $jsonConfig | $JQ '.android.TestServer.taskName' | tr -d '"')
 USING_BUNDLE_TESTSERVER=$(test $(cat $jsonConfig | $JQ '.android.TestServer.usingBundleAAB') = true && echo 1 || echo 0)
-RELEASE_TYPE_TESTSERVER=$(cat $jsonConfig | $JQ '.android.TestServer.releasType' | tr -d '"')
+RELEASE_TYPE_TESTSERVER=$(cat $jsonConfig | $JQ '.android.TestServer.releaseType' | tr -d '"')
 ###################
 if [ $isFlutterEnabled -eq 1 ]; then
     APK_OUTPUT_PATH="build/app/outputs"
