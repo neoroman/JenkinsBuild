@@ -560,11 +560,11 @@ elif [ $DEBUGGING -eq 0 ]; then
             echo "TODO: **NEED** to resend this file => ${OUTPUT_FOLDER}/${APK_GOOGLESTORE} to ${NEO2UA_OUTPUT_FOLDER}"
         fi
         if [ $USING_BUNDLE_GOOGLESTORE -eq 1 ]; then
-            BUNDLE_APK_FILE="$OUTPUT_FOLDER/${APK_GOOGLESTORE%.aab}.apk"
-            if [ -f ${OUTPUT_FOLDER}/${BUNDLE_APK_FILE} ]; then
-                if [ $(sendFile ${OUTPUT_FOLDER}/${BUNDLE_APK_FILE} ${NEO2UA_OUTPUT_FOLDER}) -eq 0 ]; then
+            SCP_BUNDLE_APK_FILE="$OUTPUT_FOLDER/${APK_GOOGLESTORE%.aab}.apk"
+            if [ -f ${SCP_BUNDLE_APK_FILE} ]; then
+                if [ $(sendFile ${SCP_BUNDLE_APK_FILE} ${NEO2UA_OUTPUT_FOLDER}) -eq 0 ]; then
                     #   echo "Failed to send file"
-                    echo "TODO: **NEED** to resend this file => ${OUTPUT_FOLDER}/${BUNDLE_APK_FILE} to ${NEO2UA_OUTPUT_FOLDER}"
+                    echo "TODO: **NEED** to resend this file => ${SCP_BUNDLE_APK_FILE} to ${NEO2UA_OUTPUT_FOLDER}"
                 fi
             fi
         fi
