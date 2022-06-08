@@ -47,6 +47,14 @@ while [[ $# -gt 0 ]]; do
     OUTPUT_AND_EXIT_USE=1
     shift # past argument
     ;;
+  --merge-tag-master)
+    LAST_TAG=$($GIT describe --tags)
+    $GIT pull
+    $GIT add .
+    $GIT merge $LAST_TAG
+    $GIT push
+    exit
+    ;;
   -ctb | --current-tag-branch)
     LAST_TAG=$($GIT describe --tags)
     if [ -z $LAST_TAG ]; then
