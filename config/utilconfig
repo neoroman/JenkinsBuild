@@ -1,5 +1,28 @@
 #!/bin/sh
 ##
+HOSTNAME=$(hostname)
+CURRENT=$PWD
+A2PS="/usr/local/bin/a2ps"
+if [ ! -f $A2PS ]; then
+  cd /usr/local/bin
+  sudo -S -k ln -s `which a2ps` <<<"${sudoPassword}"
+  cd $CURRENT
+fi
+GS="/usr/local/bin/gs"
+if [ ! -f $GS ]; then
+  cd /usr/local/bin
+  sudo -S -k ln -s `which gs` <<<"${sudoPassword}"
+  cd $CURRENT
+fi
+CONVERT="/usr/local/bin/convert"
+if [ ! -f $CONVERT ]; then
+  cd /usr/local/bin
+  sudo -S -k ln -s `which convert` <<<"${sudoPassword}"
+  cd $CURRENT
+fi
+CURL="/usr/bin/curl"
+USING_JSON=1
+###################
 if test -z "${INPUT_OS}"; then
     ./$SCRIPT_NAME -h
     exit
@@ -28,13 +51,6 @@ if test -z $IS_RELEASE; then
     fi
   fi
 fi
-###################
-HOSTNAME=$(hostname)
-A2PS="/usr/local/bin/a2ps"
-GS="/usr/local/bin/gs"
-CONVERT="/usr/local/bin/convert"
-CURL="/usr/bin/curl"
-USING_JSON=1
 ###################
 FILE_TODAY=$(/bin/date "+%y%m%d")
 ###################
