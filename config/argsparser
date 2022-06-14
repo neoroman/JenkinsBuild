@@ -50,7 +50,6 @@ while [[ $# -gt 0 ]]; do
   --merge-tag-master)
     LAST_TAG=$($GIT describe --tags)
     $GIT pull
-    $GIT add .
     $GIT merge $LAST_TAG
     $GIT push
     exit
