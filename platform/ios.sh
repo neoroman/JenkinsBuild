@@ -224,50 +224,50 @@ if [ $USING_APPSTORE -eq 1 -a $IS_RELEASE -eq 1 ]; then
     TEMP_APPSTORE_APP_FOLDER="${OUTPUT_FILENAME_APPSTORE}.app"
     OUTPUT_FILE="${OUTPUT_FOLDER}/${TARGET_APPSTORE}"
     if [ -f "${OUTPUT_FILE}" ]; then
-    mv $OUTPUT_FILE "${OUTPUT_FOLDER}/${OUTPUT_FILENAME_APPSTORE_IPA}"
-    SIZE_STORE_APP_FILE=$(du -sh "${OUTPUT_FOLDER}/${OUTPUT_FILENAME_APPSTORE_IPA}" | awk '{print $1}')
+        mv $OUTPUT_FILE "${OUTPUT_FOLDER}/${OUTPUT_FILENAME_APPSTORE_IPA}"
+        SIZE_STORE_APP_FILE=$(du -sh "${OUTPUT_FOLDER}/${OUTPUT_FILENAME_APPSTORE_IPA}" | awk '{print $1}')
 
-    if [ ! -d $OUTPUT_FOLDER/$TEMP_APPSTORE_APP_FOLDER ]; then
-        mkdir $OUTPUT_FOLDER/$TEMP_APPSTORE_APP_FOLDER
-    fi
-    if [ -f $OUTPUT_FOLDER/DistributionSummary.plist ]; then
-        mv -f $OUTPUT_FOLDER/DistributionSummary.plist $OUTPUT_FOLDER/$TEMP_APPSTORE_APP_FOLDER/
-    fi
-    if [ -f $OUTPUT_FOLDER/ExportOptions.plist ]; then
-        mv -f $OUTPUT_FOLDER/ExportOptions.plist $OUTPUT_FOLDER/$TEMP_APPSTORE_APP_FOLDER/
-    fi
-    if [ -f $OUTPUT_FOLDER/Packaging.log ]; then
-        mv -f $OUTPUT_FOLDER/Packaging.log $OUTPUT_FOLDER/$TEMP_APPSTORE_APP_FOLDER/
-    fi
-    if [ -d $ARCHIVE_PATH ]; then
-        if [ -d $OUTPUT_FOLDER/$TEMP_APPSTORE_APP_FOLDER/$ARCHIVE_FILE ]; then
-        rm -rf $OUTPUT_FOLDER/$TEMP_APPSTORE_APP_FOLDER/$ARCHIVE_FILE
+        if [ ! -d $OUTPUT_FOLDER/$TEMP_APPSTORE_APP_FOLDER ]; then
+            mkdir $OUTPUT_FOLDER/$TEMP_APPSTORE_APP_FOLDER
         fi
-        mv -f $ARCHIVE_PATH $OUTPUT_FOLDER/$TEMP_APPSTORE_APP_FOLDER/
-    fi
-    ###################
-    # Step 2.1.1: Run IxShiedCheck script and take screenshot, nees 'a2ps' and 'gs' here...!!!
-    if [ $DEBUGGING -eq 0 -a -f $A2PS ]; then
-        SPLASH_VIEW="${WORKSPACE}/${PROJECT_NAME}/ObjC/SplashViewController.m"
-        SPLASH_TEMP="${WORKSPACE}/${PROJECT_NAME}/ObjC/zzz.m"
-        if [ -f $A2PS -a -f $SPLASH_VIEW ]; then
-        if [ -f $SPLASH_VIEW ]; then
-            sed -e 's/ix_set_debug/IX_SET_DEBUG/g' $SPLASH_VIEW >$SPLASH_TEMP
-            mv -f $SPLASH_TEMP $SPLASH_VIEW
+        if [ -f $OUTPUT_FOLDER/DistributionSummary.plist ]; then
+            mv -f $OUTPUT_FOLDER/DistributionSummary.plist $OUTPUT_FOLDER/$TEMP_APPSTORE_APP_FOLDER/
+        fi
+        if [ -f $OUTPUT_FOLDER/ExportOptions.plist ]; then
+            mv -f $OUTPUT_FOLDER/ExportOptions.plist $OUTPUT_FOLDER/$TEMP_APPSTORE_APP_FOLDER/
+        fi
+        if [ -f $OUTPUT_FOLDER/Packaging.log ]; then
+            mv -f $OUTPUT_FOLDER/Packaging.log $OUTPUT_FOLDER/$TEMP_APPSTORE_APP_FOLDER/
+        fi
+        if [ -d $ARCHIVE_PATH ]; then
+            if [ -d $OUTPUT_FOLDER/$TEMP_APPSTORE_APP_FOLDER/$ARCHIVE_FILE ]; then
+            rm -rf $OUTPUT_FOLDER/$TEMP_APPSTORE_APP_FOLDER/$ARCHIVE_FILE
+            fi
+            mv -f $ARCHIVE_PATH $OUTPUT_FOLDER/$TEMP_APPSTORE_APP_FOLDER/
+        fi
+        ###################
+        # Step 2.1.1: Run IxShiedCheck script and take screenshot, nees 'a2ps' and 'gs' here...!!!
+        if [ $DEBUGGING -eq 0 -a -f $A2PS ]; then
+            SPLASH_VIEW="${WORKSPACE}/${PROJECT_NAME}/ObjC/SplashViewController.m"
+            SPLASH_TEMP="${WORKSPACE}/${PROJECT_NAME}/ObjC/zzz.m"
+            if [ -f $A2PS -a -f $SPLASH_VIEW ]; then
+                if [ -f $SPLASH_VIEW ]; then
+                    sed -e 's/ix_set_debug/IX_SET_DEBUG/g' $SPLASH_VIEW >$SPLASH_TEMP
+                    mv -f $SPLASH_TEMP $SPLASH_VIEW
 
-            cd $WORKSPACE && echo "${systemName}:ios appDevTeam$ ./IxShieldCheck.sh -i ./${PROJECT_NAME}" >merong.txt
-            cd $WORKSPACE && ./IxShieldCheck.sh -i ./${PROJECT_NAME} >>merong.txt
-            cd $WORKSPACE && cat merong.txt | $A2PS -=book -B -q --medium=A4dj --borders=no -o out1.ps && $GS -sDEVICE=png256 -dNOPAUSE -dBATCH -dSAFER -dTextAlphaBits=4 -q -r300x300 -sOutputFile=out2.png out1.ps &&
-            cd $WORKSPACE && $CONVERT -trim out2.png $OUTPUT_FOLDER/$OUTPUT_FILENAME_APPSTORE_IX_SHIELD_CHECK
-            cd $WORKSPACE && rm -f out[12].png out[12].ps merong.txt
+                    cd $WORKSPACE && echo "${systemName}:ios appDevTeam$ ./IxShieldCheck.sh -i ./${PROJECT_NAME}" >merong.txt
+                    cd $WORKSPACE && ./IxShieldCheck.sh -i ./${PROJECT_NAME} >>merong.txt
+                    cd $WORKSPACE && cat merong.txt | $A2PS -=book -B -q --medium=A4dj --borders=no -o out1.ps && $GS -sDEVICE=png256 -dNOPAUSE -dBATCH -dSAFER -dTextAlphaBits=4 -q -r300x300 -sOutputFile=out2.png out1.ps &&
+                    cd $WORKSPACE && $CONVERT -trim out2.png $OUTPUT_FOLDER/$OUTPUT_FILENAME_APPSTORE_IX_SHIELD_CHECK
+                    cd $WORKSPACE && rm -f out[12].png out[12].ps merong.txt
+                fi
+            fi
         fi
-        fi
-    fi
     fi
     ###################
     # Step 2.1.2: Remove archive folder
     if [ -d $OUTPUT_FOLDER/$TEMP_APPSTORE_APP_FOLDER ]; then
-    rm -rf $OUTPUT_FOLDER/$TEMP_APPSTORE_APP_FOLDER
+        rm -rf $OUTPUT_FOLDER/$TEMP_APPSTORE_APP_FOLDER
     fi
 fi
 ###################
@@ -279,15 +279,15 @@ if [ $USING_ADHOC -eq 1 ]; then
     OUTPUT_FILENAME_ADHOC_PLIST="${OUTPUT_FILENAME_ADHOC}.plist"
     OUTPUT_FILE="${DST_ROOT}/Applications/${OUTPUT_FILENAME_ADHOC_IPA}"
     if [ -d "${DST_ROOT}/Applications/${TARGET_ADHOC}" ]; then
-    if [ -d $PAYLOAD_FOLDER ]; then
-        rm -rf $PAYLOAD_FOLDER
-    fi
-    mkdir -p $PAYLOAD_FOLDER
-    mv "${DST_ROOT}/Applications/${TARGET_ADHOC}" "${DST_ROOT}/Applications/Payload"
-    cd "${DST_ROOT}/Applications"
-    $ZIP -r "${OUTPUT_FILE}" Payload
-    mv $OUTPUT_FILE "${OUTPUT_FOLDER}/"
-    SIZE_ADHOC_APP_FILE=$(du -sh ${OUTPUT_FOLDER}/${OUTPUT_FILENAME_ADHOC_IPA} | awk '{print $1}')
+        if [ -d $PAYLOAD_FOLDER ]; then
+            rm -rf $PAYLOAD_FOLDER
+        fi
+        mkdir -p $PAYLOAD_FOLDER
+        mv "${DST_ROOT}/Applications/${TARGET_ADHOC}" "${DST_ROOT}/Applications/Payload"
+        cd "${DST_ROOT}/Applications"
+        $ZIP -r "${OUTPUT_FILE}" Payload
+        mv $OUTPUT_FILE "${OUTPUT_FOLDER}/"
+        SIZE_ADHOC_APP_FILE=$(du -sh ${OUTPUT_FOLDER}/${OUTPUT_FILENAME_ADHOC_IPA} | awk '{print $1}')
     fi
 fi
 ###################
@@ -299,15 +299,15 @@ if [ $USING_ENTERPRISE -eq 1 ]; then
     OUTPUT_FILENAME_ENTER_PLIST="${OUTPUT_FILENAME_ENTER}.plist"
     OUTPUT_FILE="${DST_ROOT}/Applications/${OUTPUT_FILENAME_ENTER_IPA}"
     if [ -d "${DST_ROOT}/Applications/${TARGET_ENTER}" ]; then
-    if [ -d $PAYLOAD_FOLDER ]; then
-        rm -rf $PAYLOAD_FOLDER
-    fi
-    mkdir -p $PAYLOAD_FOLDER
-    mv "${DST_ROOT}/Applications/${TARGET_ENTER}" "${DST_ROOT}/Applications/Payload"
-    cd "${DST_ROOT}/Applications"
-    $ZIP -r "${OUTPUT_FILE}" Payload
-    mv $OUTPUT_FILE "${OUTPUT_FOLDER}/"
-    SIZE_ENTER_APP_FILE=$(du -sh ${OUTPUT_FOLDER}/${OUTPUT_FILENAME_ENTER_IPA} | awk '{print $1}')
+        if [ -d $PAYLOAD_FOLDER ]; then
+            rm -rf $PAYLOAD_FOLDER
+        fi
+        mkdir -p $PAYLOAD_FOLDER
+        mv "${DST_ROOT}/Applications/${TARGET_ENTER}" "${DST_ROOT}/Applications/Payload"
+        cd "${DST_ROOT}/Applications"
+        $ZIP -r "${OUTPUT_FILE}" Payload
+        mv $OUTPUT_FILE "${OUTPUT_FOLDER}/"
+        SIZE_ENTER_APP_FILE=$(du -sh ${OUTPUT_FOLDER}/${OUTPUT_FILENAME_ENTER_IPA} | awk '{print $1}')
     fi
 fi
 ###################
@@ -319,95 +319,95 @@ if [ $USING_ENTER4WEB -eq 1 ]; then
     OUTPUT_FILENAME_ENTER4WEB_PLIST="${OUTPUT_FILENAME_ENTER4WEB}.plist"
     OUTPUT_FILE="${DST_ROOT}/Applications/${OUTPUT_FILENAME_ENTER4WEB_IPA}"
     if [ -d "${DST_ROOT}/Applications/${TARGET_ENTER4WEB}" ]; then
-    if [ -d $PAYLOAD_FOLDER ]; then
-        rm -rf $PAYLOAD_FOLDER
-    fi
-    mkdir -p $PAYLOAD_FOLDER
-    mv "${DST_ROOT}/Applications/${TARGET_ENTER4WEB}" "${DST_ROOT}/Applications/Payload"
-    cd "${DST_ROOT}/Applications"
-    $ZIP -r "${OUTPUT_FILE}" Payload
-    mv $OUTPUT_FILE "${OUTPUT_FOLDER}/"
-    SIZE_ENTER4WEB_APP_FILE=$(du -sh ${OUTPUT_FOLDER}/${OUTPUT_FILENAME_ENTER4WEB_IPA} | awk '{print $1}')
+        if [ -d $PAYLOAD_FOLDER ]; then
+            rm -rf $PAYLOAD_FOLDER
+        fi
+        mkdir -p $PAYLOAD_FOLDER
+        mv "${DST_ROOT}/Applications/${TARGET_ENTER4WEB}" "${DST_ROOT}/Applications/Payload"
+        cd "${DST_ROOT}/Applications"
+        $ZIP -r "${OUTPUT_FILE}" Payload
+        mv $OUTPUT_FILE "${OUTPUT_FOLDER}/"
+        SIZE_ENTER4WEB_APP_FILE=$(du -sh ${OUTPUT_FOLDER}/${OUTPUT_FILENAME_ENTER4WEB_IPA} | awk '{print $1}')
     fi
 fi
 ###################
 # Step 2.4-1: Exit if output not using for distribution, maybe it's for Jenkins PR Checker
 if [ $PRODUCE_OUTPUT_USE -eq 0 ]; then
     if [ $OUTPUT_AND_EXIT_USE -ne 1 ]; then
-    # Exit here with remove all binary outputs
-    if [ -f ${OUTPUT_FOLDER}/${OUTPUT_FILENAME_ENTER_IPA} ]; then
-        rm -f ${OUTPUT_FOLDER}/${OUTPUT_FILENAME_ENTER_IPA}
-    fi
-    if [ -f ${OUTPUT_FOLDER}/${OUTPUT_FILENAME_ENTER4WEB_IPA} ]; then
-        rm -f ${OUTPUT_FOLDER}/${OUTPUT_FILENAME_ENTER4WEB_IPA}
-    fi
-    if [ -f ${OUTPUT_FOLDER}/${OUTPUT_FILENAME_ADHOC_IPA} ]; then
-        rm -f ${OUTPUT_FOLDER}/${OUTPUT_FILENAME_ADHOC_IPA}
-    fi
-    if [ -f $OUTPUT_FOLDER/$OUTPUT_FILENAME_APPSTORE_IX_SHIELD_CHECK ]; then
-        rm -f $OUTPUT_FOLDER/$OUTPUT_FILENAME_APPSTORE_IX_SHIELD_CHECK
-    fi
-    if [ -f ${OUTPUT_FOLDER}/${OUTPUT_FILENAME_APPSTORE_IPA} ]; then
-        rm -f ${OUTPUT_FOLDER}/${OUTPUT_FILENAME_APPSTORE_IPA}
-    fi
+        # Exit here with remove all binary outputs
+        if [ -f ${OUTPUT_FOLDER}/${OUTPUT_FILENAME_ENTER_IPA} ]; then
+            rm -f ${OUTPUT_FOLDER}/${OUTPUT_FILENAME_ENTER_IPA}
+        fi
+        if [ -f ${OUTPUT_FOLDER}/${OUTPUT_FILENAME_ENTER4WEB_IPA} ]; then
+            rm -f ${OUTPUT_FOLDER}/${OUTPUT_FILENAME_ENTER4WEB_IPA}
+        fi
+        if [ -f ${OUTPUT_FOLDER}/${OUTPUT_FILENAME_ADHOC_IPA} ]; then
+            rm -f ${OUTPUT_FOLDER}/${OUTPUT_FILENAME_ADHOC_IPA}
+        fi
+        if [ -f $OUTPUT_FOLDER/$OUTPUT_FILENAME_APPSTORE_IX_SHIELD_CHECK ]; then
+            rm -f $OUTPUT_FOLDER/$OUTPUT_FILENAME_APPSTORE_IX_SHIELD_CHECK
+        fi
+        if [ -f ${OUTPUT_FOLDER}/${OUTPUT_FILENAME_APPSTORE_IPA} ]; then
+            rm -f ${OUTPUT_FOLDER}/${OUTPUT_FILENAME_APPSTORE_IPA}
+        fi
     fi
     exit
 elif [ $DEBUGGING -eq 1 ]; then
     if [ $USING_ENTERPRISE -eq 1 ]; then
-    if [ ! -f ${OUTPUT_FOLDER}/${OUTPUT_FILENAME_ENTER_IPA} ]; then
-        touch ${OUTPUT_FOLDER}/${OUTPUT_FILENAME_ENTER_IPA}
-    fi
+        if [ ! -f ${OUTPUT_FOLDER}/${OUTPUT_FILENAME_ENTER_IPA} ]; then
+            touch ${OUTPUT_FOLDER}/${OUTPUT_FILENAME_ENTER_IPA}
+        fi
     fi
     if [ $USING_ENTER4WEB -eq 1 ]; then
-    if [ ! -f ${OUTPUT_FOLDER}/${OUTPUT_FILENAME_ENTER4WEB_IPA} ]; then
-        touch ${OUTPUT_FOLDER}/${OUTPUT_FILENAME_ENTER4WEB_IPA}
-    fi
+        if [ ! -f ${OUTPUT_FOLDER}/${OUTPUT_FILENAME_ENTER4WEB_IPA} ]; then
+            touch ${OUTPUT_FOLDER}/${OUTPUT_FILENAME_ENTER4WEB_IPA}
+        fi
     fi
     if [ $USING_ADHOC -eq 1 ]; then
-    if [ ! -f ${OUTPUT_FOLDER}/${OUTPUT_FILENAME_ADHOC_IPA} ]; then
-        touch ${OUTPUT_FOLDER}/${OUTPUT_FILENAME_ADHOC_IPA}
-    fi
+        if [ ! -f ${OUTPUT_FOLDER}/${OUTPUT_FILENAME_ADHOC_IPA} ]; then
+            touch ${OUTPUT_FOLDER}/${OUTPUT_FILENAME_ADHOC_IPA}
+        fi
     fi
     if [ $IS_RELEASE -eq 1 -a $USING_APPSTORE -eq 1 ]; then
-    if [ ! -f $OUTPUT_FOLDER/$OUTPUT_FILENAME_APPSTORE_IX_SHIELD_CHECK ]; then
-        touch $OUTPUT_FOLDER/$OUTPUT_FILENAME_APPSTORE_IX_SHIELD_CHECK
-    fi
-    if [ ! -f ${OUTPUT_FOLDER}/${OUTPUT_FILENAME_APPSTORE_IPA} ]; then
-        touch ${OUTPUT_FOLDER}/${OUTPUT_FILENAME_APPSTORE_IPA}
-    fi
+        if [ ! -f $OUTPUT_FOLDER/$OUTPUT_FILENAME_APPSTORE_IX_SHIELD_CHECK ]; then
+            touch $OUTPUT_FOLDER/$OUTPUT_FILENAME_APPSTORE_IX_SHIELD_CHECK
+        fi
+        if [ ! -f ${OUTPUT_FOLDER}/${OUTPUT_FILENAME_APPSTORE_IPA} ]; then
+            touch ${OUTPUT_FOLDER}/${OUTPUT_FILENAME_APPSTORE_IPA}
+        fi
     fi
 elif [ $USING_SCP -eq 1 ]; then
     ###################
     # Step 2.99: Send file to NAS (app.company.com)
     if [ -f ${OUTPUT_FOLDER}/${OUTPUT_FILENAME_APPSTORE_IPA} ]; then
-    if [ $(sendFile ${OUTPUT_FOLDER}/${OUTPUT_FILENAME_APPSTORE_IPA} ${NEO2UA_OUTPUT_FOLDER}) -eq 0 ]; then
-        #   echo "Failed to send file"
-        echo "TODO: **NEED** to resend this file => ${OUTPUT_FOLDER}/${OUTPUT_FILENAME_APPSTORE_IPA} to ${NEO2UA_OUTPUT_FOLDER}"
-    fi
-    if [ -f ${OUTPUT_FOLDER}/${OUTPUT_FILENAME_APPSTORE_IX_SHIELD_CHECK} ]; then
-        if [ $(sendFile ${OUTPUT_FOLDER}/${OUTPUT_FILENAME_APPSTORE_IX_SHIELD_CHECK} ${NEO2UA_OUTPUT_FOLDER}) -eq 0 ]; then
-        #   echo "Failed to send file"
-        echo "TODO: **NEED** to resend this file => ${OUTPUT_FOLDER}/${OUTPUT_FILENAME_APPSTORE_IX_SHIELD_CHECK} to ${NEO2UA_OUTPUT_FOLDER}"
+        if [ $(sendFile ${OUTPUT_FOLDER}/${OUTPUT_FILENAME_APPSTORE_IPA} ${NEO2UA_OUTPUT_FOLDER}) -eq 0 ]; then
+            #   echo "Failed to send file"
+            echo "TODO: **NEED** to resend this file => ${OUTPUT_FOLDER}/${OUTPUT_FILENAME_APPSTORE_IPA} to ${NEO2UA_OUTPUT_FOLDER}"
+        fi
+        if [ -f ${OUTPUT_FOLDER}/${OUTPUT_FILENAME_APPSTORE_IX_SHIELD_CHECK} ]; then
+            if [ $(sendFile ${OUTPUT_FOLDER}/${OUTPUT_FILENAME_APPSTORE_IX_SHIELD_CHECK} ${NEO2UA_OUTPUT_FOLDER}) -eq 0 ]; then
+            #   echo "Failed to send file"
+            echo "TODO: **NEED** to resend this file => ${OUTPUT_FOLDER}/${OUTPUT_FILENAME_APPSTORE_IX_SHIELD_CHECK} to ${NEO2UA_OUTPUT_FOLDER}"
+            fi
         fi
     fi
-    fi
     if [ -f ${OUTPUT_FOLDER}/${OUTPUT_FILENAME_ADHOC_IPA} ]; then
-    if [ $(sendFile ${OUTPUT_FOLDER}/${OUTPUT_FILENAME_ADHOC_IPA} ${NEO2UA_OUTPUT_FOLDER}) -eq 0 ]; then
-        #   echo "Failed to send file"
-        echo "TODO: **NEED** to resend this file => ${OUTPUT_FOLDER}/${OUTPUT_FILENAME_ADHOC_IPA} to ${NEO2UA_OUTPUT_FOLDER}"
-    fi
+        if [ $(sendFile ${OUTPUT_FOLDER}/${OUTPUT_FILENAME_ADHOC_IPA} ${NEO2UA_OUTPUT_FOLDER}) -eq 0 ]; then
+            #   echo "Failed to send file"
+            echo "TODO: **NEED** to resend this file => ${OUTPUT_FOLDER}/${OUTPUT_FILENAME_ADHOC_IPA} to ${NEO2UA_OUTPUT_FOLDER}"
+        fi
     fi
     if [ -f ${OUTPUT_FOLDER}/${OUTPUT_FILENAME_ENTER_IPA} ]; then
-    if [ $(sendFile ${OUTPUT_FOLDER}/${OUTPUT_FILENAME_ENTER_IPA} ${NEO2UA_OUTPUT_FOLDER}) -eq 0 ]; then
-        #   echo "Failed to send file"
-        echo "TODO: **NEED** to resend this file => ${OUTPUT_FOLDER}/${OUTPUT_FILENAME_ENTER_IPA} to ${NEO2UA_OUTPUT_FOLDER}"
-    fi
+        if [ $(sendFile ${OUTPUT_FOLDER}/${OUTPUT_FILENAME_ENTER_IPA} ${NEO2UA_OUTPUT_FOLDER}) -eq 0 ]; then
+            #   echo "Failed to send file"
+            echo "TODO: **NEED** to resend this file => ${OUTPUT_FOLDER}/${OUTPUT_FILENAME_ENTER_IPA} to ${NEO2UA_OUTPUT_FOLDER}"
+        fi
     fi
     if [ -f ${OUTPUT_FOLDER}/${OUTPUT_FILENAME_ENTER4WEB_IPA} ]; then
-    if [ $(sendFile ${OUTPUT_FOLDER}/${OUTPUT_FILENAME_ENTER4WEB_IPA} ${NEO2UA_OUTPUT_FOLDER}) -eq 0 ]; then
-        #   echo "Failed to send file"
-        echo "TODO: **NEED** to resend this file => ${OUTPUT_FOLDER}/${OUTPUT_FILENAME_ENTER4WEB_IPA} to ${NEO2UA_OUTPUT_FOLDER}"
-    fi
+        if [ $(sendFile ${OUTPUT_FOLDER}/${OUTPUT_FILENAME_ENTER4WEB_IPA} ${NEO2UA_OUTPUT_FOLDER}) -eq 0 ]; then
+            #   echo "Failed to send file"
+            echo "TODO: **NEED** to resend this file => ${OUTPUT_FOLDER}/${OUTPUT_FILENAME_ENTER4WEB_IPA} to ${NEO2UA_OUTPUT_FOLDER}"
+        fi
     fi
 fi
 
@@ -427,12 +427,12 @@ if [ $USING_ADHOC -eq 1 ]; then
     >$OUTPUT_FOLDER/$OUTPUT_FILENAME_ADHOC_PLIST
     ADHOC_PLIST_ITMS_URL=${HTTPS_PREFIX}${OUTPUT_FILENAME_ADHOC_PLIST}
     if [ $USING_SCP -eq 1 ]; then
-    if [ -f ${OUTPUT_FOLDER}/${OUTPUT_FILENAME_ADHOC_PLIST} ]; then
-        if [ $(sendFile ${OUTPUT_FOLDER}/${OUTPUT_FILENAME_ADHOC_PLIST} ${NEO2UA_OUTPUT_FOLDER}) -eq 0 ]; then
-        #   echo "Failed to send file"
-        echo "TODO: **NEED** to resend this file => ${OUTPUT_FOLDER}/${OUTPUT_FILENAME_ADHOC_PLIST} to ${NEO2UA_OUTPUT_FOLDER}"
+        if [ -f ${OUTPUT_FOLDER}/${OUTPUT_FILENAME_ADHOC_PLIST} ]; then
+            if [ $(sendFile ${OUTPUT_FOLDER}/${OUTPUT_FILENAME_ADHOC_PLIST} ${NEO2UA_OUTPUT_FOLDER}) -eq 0 ]; then
+            #   echo "Failed to send file"
+            echo "TODO: **NEED** to resend this file => ${OUTPUT_FOLDER}/${OUTPUT_FILENAME_ADHOC_PLIST} to ${NEO2UA_OUTPUT_FOLDER}"
+            fi
         fi
-    fi
     fi
 fi
 if [ $USING_ENTERPRISE -eq 1 ]; then
@@ -441,12 +441,12 @@ if [ $USING_ENTERPRISE -eq 1 ]; then
     >$OUTPUT_FOLDER/$OUTPUT_FILENAME_ENTER_PLIST
     ENTER_PLIST_ITMS_URL=${HTTPS_PREFIX}${OUTPUT_FILENAME_ENTER_PLIST}
     if [ $USING_SCP -eq 1 ]; then
-    if [ -f ${OUTPUT_FOLDER}/${OUTPUT_FILENAME_ENTER_PLIST} ]; then
-        if [ $(sendFile ${OUTPUT_FOLDER}/${OUTPUT_FILENAME_ENTER_PLIST} ${NEO2UA_OUTPUT_FOLDER}) -eq 0 ]; then
-        #   echo "Failed to send file"
-        echo "TODO: **NEED** to resend this file => ${OUTPUT_FOLDER}/${OUTPUT_FILENAME_ENTER_PLIST} to ${NEO2UA_OUTPUT_FOLDER}"
+        if [ -f ${OUTPUT_FOLDER}/${OUTPUT_FILENAME_ENTER_PLIST} ]; then
+            if [ $(sendFile ${OUTPUT_FOLDER}/${OUTPUT_FILENAME_ENTER_PLIST} ${NEO2UA_OUTPUT_FOLDER}) -eq 0 ]; then
+            #   echo "Failed to send file"
+            echo "TODO: **NEED** to resend this file => ${OUTPUT_FOLDER}/${OUTPUT_FILENAME_ENTER_PLIST} to ${NEO2UA_OUTPUT_FOLDER}"
+            fi
         fi
-    fi
     fi
 fi
 if [ $USING_ENTER4WEB -eq 1 ]; then
