@@ -49,15 +49,6 @@ while [[ $# -gt 0 ]]; do
     ;;
   --merge-tag-master)
     LAST_TAG=$($GIT describe --tags)
-    $GIT checkout master
-    $GIT pull
-    $GIT merge $LAST_TAG
-    $GIT push
-    exit
-    ;;
-  --merge-tag-main)
-    LAST_TAG=$($GIT describe --tags)
-    $GIT checkout main
     $GIT pull
     $GIT merge $LAST_TAG
     $GIT push
