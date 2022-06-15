@@ -74,6 +74,7 @@ LOCAL_BRANCH=$(echo ${GIT_BRANCH} | sed -e 's/.*\/\(.*\)$/\1/')
 DST_ROOT="/tmp/${PROJECT_NAME}/${LOCAL_BRANCH}"
 OUTPUT_FOLDER="${APP_ROOT}/${APP_VERSION}"
 HTTPS_PREFIX="${FRONTEND_POINT}/${TOP_PATH}/${APP_ROOT_SUFFIX}/${APP_VERSION}/"
+OUTBOUND_HTTPS_PREFIX="${OUTBOUND_POINT}/${TOP_PATH}/${APP_ROOT_SUFFIX}/${APP_VERSION}/"
 ###################
 XCODE_WORKSPACE="${WORKSPACE}/${PROJECT_NAME}.xcworkspace"
 if [ ! -d $XCODE_WORKSPACE ]; then
@@ -422,7 +423,7 @@ else
 fi
 
 if [ $USING_ADHOC -eq 1 ]; then
-    ADHOC_IPA_DOWNLOAD_URL=${HTTPS_PREFIX}${OUTPUT_FILENAME_ADHOC_IPA}
+    ADHOC_IPA_DOWNLOAD_URL=${OUTBOUND_HTTPS_PREFIX}${OUTPUT_FILENAME_ADHOC_IPA}
     echo "<?xml version=\"1.0\" encoding=\"UTF-8\"?><"'!'"DOCTYPE plist PUBLIC \"-//Apple//DTD PLIST 1.0//EN\" \"http://www.apple.com/DTDs/PropertyList-1.0.dtd\"><plist version=\"1.0\"><dict><key>items</key><array><dict><key>assets</key><array><dict><key>kind</key><string>software-package</string><key>url</key><string>${ADHOC_IPA_DOWNLOAD_URL}</string></dict></array><key>metadata</key><dict><key>bundle-identifier</key><string>${BUNDLE_ID_ADHOC}</string><key>bundle-version</key><string>${APP_VERSION}</string><key>kind</key><string>software</string><key>title</key><string>${BUNDLE_NAME_ADHOC} ${VERSION_STRING}</string></dict></dict></array></dict></plist>" \
     >$OUTPUT_FOLDER/$OUTPUT_FILENAME_ADHOC_PLIST
     ADHOC_PLIST_ITMS_URL=${HTTPS_PREFIX}${OUTPUT_FILENAME_ADHOC_PLIST}
@@ -436,7 +437,7 @@ if [ $USING_ADHOC -eq 1 ]; then
     fi
 fi
 if [ $USING_ENTERPRISE -eq 1 ]; then
-    ENTER_IPA_DOWNLOAD_URL=${HTTPS_PREFIX}${OUTPUT_FILENAME_ENTER_IPA}
+    ENTER_IPA_DOWNLOAD_URL=${OUTBOUND_HTTPS_PREFIX}${OUTPUT_FILENAME_ENTER_IPA}
     echo "<?xml version=\"1.0\" encoding=\"UTF-8\"?><"'!'"DOCTYPE plist PUBLIC \"-//Apple//DTD PLIST 1.0//EN\" \"http://www.apple.com/DTDs/PropertyList-1.0.dtd\"><plist version=\"1.0\"><dict><key>items</key><array><dict><key>assets</key><array><dict><key>kind</key><string>software-package</string><key>url</key><string>${ENTER_IPA_DOWNLOAD_URL}</string></dict></array><key>metadata</key><dict><key>bundle-identifier</key><string>${BUNDLE_ID_ENTER}</string><key>bundle-version</key><string>${APP_VERSION}</string><key>kind</key><string>software</string><key>title</key><string>${BUNDLE_NAME_ENTER} ${VERSION_STRING}</string></dict></dict></array></dict></plist>" \
     >$OUTPUT_FOLDER/$OUTPUT_FILENAME_ENTER_PLIST
     ENTER_PLIST_ITMS_URL=${HTTPS_PREFIX}${OUTPUT_FILENAME_ENTER_PLIST}

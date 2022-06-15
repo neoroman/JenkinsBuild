@@ -29,6 +29,9 @@ if [ -f $jsonConfig ]; then
   frontEndPoint=$(echo $config | $JQ '.frontEndPoint' | tr -d '"')
   frontEndProtocol=$(echo $config | $JQ '.frontEndProtocol' | tr -d '"')
   FRONTEND_POINT="$frontEndProtocol://$frontEndPoint"
+  outBoundPoint=$(echo $config | $JQ '.outBoundPoint' | tr -d '"')
+  outBoundProtocol=$(echo $config | $JQ '.outBoundProtocol' | tr -d '"')
+  OUTBOUND_POINT="$outBoundProtocol://$outBoundPoint"
   ConfigJavaHome=$(cat $jsonConfig | $JQ '.android.javaHome' | tr -d '"')
   USING_MAIL=$(test $(cat $jsonConfig | $JQ '.mail.domesticEnabled') = true && echo 1 || echo 0)
   PROJECT_NAME=$(cat $jsonConfig | $JQ '.ios.projectName' | tr -d '"')
