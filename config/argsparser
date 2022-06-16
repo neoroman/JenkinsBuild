@@ -59,8 +59,10 @@ while [[ $# -gt 0 ]]; do
     if [ -z $LAST_TAG ]; then
       LAST_TAG="master"
     fi
-    $GIT fetch --prune
-    $GIT branch -r | grep -v '\->' | grep -v 'external/' | while read remote; do $GIT branch --track "${remote#origin/}" "$remote" --force >/dev/null; done
+    if [ $($GIT remote -v | grep "^external" >/dev/null && [ $? -eq 0 ] && echo 1 || echo 0) -eq 1 ]; then
+      $GIT fetch --prune
+      $GIT branch -r | grep -v '\->' | grep -v 'external/' | while read remote; do $GIT branch --track "${remote#origin/}" "$remote" --force >/dev/null; done
+    fi
     $GIT fetch --all
     SYNC_TO_BE=$($GIT branch --contains tags/${LAST_TAG} | grep -vi 'head' | tail -1 | tr -d ' *')
     $GIT checkout ${SYNC_TO_BE}
