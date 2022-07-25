@@ -72,6 +72,10 @@ while [[ $# -gt 0 ]]; do
     WITH_TAG_PUSH=0
     shift # past argument
     ;;
+  --for-master-branch)
+    FOR_MASTER_BRANCH=1
+    shift # past argument
+    ;;
   -pu | --push-to-upstream)
     upstreamUrl="$2"
     if [[ "${upstreamUrl#https://}" != "${upstreamUrl}" ]]; then
@@ -102,7 +106,9 @@ while [[ $# -gt 0 ]]; do
     CURRENT_BRANCH=${CURRENT_BRANCH#"heads/"}
     $GIT branch -r | grep -v '\->' | grep -v 'external/' | grep -v ${CURRENT_BRANCH} | while read remote; do $GIT branch --track "${remote#origin/}" "$remote" --force >/dev/null; done
     $GIT fetch --all
-    LAST_TAG=$($GIT describe --tags)
+    if [ $FOR_MASTER_BRANCH -eq 0 ]; then
+      LAST_TAG=$($GIT describe --tags)
+    fi
     if [ -z $LAST_TAG ]; then
       LAST_TAG="master"
       SYNC_TO_BE=${LAST_TAG}
