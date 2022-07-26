@@ -41,12 +41,12 @@ if [[ "${APP_VERSION}" == ".." ]]; then
     if [ $isFlutterEnabled -eq 1 ]; then
         LOCAL_PROPERTIES="${WORKSPACE}/android/local.properties"
         PODSPEC="${WORKSPACE}/pubspec.yaml"
-        if [ -f "${LOCAL_PROPERTIES}" ]; then
-            APP_VERSION=$(grep 'flutter.versionName' ${LOCAL_PROPERTIES} | sed -e "s/flutter.versionName=\([0-9]*.[0-9]*.[0-9]*.*\)/\1/")
-            BUILD_VERSION=$(grep 'flutter.versionCode' ${LOCAL_PROPERTIES} | sed -e "s/flutter.versionCode=\(.*\)/\1/")
-        elif [ -f "${PODSPEC}" ]; then
+        if [ -f "${PODSPEC}" ]; then
             APP_VERSION=$(grep 'version:' ${PODSPEC} | grep -v '^#' | sed -e 's/version: \([0-9]*.[0-9]*.[0-9]*\)+.*/\1/')
             BUILD_VERSION=$(grep 'version:' ${PODSPEC} | grep -v '^#' |  sed -e 's/version: .*+\([0-9]*\).*/\1/')
+        elif [ -f "${LOCAL_PROPERTIES}" ]; then
+            APP_VERSION=$(grep 'flutter.versionName' ${LOCAL_PROPERTIES} | sed -e "s/flutter.versionName=\([0-9]*.[0-9]*.[0-9]*.*\)/\1/")
+            BUILD_VERSION=$(grep 'flutter.versionCode' ${LOCAL_PROPERTIES} | sed -e "s/flutter.versionCode=\(.*\)/\1/")
         else
             APP_VERSION=$(grep 'flutterVersionName' ${BUILD_GRADLE_CONFIG} | grep "flutterVersionName = '"| sed -e "s/flutterVersionName = '\([0-9]*.[0-9]*.[0-9]*.*\)'/\1/" | tr -d "' ")
             BUILD_VERSION=$(grep 'flutterVersionCode' ${BUILD_GRADLE_CONFIG} | grep "flutterVersionCode = '"| sed -e "s/flutterVersionCode = '\(.*\)'/\1/" | tr -d "' ")
