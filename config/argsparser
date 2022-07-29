@@ -76,6 +76,10 @@ while [[ $# -gt 0 ]]; do
     FOR_MASTER_BRANCH=1
     shift # past argument
     ;;
+  --force)
+    PUSH_FORCE=1
+    shift # past argument
+    ;;
   -pu | --push-to-upstream)
     upstreamUrl="$2"
     if [[ "${upstreamUrl#https://}" != "${upstreamUrl}" ]]; then
@@ -117,7 +121,11 @@ while [[ $# -gt 0 ]]; do
     fi
     if [[ ! -z "$SYNC_TO_BE" ]]; then
       $GIT checkout ${SYNC_TO_BE}
-      $GIT push -u external ${SYNC_TO_BE}
+      if [ $PUSH_FORCE -eq 1 ]; then
+        $GIT push -uf external ${SYNC_TO_BE}
+      else
+        $GIT push -u external ${SYNC_TO_BE}
+      fi
     fi
     if [ $WITH_TAG_PUSH -eq 1 ]; then
       $GIT push -u external --tags -f
