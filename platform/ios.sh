@@ -45,8 +45,8 @@ elif [ $isReactNativeEnabled -eq 1 ]; then
 fi
 if test ! -z $(grep 'CFBundleShortVersionString' "${WORKSPACE}/${INFO_PLIST}"); then
     if [ -f "${WORKSPACE}/${INFO_PLIST}" ]; then
-    APP_VERSION=$(/usr/libexec/PlistBuddy -c "Print CFBundleShortVersionString" "${WORKSPACE}/${INFO_PLIST}")
-    BUILD_VERSION=$(/usr/libexec/PlistBuddy -c "Print CFBundleVersion" "${WORKSPACE}/${INFO_PLIST}")
+        APP_VERSION=$(/usr/libexec/PlistBuddy -c "Print CFBundleShortVersionString" "${WORKSPACE}/${INFO_PLIST}")
+        BUILD_VERSION=$(/usr/libexec/PlistBuddy -c "Print CFBundleVersion" "${WORKSPACE}/${INFO_PLIST}")
     fi
 else
     APP_VERSION="MARKETING_VERSION"
@@ -56,10 +56,10 @@ if [[ "$APP_VERSION" == *"MARKETING_VERSION"* ]]; then
     APP_VERSION=$(grep 'MARKETING_VERSION' $XCODE_PBXFILE | head -1 | sed -e 's/MARKETING_VERSION = \(.*\);/\1/g' | tr -d ' \t')
     BUILD_VERSION=$(grep 'CURRENT_PROJECT_VERSION = ' $XCODE_PBXFILE | head -1 | sed -e 's/CURRENT_PROJECT_VERSION = \(.*\);/\1/g' | tr -d ' \t')
     if [[ "$APP_VERSION" == *"FLUTTER_BUILD_NAME"* ]]; then
-    APP_VERSION=$(grep 'FLUTTER_BUILD_NAME=' ios/Flutter/Generated.xcconfig | head -1 | sed -e 's/FLUTTER_BUILD_NAME=\(.*\)/\1/g' | tr -d ' ')
+        APP_VERSION=$(grep 'FLUTTER_BUILD_NAME=' ios/Flutter/Generated.xcconfig | head -1 | sed -e 's/FLUTTER_BUILD_NAME=\(.*\)/\1/g' | tr -d ' ')
     fi
     if [[ "$BUILD_VERSION" == *"FLUTTER_BUILD_NUMBER"* ]]; then
-    BUILD_VERSION=$(grep 'FLUTTER_BUILD_NUMBER=' ios/Flutter/Generated.xcconfig | head -1 | sed -e 's/FLUTTER_BUILD_NUMBER=\(.*\)/\1/g' | tr -d ' ')
+        BUILD_VERSION=$(grep 'FLUTTER_BUILD_NUMBER=' ios/Flutter/Generated.xcconfig | head -1 | sed -e 's/FLUTTER_BUILD_NUMBER=\(.*\)/\1/g' | tr -d ' ')
     fi
 fi
 if test -z $BUILD_VERSION; then
@@ -76,13 +76,6 @@ OUTPUT_FOLDER="${APP_ROOT}/${APP_VERSION}"
 HTTPS_PREFIX="${FRONTEND_POINT}/${TOP_PATH}/${APP_ROOT_SUFFIX}/${APP_VERSION}/"
 OUTBOUND_HTTPS_PREFIX="${OUTBOUND_POINT}/${TOP_PATH}/${APP_ROOT_SUFFIX}/${APP_VERSION}/"
 ###################
-XCODE_WORKSPACE="${WORKSPACE}/${PROJECT_NAME}.xcworkspace"
-if [ ! -d $XCODE_WORKSPACE ]; then
-    echo ""
-    echo "Error: cannot find the target workspace, $XCODE_WORKSPACE"
-    echo ""
-    exit
-fi
 USING_APPSTORE=$(test $(cat $jsonConfig | $JQ '.ios.AppStore.enabled') = true && echo 1 || echo 0)
 if [ $USING_APPSTORE -eq 1 ]; then
     SCHEME_APPSTORE=$(cat $jsonConfig | $JQ '.ios.AppStore.schemeName' | tr -d '"')
@@ -129,11 +122,11 @@ if [ ! -d $OUTPUT_FOLDER ]; then
 fi
 if [ $USING_SCP -eq 1 ]; then
     if [ $DEBUGGING -eq 0 ]; then
-    NEO2UA_OUTPUT_FOLDER="${TOP_PATH}/${APP_ROOT_SUFFIX}/${APP_VERSION}"
-    if [ $(checkDirExist ${NEO2UA_OUTPUT_FOLDER}) -eq 0 ]; then
-        # echo "Dir **NOT** exist: ${TOP_PATH}/${APP_ROOT_SUFFIX}/${APP_VERSION}"
-        makeDir ${NEO2UA_OUTPUT_FOLDER}
-    fi
+        NEO2UA_OUTPUT_FOLDER="${TOP_PATH}/${APP_ROOT_SUFFIX}/${APP_VERSION}"
+        if [ $(checkDirExist ${NEO2UA_OUTPUT_FOLDER}) -eq 0 ]; then
+            # echo "Dir **NOT** exist: ${TOP_PATH}/${APP_ROOT_SUFFIX}/${APP_VERSION}"
+            makeDir ${NEO2UA_OUTPUT_FOLDER}
+        fi
     fi
 fi
 ###################
@@ -157,6 +150,14 @@ if [ $isFlutterEnabled -ne 1 -a -f ${WORKSPACE}/${POD_FILE} ]; then
     fi
 fi
 ###################
+XCODE_WORKSPACE="${WORKSPACE}/${PROJECT_NAME}.xcworkspace"
+if [ ! -d $XCODE_WORKSPACE ]; then
+    echo ""
+    echo "Error: cannot find the target workspace, $XCODE_WORKSPACE"
+    echo ""
+    exit
+fi
+###################
 if [ $DEBUGGING -eq 0 ]; then
     # unlock the keychain to make code signing work
     sudo -S su ${jenkinsUser} -c "security unlock-keychain -p "${sudoPassword}" ${HOME}/Library/Keychains/login.keychain" <<<"${sudoPassword}"
@@ -165,45 +166,45 @@ fi
 # Step 1.1: Build target for AppStore (We don't need AppStore version for preRelease)
 if [ $DEBUGGING -eq 0 ]; then
     if [ $IS_RELEASE -eq 1 -a $USING_APPSTORE -eq 1 ]; then
-    if [ $APP_VERSION != "" ]; then
-        VERSION_STRING="${APP_VERSION}(${BUILD_VERSION})"
-    else
-        VERSION_STRING=""
-    fi
-    ARCHIVE_FILE="${OUTPUT_PREFIX}${VERSION_STRING}_${FILE_TODAY}.xcarchive"
-    ARCHIVE_PATH="${OUTPUT_FOLDER}/${ARCHIVE_FILE}"
-    plistConfig="${APP_ROOT_PREFIX}/${TOP_PATH}/config/ExportOptions_AppStore.plist"
-    EXPORT_PLIST="${APP_ROOT}/ExportOptions.plist"
-    if [ -f $plistConfig ]; then
-        cp $plistConfig $EXPORT_PLIST
-        chmod 777 $EXPORT_PLIST
-        echo ""
-        echo "Warning: should modify ``ExportOptions.plist`` for binary(IPK) of App Store"
-        echo ""
-    fi
-    if [ ! -f $EXPORT_PLIST ]; then
-        APPSTORE_BUNDLE_IDENTIFIER=$(cat $jsonConfig | $JQ '.ios.AppStore.bundleId' | tr -d '"')
-        APPSTORE_TEAM_ID=$(cat $jsonConfig | $JQ '.ios.AppStore.teamId' | tr -d '"')
-        APPSTORE_KEY_STRING=$(cat $jsonConfig | $JQ '.ios.AppStore.appKeyString' | tr -d '"')
-        APPSTORE_NOTIFICATION_KEY_STRING=$(cat $jsonConfig | $JQ '.ios.AppStore.notificationKeyString' | tr -d '"')
-        printf "<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n<"'!'"DOCTYPE plist PUBLIC \"-//Apple//DTD PLIST 1.0//EN\" \"http://www.apple.com/DTDs/PropertyList-1.0.dtd\">\n<plist version=\"1.0\">\n<dict>\n\t<key>method</key>\n\t<string>app-store</string>\n\t<key>provisioningProfiles</key>\n\t<dict>\n\t\t<key>${APPSTORE_BUNDLE_IDENTIFIER}</key>\n\t\t<string>${APPSTORE_KEY_STRING}</string>\n\t\t<key>${APPSTORE_BUNDLE_IDENTIFIER}.NotificationServiceExtension</key>\n\t\t<string>${APPSTORE_NOTIFICATION_KEY_STRING}</string>\n\t</dict>\n\t<key>signingCertificate</key>\n\t<string>iPhone Distribution</string>\n\t<key>signingStyle</key>\n\t<string>manual</string>\n\t<key>stripSwiftSymbols</key>\n\t<true/>\n\t<key>teamID</key>\n\t<string>${APPSTORE_TEAM_ID}</string>\n\t<key>uploadBitcode</key>\n\t<false/>\n\t<key>uploadSymbols</key>\n\t<true/>\n</dict>\n</plist>\n" \
-        >$EXPORT_PLIST
-    fi
-    # $XCODE -workspace "${XCODE_WORKSPACE}" -scheme "${SCHEME_APPSTORE}" -sdk iphoneos -configuration AppStoreDistribution archive -archivePath ${ARCHIVE_PATH}
-    $XCODE -workspace "${XCODE_WORKSPACE}" -scheme "${SCHEME_APPSTORE}" -sdk iphoneos -skip-test-configuration -configuration archive -archivePath ${ARCHIVE_PATH}
-    $XCODE -exportArchive -archivePath ${ARCHIVE_PATH} -exportOptionsPlist ${EXPORT_PLIST} -exportPath ${OUTPUT_FOLDER}
+        if [ $APP_VERSION != "" ]; then
+            VERSION_STRING="${APP_VERSION}(${BUILD_VERSION})"
+        else
+            VERSION_STRING=""
+        fi
+        ARCHIVE_FILE="${OUTPUT_PREFIX}${VERSION_STRING}_${FILE_TODAY}.xcarchive"
+        ARCHIVE_PATH="${OUTPUT_FOLDER}/${ARCHIVE_FILE}"
+        plistConfig="${APP_ROOT_PREFIX}/${TOP_PATH}/config/ExportOptions_AppStore.plist"
+        EXPORT_PLIST="${APP_ROOT}/ExportOptions.plist"
+        if [ -f $plistConfig ]; then
+            cp $plistConfig $EXPORT_PLIST
+            chmod 777 $EXPORT_PLIST
+            echo ""
+            echo "Warning: should modify ``ExportOptions.plist`` for binary(IPK) of App Store"
+            echo ""
+        fi
+        if [ ! -f $EXPORT_PLIST ]; then
+            APPSTORE_BUNDLE_IDENTIFIER=$(cat $jsonConfig | $JQ '.ios.AppStore.bundleId' | tr -d '"')
+            APPSTORE_TEAM_ID=$(cat $jsonConfig | $JQ '.ios.AppStore.teamId' | tr -d '"')
+            APPSTORE_KEY_STRING=$(cat $jsonConfig | $JQ '.ios.AppStore.appKeyString' | tr -d '"')
+            APPSTORE_NOTIFICATION_KEY_STRING=$(cat $jsonConfig | $JQ '.ios.AppStore.notificationKeyString' | tr -d '"')
+            printf "<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n<"'!'"DOCTYPE plist PUBLIC \"-//Apple//DTD PLIST 1.0//EN\" \"http://www.apple.com/DTDs/PropertyList-1.0.dtd\">\n<plist version=\"1.0\">\n<dict>\n\t<key>method</key>\n\t<string>app-store</string>\n\t<key>provisioningProfiles</key>\n\t<dict>\n\t\t<key>${APPSTORE_BUNDLE_IDENTIFIER}</key>\n\t\t<string>${APPSTORE_KEY_STRING}</string>\n\t\t<key>${APPSTORE_BUNDLE_IDENTIFIER}.NotificationServiceExtension</key>\n\t\t<string>${APPSTORE_NOTIFICATION_KEY_STRING}</string>\n\t</dict>\n\t<key>signingCertificate</key>\n\t<string>iPhone Distribution</string>\n\t<key>signingStyle</key>\n\t<string>manual</string>\n\t<key>stripSwiftSymbols</key>\n\t<true/>\n\t<key>teamID</key>\n\t<string>${APPSTORE_TEAM_ID}</string>\n\t<key>uploadBitcode</key>\n\t<false/>\n\t<key>uploadSymbols</key>\n\t<true/>\n</dict>\n</plist>\n" \
+            >$EXPORT_PLIST
+        fi
+        # $XCODE -workspace "${XCODE_WORKSPACE}" -scheme "${SCHEME_APPSTORE}" -sdk iphoneos -configuration AppStoreDistribution archive -archivePath ${ARCHIVE_PATH}
+        $XCODE -workspace "${XCODE_WORKSPACE}" -scheme "${SCHEME_APPSTORE}" -sdk iphoneos -skip-test-configuration -configuration archive -archivePath ${ARCHIVE_PATH}
+        $XCODE -exportArchive -archivePath ${ARCHIVE_PATH} -exportOptionsPlist ${EXPORT_PLIST} -exportPath ${OUTPUT_FOLDER}
     fi
     if [ $USING_ADHOC -eq 1 ]; then
-    # Step 1.2: Build target for AdHoc
-    $XCODE -workspace "${XCODE_WORKSPACE}" -scheme "${SCHEME_ADHOC}" DSTROOT="${DST_ROOT}" -destination "generic/platform=iOS" archive
+        # Step 1.2: Build target for AdHoc
+        $XCODE -workspace "${XCODE_WORKSPACE}" -scheme "${SCHEME_ADHOC}" DSTROOT="${DST_ROOT}" -destination "generic/platform=iOS" archive
     fi
     if [ $USING_ENTERPRISE -eq 1 ]; then
-    # Step 1.1: Build target for Enterprise
-    $XCODE -workspace "${XCODE_WORKSPACE}" -scheme "${SCHEME_ENTER}" DSTROOT="${DST_ROOT}" -destination "generic/platform=iOS" archive
+        # Step 1.1: Build target for Enterprise
+        $XCODE -workspace "${XCODE_WORKSPACE}" -scheme "${SCHEME_ENTER}" DSTROOT="${DST_ROOT}" -destination "generic/platform=iOS" archive
     fi
     if [ $USING_ENTER4WEB -eq 1 ]; then
-    # Step 1.1: Build target for Enterprise
-    $XCODE -workspace "${XCODE_WORKSPACE}" -scheme "${SCHEME_ENTER4WEB}" DSTROOT="${DST_ROOT}" -destination "generic/platform=iOS" archive
+        # Step 1.1: Build target for Enterprise
+        $XCODE -workspace "${XCODE_WORKSPACE}" -scheme "${SCHEME_ENTER4WEB}" DSTROOT="${DST_ROOT}" -destination "generic/platform=iOS" archive
     fi
 fi
 ###################
@@ -243,7 +244,7 @@ if [ $USING_APPSTORE -eq 1 -a $IS_RELEASE -eq 1 ]; then
         fi
         if [ -d $ARCHIVE_PATH ]; then
             if [ -d $OUTPUT_FOLDER/$TEMP_APPSTORE_APP_FOLDER/$ARCHIVE_FILE ]; then
-            rm -rf $OUTPUT_FOLDER/$TEMP_APPSTORE_APP_FOLDER/$ARCHIVE_FILE
+                rm -rf $OUTPUT_FOLDER/$TEMP_APPSTORE_APP_FOLDER/$ARCHIVE_FILE
             fi
             mv -f $ARCHIVE_PATH $OUTPUT_FOLDER/$TEMP_APPSTORE_APP_FOLDER/
         fi
