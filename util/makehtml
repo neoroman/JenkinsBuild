@@ -124,7 +124,9 @@ else
     touch $APP_HTML/dist_android.html
     chmod 777 $APP_HTML/dist_android.html
   fi
-  chmod 777 $APP_HTML/index.html
+  if [ -f $APP_HTML/index.html ]; then
+    chmod 777 $APP_HTML/index.html
+  fi
   touch $OUTPUT_FOLDER/zzz_$OUTPUT_FILENAME_HTML
   ##################################
   if [ $USING_SCP -eq 1 ]; then
