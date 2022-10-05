@@ -32,7 +32,7 @@ fi
 BUILD_GRADLE_CONFIG="${WORKSPACE}/${ANDROID_APP_PATH}/build.gradle"
 if [ $IS_RELEASE -eq 1 ]; then
     APP_VERSION="${MAJOR}.${MINOR}.${POINT}"
-    BUILD_VERSION=$(grep ${APP_BUNDLE_IDENTIFIER_ANDROID} -5 ${BUILD_GRADLE_CONFIG} | grep 'versionCode' | awk 'BEGIN{FS=" "} {print $2}')
+    BUILD_VERSION=$(grep ${APP_BUNDLE_IDENTIFIER_ANDROID} -5 ${BUILD_GRADLE_CONFIG} | grep 'versionCode' | grep -v '^\/\/' | awk 'BEGIN{FS=" "} {print $2}')
 else
     APP_VERSION="${DEBUG_MAJOR}.${DEBUG_MINOR}.${DEBUG_POINT}"
     BUILD_VERSION="${DEBUG_LOCAL}"
@@ -52,14 +52,14 @@ if [[ "${APP_VERSION}" == ".." ]]; then
             BUILD_VERSION=$(grep 'flutterVersionCode' ${BUILD_GRADLE_CONFIG} | grep "flutterVersionCode = '"| sed -e "s/flutterVersionCode = '\(.*\)'/\1/" | tr -d "' ")
         fi
     else
-        APP_VERSION=$(grep 'versionName' ${BUILD_GRADLE_CONFIG} | sed -e 's/versionName "\(.*\)"/\1/' | tr -d ' ')
+        APP_VERSION=$(grep 'versionName' ${BUILD_GRADLE_CONFIG} | grep -v '^\/\/' | sed -e 's/versionName "\(.*\)"/\1/' | tr -d ' ')
         if [[ $APP_VERSION == "versionName"* ]]; then
-            APP_VERSION=$(grep 'versionName' ${BUILD_GRADLE_CONFIG} | sed -e "s/versionName '\(.*\)'/\1/" | tr -d ' ')
+            APP_VERSION=$(grep 'versionName' ${BUILD_GRADLE_CONFIG} | grep -v '^\/\/' | sed -e "s/versionName '\(.*\)'/\1/" | tr -d ' ')
         fi
         if [ $isReactNativeEnabled -eq 1 ]; then
-            BUILD_VERSION=$(grep 'versionCode' ${BUILD_GRADLE_CONFIG} | head -1 | sed -e 's/versionCode \(.*\)$/\1/' | tr -d ' ')
+            BUILD_VERSION=$(grep 'versionCode' ${BUILD_GRADLE_CONFIG} | grep -v '^\/\/' | head -1 | sed -e 's/versionCode \(.*\)$/\1/' | tr -d ' ')
         else
-            BUILD_VERSION=$(grep 'versionCode' ${BUILD_GRADLE_CONFIG} | sed -e 's/versionCode \(.*\)$/\1/' | tr -d ' ')
+            BUILD_VERSION=$(grep 'versionCode' ${BUILD_GRADLE_CONFIG} | grep -v '^\/\/' | sed -e 's/versionCode \(.*\)$/\1/' | tr -d ' ')
         fi
     fi
     if [[ "${APP_VERSION}" == ".." ]]; then
