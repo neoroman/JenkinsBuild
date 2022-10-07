@@ -28,12 +28,16 @@ Language: BASH Shell Script
 ## Jenkins Item Configuration for Build Section
 - for ``iOS`` into ``{WebServer}/{DocumentRoot}/NeoRoman/AppProject``
   ```
+    git config -f .gitmodules submodule.jenkins.url https://github.com/neoroman/JenkinsBuild.git
+    git submodule sync
     git submodule update --force --recursive --init --remote
     git submodule foreach git pull origin master
     bash -ex ${WORKSPACE}/jenkins/build.sh -p ios -tp "NeoRoman/AppProject"
   ```
 - for ``Android`` into ``{WebServer}/{DocumentRoot}/NeoRoman/AppProject``
   ```
+    git config -f .gitmodules submodule.jenkins.url https://github.com/neoroman/JenkinsBuild.git
+    git submodule sync
     git submodule update --force --recursive --init --remote
     git submodule foreach git pull origin master
     bash -ex ${WORKSPACE}/jenkins/build.sh -p android -tp "NeoRoman/AppProject"
