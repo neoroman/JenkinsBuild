@@ -156,11 +156,11 @@ if [ ! -d $OUTPUT_FOLDER ]; then
 fi
 if [ $USING_SCP -eq 1 ]; then
     if [ $DEBUGGING -eq 0 ]; then
-    NEO2UA_OUTPUT_FOLDER="${TOP_PATH}/${APP_ROOT_SUFFIX}/${APP_VERSION}"
-    if [ $(checkDirExist ${NEO2UA_OUTPUT_FOLDER}) -eq 0 ]; then
-        # echo "Dir **NOT** exist: ${TOP_PATH}/${APP_ROOT_SUFFIX}/${APP_VERSION}"
-        makeDir ${NEO2UA_OUTPUT_FOLDER}
-    fi
+        NEO2UA_OUTPUT_FOLDER="${TOP_PATH}/${APP_ROOT_SUFFIX}/${APP_VERSION}"
+        if [ $(checkDirExist ${NEO2UA_OUTPUT_FOLDER}) -eq 0 ]; then
+            # echo "Dir **NOT** exist: ${TOP_PATH}/${APP_ROOT_SUFFIX}/${APP_VERSION}"
+            makeDir ${NEO2UA_OUTPUT_FOLDER}
+        fi
     fi
 fi
 cd ${WORKSPACE}
