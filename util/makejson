@@ -1,5 +1,33 @@
 #!/bin/sh
-##
+##### Function getDevToolInfo()
+function getDevToolInfo() {
+  if [ -f ${jsonConfig} ]; then
+    isFlutterEnabled=$(test $(cat $jsonConfig | $JQ '.Flutter.enabled') = true && echo 1 || echo 0)
+    FlutterBin=$(cat $jsonConfig | $JQ '.Flutter.path' | tr -d '"')
+    isReactNativeEnabled=$(test $(cat $jsonConfig | $JQ '.ReactNative.enabled') = true && echo 1 || echo 0)
+    if [ $isReactNativeEnabled -eq 1 ]; then
+      NodePath=$(cat $jsonConfig | $JQ '.ReactNative.path' | tr -d '"')
+      ReactNativeBin="${NodePath}/npm"
+      export PATH=${NodePath}:$PATH
+    else
+      NodePath="node"
+      ReactNativeBin="npm"
+    fi
+    OTHER_BUILD_ENV=""
+    if [ $isFlutterEnabled -eq 1 ]; then
+      BUILD_COMMAND=$FlutterBin
+    elif [ $isReactNativeEnabled -eq 1 ]; then
+      BUILD_COMMAND="./gradlew"
+      OTHER_BUILD_ENV="node "$(node --version)
+      OTHER_BUILD_ENV="${OTHER_BUILD_ENV}<BR />npm v"$(npm --version)
+      OTHER_BUILD_ENV="${OTHER_BUILD_ENV}<BR />"
+    else
+      BUILD_COMMAND="./gradlew"
+    fi
+  fi
+}
+
+#####
 if [ $APP_VERSION != "" ]; then
   if [ $IS_RELEASE -eq 1 ]; then
     VERSION_STRING="${APP_VERSION}(${BUILD_VERSION})"
@@ -84,6 +112,7 @@ if [ -f $JQ -a $USING_JSON -eq 1 ]; then
   OUTPUT_FILENAME_JSON="${OUTPUT_FILENAME_ONLY}.json"
 
   if [[ "$INPUT_OS" == "ios" ]]; then
+    # INPUT_OS = ``iOS``
     if [ $IS_RELEASE -eq 1 ]; then
       if [ $USING_APPSTORE -eq 1 ]; then
         file1Title="${APPSTORE_TITLE}"
@@ -175,7 +204,16 @@ if [ -f $JQ -a $USING_JSON -eq 1 ]; then
       file5Binary=""
       file5Plist=""
     fi
+    ##### Build Environment
+    getDevToolInfo
+    if command -v xcodebuild >/dev/null 2>&1 ; then
+      DEV_ENV="$($XCODE -version)<BR />CocoaPod $($POD --version)"
+      if [ -f $(which sw_vers) ]; then
+        DEV_ENV="$DEV_ENV <BR />Hostname: $(hostname)<BR />$(sw_vers)"
+      fi
+    fi
   else
+    # INPUT_OS = ``Android``
     if [ $IS_RELEASE -eq 1 ]; then
       GOOGLE_TITLE=$(cat $jsonConfig | $JQ '.android.GoogleStore.title' | tr -d '"')
       ONE_TITLE=$(cat $jsonConfig | $JQ '.android.OneStore.title' | tr -d '"')
@@ -254,7 +292,25 @@ if [ -f $JQ -a $USING_JSON -eq 1 ]; then
       file5Binary=""
       file5Plist=""
     fi
-  fi
+    ##### Build Environment
+    if [ -f ${jsonConfig} ]; then
+      #WORKSPACE=$(cat ${jsonConfig} | $JQ '.android.jenkinsWorkspace' | tr -d '"') # pass from jenkins
+      AOS_APPPATH=$(cat ${jsonConfig} | $JQ '.android.appPath' | tr -d '"')
+      AOS_APPPATH=${AOS_APPPATH%"app"}
+      ##
+      getDevToolInfo
+      DEV_ENV=$(${WORKSPACE}/${AOS_APPPATH}/${BUILD_COMMAND} --version)
+      if [ -z $(echo $DEV_ENV | xargs) ]; then
+        DEV_ENV="$(cd $WORKSPACE && $BUILD_COMMAND --version)"
+      fi
+      DEV_ENV="${OTHER_BUILD_ENV}<BR />${DEV_ENV}"
+      if [ -f $(which sw_vers) ]; then
+        DEV_ENV="$DEV_ENV <BR />Hostname: $(hostname)<BR />$(sw_vers)"
+      fi
+      ##
+    fi
+  fi # INPUT_OS = ``Android``
+
 
   JSON_STRING=$($JQ -n \
     --arg title "${HTML_TITLE}" \
@@ -286,6 +342,7 @@ if [ -f $JQ -a $USING_JSON -eq 1 ]; then
     --arg file5_binary "${file5Binary}" \
     --arg file5_plist "${file5Plist}" \
     --arg git_last_log "${GIT_LAST_LOG}" \
+    --arg build_env "${DEV_ENV}" \
 '{"title": $title, "appVersion": $av, "buildVersion": $bv, "versionKey": $vk, '\
 '"buildNumber": $bn, "buildTime": $bt, "urlPrefix": $url_prefix, "releaseType": $rt, '\
 '"files": [ '\
@@ -294,7 +351,7 @@ if [ -f $JQ -a $USING_JSON -eq 1 ]; then
 '{ "title": $file3_title, "size": $file3_size, "file": $file3_binary, "plist": $file3_plist }, '\
 '{ "title": $file4_title, "size": $file4_size, "file": $file4_binary, "plist": $file4_plist }, '\
 '{ "title": $file5_title, "size": $file5_size, "file": $file5_binary, "plist": $file5_plist } ], '\
-'"gitLastLog": $git_last_log}')
+'"gitLastLog": $git_last_log, "buildEnv": $build_env}')
 
   echo "${JSON_STRING}" >$OUTPUT_FOLDER/$OUTPUT_FILENAME_JSON
   chmod 777 $OUTPUT_FOLDER/$OUTPUT_FILENAME_JSON
