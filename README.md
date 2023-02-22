@@ -23,6 +23,10 @@ Language: BASH Shell Script
     git submodule init
     git submodule update
   ```
+- Add pull rebase true to global configuration of git
+  ```
+    git config pull.rebase true
+  ```
 
 
 ## Jenkins Item Configuration for Build Section
