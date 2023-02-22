@@ -15,15 +15,13 @@ function getDevToolInfo() {
     fi
     OTHER_BUILD_ENV=""
     if [ $isFlutterEnabled -eq 1 ]; then
-      BUILD_COMMAND=$FlutterBin
+      OTHER_BUILD_ENV=$($FlutterBin --version)
     elif [ $isReactNativeEnabled -eq 1 ]; then
-      BUILD_COMMAND="./gradlew"
       OTHER_BUILD_ENV="node "$(node --version)
       OTHER_BUILD_ENV="${OTHER_BUILD_ENV}<BR />npm v"$(npm --version)
       OTHER_BUILD_ENV="${OTHER_BUILD_ENV}<BR />"
-    else
-      BUILD_COMMAND="./gradlew"
     fi
+    BUILD_COMMAND="./gradlew"
   fi
 }
 
