@@ -15,7 +15,7 @@ function getDevToolInfo() {
     fi
     OTHER_BUILD_ENV=""
     if [ $isFlutterEnabled -eq 1 ]; then
-      OTHER_BUILD_ENV=$($FlutterBin --version)
+      OTHER_BUILD_ENV=$($FlutterBin --version | sed -e 's/$/<BR \/>/g')
     elif [ $isReactNativeEnabled -eq 1 ]; then
       OTHER_BUILD_ENV="node "$(node --version)
       OTHER_BUILD_ENV="${OTHER_BUILD_ENV}<BR />npm v"$(npm --version)
@@ -205,9 +205,9 @@ if [ -f $JQ -a $USING_JSON -eq 1 ]; then
     ##### Build Environment
     getDevToolInfo
     if command -v xcodebuild >/dev/null 2>&1 ; then
-      DEV_ENV="$($XCODE -version)<BR />CocoaPod $($POD --version)"
+      DEV_ENV="$($XCODE -version | sed -e 's/$/<BR \/>/g')<BR />CocoaPod $($POD --version)"
       if [ -f $(which sw_vers) ]; then
-        DEV_ENV="$DEV_ENV <BR />Hostname: $(hostname)<BR />$(sw_vers)"
+        DEV_ENV="$DEV_ENV <BR />Hostname: $(hostname)<BR />$(sw_vers | sed -e 's/$/<BR \/>/g')"
       fi
     fi
   else
@@ -297,9 +297,9 @@ if [ -f $JQ -a $USING_JSON -eq 1 ]; then
       AOS_APPPATH=${AOS_APPPATH%"app"}
       ##
       getDevToolInfo
-      DEV_ENV=$(${WORKSPACE}/${AOS_APPPATH}/${BUILD_COMMAND} --version)
+      DEV_ENV=$(${WORKSPACE}/${AOS_APPPATH}/${BUILD_COMMAND} --version | sed -e 's/$/<BR \/>/g')
       if [ -z $(echo $DEV_ENV | xargs) ]; then
-        DEV_ENV="$(cd $WORKSPACE && $BUILD_COMMAND --version)"
+        DEV_ENV="$(cd $WORKSPACE && $BUILD_COMMAND --version | sed -e 's/$/<BR \/>/g')"
       fi
       DEV_ENV="${OTHER_BUILD_ENV}<BR />${DEV_ENV}"
       if [ -f $(which sw_vers) ]; then
