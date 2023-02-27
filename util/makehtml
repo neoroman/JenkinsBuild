@@ -118,11 +118,15 @@ if [ -d $APP_HTML -a $USING_HTML -eq 1 ]; then
   fi
 else
   if [[ "$INPUT_OS" == "ios" ]]; then
-    touch $APP_HTML/dist_ios.html
-    chmod 777 $APP_HTML/dist_ios.html
+    if [ -f $APP_HTML/dist_ios.html ]; then
+      touch $APP_HTML/dist_ios.html
+      chmod 777 $APP_HTML/dist_ios.html
+    fi
   else
-    touch $APP_HTML/dist_android.html
-    chmod 777 $APP_HTML/dist_android.html
+    if [ -f $APP_HTML/dist_android.html ]; then
+      touch $APP_HTML/dist_android.html
+      chmod 777 $APP_HTML/dist_android.html
+    fi
   fi
   if [ -f $APP_HTML/index.html ]; then
     chmod 777 $APP_HTML/index.html
