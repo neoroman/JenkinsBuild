@@ -51,7 +51,7 @@ if [[ "${APP_VERSION}" == ".." ]]; then
             BUILD_VERSION=$(grep 'flutterVersionCode' ${BUILD_GRADLE_CONFIG} | grep "flutterVersionCode = '"| sed -e "s/flutterVersionCode = '\(.*\)'/\1/" | tr -d "' ")
         fi
     else
-        APP_VERSION=$(grep 'versionName' ${BUILD_GRADLE_CONFIG} | grep -v '^\/\/' | sed -e 's/versionName "\(.*\)"/\1/' | tr -d ' ')
+        APP_VERSION=$(grep 'versionName[[:space:]]"' ${BUILD_GRADLE_CONFIG} | grep -v '^\/\/' | sed -e 's/versionName "\(.*\)"/\1/' | tr -d ' ')
         if [[ $APP_VERSION == "versionName"* ]]; then
             APP_VERSION=$(grep 'versionName' ${BUILD_GRADLE_CONFIG} | grep -v '^\/\/' | sed -e "s/versionName '\(.*\)'/\1/" | tr -d ' ')
         fi
