@@ -2,7 +2,12 @@
 #
 ##
 jsonConfig="${APP_ROOT_PREFIX}/${TOP_PATH}/config/config.json"
-installedOrNot="${APP_ROOT_PREFIX}/${TOP_PATH}/config/.install_not_finished"
+if [ ! -f $jsonConfig ]; then
+  SAMPLE_FILE="${APP_ROOT_PREFIX}/${TOP_PATH}/src/config/config.json.default"
+  if [ -f $SAMPLE_FILE ]; then
+    cp  $SAMPLE_FILE  $jsonConfig
+  fi
+fi
 if [ -f $jsonConfig ]; then
   if [ $DEBUGGING -eq 1 ]; then
     config=$(cat $jsonConfig | $JQ '.development')
@@ -15,7 +20,6 @@ if [ -f $jsonConfig ]; then
     TOP_PATH=$(echo $config | $JQ '.topPath' | tr -d '"')
   fi
   OUTPUT_PREFIX=$(echo $config | $JQ '.outputPrefix' | tr -d '"')
-  ANDROID_HOME=$(cat $jsonConfig | $JQ '.android.androidHome' | tr -d '"')
   USING_SLACK=$(test $(cat $jsonConfig | $JQ '.slack.enabled') = true && echo 1 || echo 0)
   SLACK_CHANNEL=$(cat $jsonConfig | $JQ '.slack.channel' | tr -d '"')
   USING_TEAMS_WEBHOOK=$(test $(cat $jsonConfig | $JQ '.teams.enabled') = true && echo 1 || echo 0)
@@ -32,12 +36,17 @@ if [ -f $jsonConfig ]; then
   outBoundPoint=$(echo $config | $JQ '.outBoundPoint' | tr -d '"')
   outBoundProtocol=$(echo $config | $JQ '.outBoundProtocol' | tr -d '"')
   OUTBOUND_POINT="$outBoundProtocol://$outBoundPoint"
-  ConfigJavaHome=$(cat $jsonConfig | $JQ '.android.javaHome' | tr -d '"')
   USING_MAIL=$(test $(cat $jsonConfig | $JQ '.mail.domesticEnabled') = true && echo 1 || echo 0)
   PROJECT_NAME=$(cat $jsonConfig | $JQ '.ios.projectName' | tr -d '"')
   POD_FILE=$(cat $jsonConfig | $JQ '.ios.podFile' | tr -d '"')
+  if test -z "$jenkinsUser"; then
+    jenkinsUser=$(cat $jsonConfig | $JQ '.ios.jenkinsUser' | tr -d '"')
+  fi
   sudoPassword=$(cat $jsonConfig | $JQ '.ios.sudoPassword' | tr -d '"')
-  jenkinsUser=$(cat $jsonConfig | $JQ '.ios.jenkinsUser' | tr -d '"')
+  if test -z "$ANDROID_HOME"; then
+    ANDROID_HOME=$(cat $jsonConfig | $JQ '.android.androidHome' | tr -d '"')
+  fi
+  ConfigJavaHome=$(cat $jsonConfig | $JQ '.android.javaHome' | tr -d '"')
   isFlutterEnabled=$(test $(cat $jsonConfig | $JQ '.Flutter.enabled') = true && echo 1 || echo 0)
   FlutterBin=$(cat $jsonConfig | $JQ '.Flutter.path' | tr -d '"')
   ANDROID_APP_PATH=$(cat $jsonConfig | $JQ '.android.appPath' | tr -d '"')
