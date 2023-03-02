@@ -160,7 +160,11 @@ fi
 ###################
 if [ $DEBUGGING -eq 0 ]; then
     # unlock the keychain to make code signing work
-    sudo -S su ${jenkinsUser} -c "security unlock-keychain -p "${sudoPassword}" ${HOME}/Library/Keychains/login.keychain" <<<"${sudoPassword}"
+    if test -n "$sudoPassword"; then
+        if [[ "$sudoPassword" != "qwer1234" ]]; then
+            sudo -S su ${jenkinsUser} -c "security unlock-keychain -p "${sudoPassword}" ${HOME}/Library/Keychains/login.keychain" <<<"${sudoPassword}"
+        fi
+    fi
 fi
 ###################
 # Step 1.1: Build target for AppStore (We don't need AppStore version for preRelease)
@@ -258,11 +262,17 @@ if [ $USING_APPSTORE -eq 1 -a $IS_RELEASE -eq 1 ]; then
                     sed -e 's/ix_set_debug/IX_SET_DEBUG/g' $SPLASH_VIEW >$SPLASH_TEMP
                     mv -f $SPLASH_TEMP $SPLASH_VIEW
 
-                    cd $WORKSPACE && echo "${systemName}:ios appDevTeam$ ./IxShieldCheck.sh -i ./${PROJECT_NAME}" >merong.txt
-                    cd $WORKSPACE && ./IxShieldCheck.sh -i ./${PROJECT_NAME} >>merong.txt
-                    cd $WORKSPACE && cat merong.txt | $A2PS -=book -B -q --medium=A4dj --borders=no -o out1.ps && $GS -sDEVICE=png256 -dNOPAUSE -dBATCH -dSAFER -dTextAlphaBits=4 -q -r300x300 -sOutputFile=out2.png out1.ps &&
-                    cd $WORKSPACE && $CONVERT -trim out2.png $OUTPUT_FOLDER/$OUTPUT_FILENAME_APPSTORE_IX_SHIELD_CHECK
-                    cd $WORKSPACE && rm -f out[12].png out[12].ps merong.txt
+                    if command -v $A2PS >/dev/null && command -v $GS >/dev/null; then
+                        cd $WORKSPACE && echo "${systemName}:ios appDevTeam$ ./IxShieldCheck.sh -i ./${PROJECT_NAME}" >merong.txt
+                        cd $WORKSPACE && ./IxShieldCheck.sh -i ./${PROJECT_NAME} >>merong.txt
+                        cd $WORKSPACE && cat merong.txt | $A2PS -=book -B -q --medium=A4dj --borders=no -o out1.ps && $GS -sDEVICE=png256 -dNOPAUSE -dBATCH -dSAFER -dTextAlphaBits=4 -q -r300x300 -sOutputFile=out2.png out1.ps
+                        if command -v $CONVERT >/dev/null; then
+                            cd $WORKSPACE && $CONVERT -trim out2.png $OUTPUT_FOLDER/$OUTPUT_FILENAME_APPSTORE_IX_SHIELD_CHECK
+                        else
+                            cd $WORKSPACE && cp out2.png $OUTPUT_FOLDER/$OUTPUT_FILENAME_APPSTORE_IX_SHIELD_CHECK
+                        fi
+                        cd $WORKSPACE && rm -f out[12].png out[12].ps merong.txt
+                    fi
                 fi
             fi
         fi

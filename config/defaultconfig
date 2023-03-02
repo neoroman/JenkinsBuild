@@ -1,19 +1,40 @@
 #!/bin/sh
 #
 ##
-# Shell Environment
-export ANDROID_HOME="/Users/${jenkinsUser}/Library/Android/sdk"
-#
-##
 # System account
 sudoPassword="qwer1234"
-jenkinsUser="jenkinsUser"
-systemName="MacStudio"
+if type sw_vers >/dev/null 2>&1; then
+    systemName=$(sw_vers | grep 'ProductName:' | awk '{print $2}')
+else
+    systemName="MacStudio"
+fi
+if type whoami >/dev/null 2>&1; then
+    jenkinsUser=`whoami`
+else
+    jenkinsUser="jenkinsUser"
+fi
+#
+##
+# Shell Environment
+if type android >/dev/null 2>&1; then
+    AOS_EXEC=`which android`
+    export ANDROID_HOME="$(dirname ${AOS_EXEC%android})"
+else
+    export ANDROID_HOME="/Users/${jenkinsUser}/Library/Android/sdk"
+fi
 #
 ##
 # Git
-GIT_USER="AppDevTeam"
-GIT_EMAIL="app.support@company.com"
+if test -n $(git config user.name); then
+    GIT_USER=$(git config user.name)
+else
+    GIT_USER="AppDevTeam"
+fi
+if test -n $(git config user.email); then
+    GIT_EMAIL=$(git config user.email)
+else
+    GIT_EMAIL="app.support@company.com"
+fi
 #
 ##
 # Teams

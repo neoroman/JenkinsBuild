@@ -5,26 +5,42 @@ CURRENT=$PWD
 A2PS="/usr/local/bin/a2ps"
 if [ ! -f $A2PS ]; then
   cd /usr/local/bin
-  sudo -S -k ln -s `which a2ps` <<<"${sudoPassword}"
+  if test -n "$sudoPassword"; then
+    if [[ "$sudoPassword" != "qwer1234" ]]; then
+      sudo -S -k ln -s `which a2ps` <<<"${sudoPassword}"
+    fi
+  fi
   cd $CURRENT
 fi
 GS="/usr/local/bin/gs"
 if [ ! -f $GS ]; then
   cd /usr/local/bin
-  sudo -S -k ln -s `which gs` <<<"${sudoPassword}"
+  if test -n "$sudoPassword"; then
+    if [[ "$sudoPassword" != "qwer1234" ]]; then
+      sudo -S -k ln -s `which gs` <<<"${sudoPassword}"
+    fi
+  fi
   cd $CURRENT
 fi
 CONVERT="/usr/local/bin/convert"
 if [ ! -f $CONVERT ]; then
   cd /usr/local/bin
-  sudo -S -k ln -s `which convert` <<<"${sudoPassword}"
+  if test -n "$sudoPassword"; then
+    if [[ "$sudoPassword" != "qwer1234" ]]; then
+      sudo -S -k ln -s `which convert` <<<"${sudoPassword}"
+    fi
+  fi
   cd $CURRENT
 fi
-CURL="/usr/bin/curl"
+if type curl >/dev/null 2>&1; then
+  CURL=`which curl`
+else
+  CURL="/usr/bin/curl"
+fi
 USING_JSON=1
 ###################
 if test -z "${INPUT_OS}"; then
-    ./$SCRIPT_NAME -h
+    $SCRIPT_NAME -h
     exit
 fi
 if [ $DEBUGGING -eq 1 ]; then

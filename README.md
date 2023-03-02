@@ -10,7 +10,7 @@ Language: BASH Shell Script
 -  3. (Optional) Install ``slack`` from "https://github.com/rockymadden/slack-cli"
       (also use "brew install rockymadden/rockymadden/slack-cli"),
       run "slack init", and Enter Slack API token from https://api.slack.com/custom-integrations/legacy-tokens
--  4. (Optional) Install ``jq`` path with "/usr/local/bin/jq" in "/usr/local/bin/slac"
+-  4. (Optional) If using slack, Adjust ``jq`` path as "/usr/local/bin/jq" in "/usr/local/bin/slac"
 -  5. (Optional) Install ``a2ps`` via HomeBrew, brew install a2ps
 -  6. (Optional) Install ``gs`` via HomeBrew, brew install gs
 -  7. (Optional) Install ``convert``(ImageMagick) via HomeBrew, brew install imagemagick

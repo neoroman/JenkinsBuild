@@ -3,19 +3,18 @@
 # Android Shell Script
 #
 if test -z $ConfigJavaHome; then
-    export JAVA_HOME="/usr/local/opt/openjdk@8"
-elif [[ "$ConfigJavaHome" != "null" ]]; then
-    export JAVA_HOME="${ConfigJavaHome}"
+    if type java >/dev/null 2>&1; then
+        JAVA_EXEC=`which java`
+        ConfigJavaHome=$(dirname ${JAVA_EXEC%java})
+    fi
 fi
+export JAVA_HOME="${ConfigJavaHome}"
 export ANDROID_SDK_ROOT="${ANDROID_HOME}"
 export ANDROID_HOME="${ANDROID_HOME}"
-#export CLASSPATH="${JAVA_HOME}/libexec/openjdk.jdk/Contents/Home/lib"
 ##### Using Allatori or Not, 0=Not Using, 1=Using Allatori (1차 난독화)
 USING_ALLATORI=$(test $(cat $jsonConfig | $JQ '.android.usingAllatori') = true && echo 1 || echo 0)
-APP_PATH="${TOP_PATH}/android"
 APP_ROOT_SUFFIX="android_distributions"
 APP_ROOT="${APP_ROOT_PREFIX}/${TOP_PATH}/${APP_ROOT_SUFFIX}"
-APP_HTML="${APP_ROOT_PREFIX}/${APP_PATH}"
 ###################
 if test -z $ANDROID_APP_PATH; then
     ANDROID_APP_PATH="app"
@@ -601,25 +600,31 @@ if [ $DEBUGGING -eq 0 ]; then
         if [ -f ${OUTPUT_FOLDER}/${APK_GOOGLESTORE} ]; then
             if [ -f $WORKSPACE/${ANDROID_APP_PATH}/check.sh -a $IS_RELEASE -eq 1 ]; then
                 chmod +x $WORKSPACE/${ANDROID_APP_PATH}/check.sh
-                cd $WORKSPACE/${ANDROID_APP_PATH} && echo "appdevteam@DESKTOP-ONE NIMGW32 ${WORKSPACE} (${GIT_BRANCH})" >merong.txt
-                cd $WORKSPACE/${ANDROID_APP_PATH} && echo "$ ./check.sh -a src" >>merong.txt
-                cd $WORKSPACE/${ANDROID_APP_PATH} && ./check.sh -a src >>merong.txt
-                cd $WORKSPACE/${ANDROID_APP_PATH} && cat merong.txt | $A2PS -=book -B -q --medium=A4dj --borders=no -o out1.ps && $GS -sDEVICE=png256 -dNOPAUSE -dBATCH -dSAFER -dTextAlphaBits=4 -q -r300x300 -sOutputFile=out2.png out1.ps &&
-                cd $WORKSPACE/${ANDROID_APP_PATH} && $CONVERT -trim out2.png $OUTPUT_FOLDER/$Obfuscation_SCREENSHOT
-                cd $WORKSPACE/${ANDROID_APP_PATH} && rm -f out[12].png out[12].ps merong.txt
-
-                if [ -f $APP_HTML/$Obfuscation_INPUT_FILE ]; then
-                    cp -f $APP_HTML/$Obfuscation_INPUT_FILE $OUTPUT_FOLDER/$Obfuscation_OUTPUT_FILE
-                fi
-
-                if [ $USING_SCP -eq 1 ]; then
-                    if [ $(sendFile ${OUTPUT_FOLDER}/${Obfuscation_SCREENSHOT} ${NEO2UA_OUTPUT_FOLDER}) -eq 0 ]; then
-                        #   echo "Failed to send file"
-                        echo "TODO: **NEED** to resend this file => ${OUTPUT_FOLDER}/${Obfuscation_SCREENSHOT} to ${NEO2UA_OUTPUT_FOLDER}"
+                if command -v $A2PS >/dev/null && command -v $GS >/dev/null; then
+                    cd $WORKSPACE/${ANDROID_APP_PATH} && echo "$GIT_USER $(hostname -s) ${WORKSPACE} (${GIT_BRANCH})" >merong.txt
+                    cd $WORKSPACE/${ANDROID_APP_PATH} && echo "$ ./check.sh -a src" >>merong.txt
+                    cd $WORKSPACE/${ANDROID_APP_PATH} && ./check.sh -a src >>merong.txt
+                    cd $WORKSPACE/${ANDROID_APP_PATH} && cat merong.txt | $A2PS -=book -B -q --medium=A4dj --borders=no -o out1.ps && $GS -sDEVICE=png256 -dNOPAUSE -dBATCH -dSAFER -dTextAlphaBits=4 -q -r300x300 -sOutputFile=out2.png out1.ps
+                    if command -v $CONVERT >/dev/null; then
+                        cd $WORKSPACE/${ANDROID_APP_PATH} && $CONVERT -trim out2.png $OUTPUT_FOLDER/$Obfuscation_SCREENSHOT
+                    else
+                        cp out2.png $OUTPUT_FOLDER/$Obfuscation_SCREENSHOT
                     fi
-                    if [ $(sendFile ${OUTPUT_FOLDER}/${Obfuscation_OUTPUT_FILE} ${NEO2UA_OUTPUT_FOLDER}) -eq 0 ]; then
-                        #   echo "Failed to send file"
-                        echo "TODO: **NEED** to resend this file => ${OUTPUT_FOLDER}/${Obfuscation_OUTPUT_FILE} to ${NEO2UA_OUTPUT_FOLDER}"
+                    cd $WORKSPACE/${ANDROID_APP_PATH} && rm -f out[12].png out[12].ps merong.txt
+
+                    if [ -f ${APP_ROOT_PREFIX}/${TOP_PATH}/$Obfuscation_INPUT_FILE ]; then
+                        cp -f ${APP_ROOT_PREFIX}/${TOP_PATH}/$Obfuscation_INPUT_FILE $OUTPUT_FOLDER/$Obfuscation_OUTPUT_FILE
+                    fi
+
+                    if [ $USING_SCP -eq 1 ]; then
+                        if [ $(sendFile ${OUTPUT_FOLDER}/${Obfuscation_SCREENSHOT} ${NEO2UA_OUTPUT_FOLDER}) -eq 0 ]; then
+                            #   echo "Failed to send file"
+                            echo "TODO: **NEED** to resend this file => ${OUTPUT_FOLDER}/${Obfuscation_SCREENSHOT} to ${NEO2UA_OUTPUT_FOLDER}"
+                        fi
+                        if [ $(sendFile ${OUTPUT_FOLDER}/${Obfuscation_OUTPUT_FILE} ${NEO2UA_OUTPUT_FOLDER}) -eq 0 ]; then
+                            #   echo "Failed to send file"
+                            echo "TODO: **NEED** to resend this file => ${OUTPUT_FOLDER}/${Obfuscation_OUTPUT_FILE} to ${NEO2UA_OUTPUT_FOLDER}"
+                        fi
                     fi
                 fi
             fi
