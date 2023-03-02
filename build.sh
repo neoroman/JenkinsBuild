@@ -39,6 +39,12 @@ fi
 . ${TOP_DIR}/config/utilconfig  ### Import SSH Funtions ######################
 ################################################################################
 ##
+# Update distribution site source ##############################################
+if [ -f ${APP_ROOT_PREFIX}/${TOP_PATH}/.htaccess ]; then
+  if [ -f ${APP_ROOT_PREFIX}/${TOP_PATH}/installOrUpdate.sh ]; then
+    ${APP_ROOT_PREFIX}/${TOP_PATH}/installOrUpdate.sh
+  fi
+fi
 ################################################################################
 if [[ "$INPUT_OS" == "android" ]]; then
     ## for Android
