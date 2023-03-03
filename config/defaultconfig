@@ -16,8 +16,8 @@ fi
 #
 ##
 # Shell Environment
-if type android >/dev/null 2>&1; then
-    AOS_EXEC=`which android`
+if command -v android >/dev/null; then
+    AOS_EXEC=$(command -v android)
     export ANDROID_HOME="$(dirname ${AOS_EXEC%android})"
 else
     export ANDROID_HOME="/Users/${jenkinsUser}/Library/Android/sdk"
