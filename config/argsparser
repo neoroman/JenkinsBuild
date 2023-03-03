@@ -194,8 +194,10 @@ if [ ! -d ${APP_ROOT_PREFIX}/${TOP_PATH} ]; then
 fi
 ################################################################################
 # JQ=$(which jq)
-if [[ "$JQ" == "" ]]; then
-  if [ -f "/usr/local/bin/jq" ]; then
+if test -z "$JQ"; then
+  if command -v jq >/dev/null; then
+    JQ=$(command -v jq)
+  elif [ -f "/usr/local/bin/jq" ]; then
     JQ="/usr/local/bin/jq"
   elif [ -f "/usr/bin/jq" ]; then
     JQ="/usr/bin/jq"
@@ -203,10 +205,13 @@ if [[ "$JQ" == "" ]]; then
     JQ="/bin/jq"
   fi
   if [ ! -f $JQ ]; then
-    echo ""
-    echo "Error: please install `jq` via Homebrew on macOS"
-    echo "       brew install jq"
-    echo "       `jq` is Lightweight and flexible command-line JSON processor"
-    exit
+    # echo ""
+    # echo "Error: please install `jq` via Homebrew on macOS"
+    # echo "       brew install jq"
+    # echo "       `jq` is Lightweight and flexible command-line JSON processor"
+    # exit
+    if command -v brew >/dev/null; then
+      brew install jq
+    fi
   fi
 fi

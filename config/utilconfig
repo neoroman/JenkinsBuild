@@ -47,8 +47,10 @@ if [ $DEBUGGING -eq 1 ]; then
   if test -z $WORKSPACE; then
     if [[ "$INPUT_OS" == "ios" ]]; then
       WORKSPACE=$DEBUG_WORKSPACE_IOS
-    else
+    elif [[ "$INPUT_OS" == "android" ]]; then
       WORKSPACE=$DEBUG_WORKSPACE_ANDROID
+    else
+      WORKSPACE="."
     fi
   fi
 elif test -z $WORKSPACE; then

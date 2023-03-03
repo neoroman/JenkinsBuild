@@ -1,7 +1,7 @@
 #!/bin/sh
 ##
 # iOS Shell Script
-XCODE="/usr/bin/xcodebuild"
+XCODE=$(command -v xcodebuild)
 if [ ! -f $XCODE ]; then
     echo ""
     echo "Error: cannot find xcodebuild in $XCODE"
@@ -24,8 +24,8 @@ APP_PATH="${TOP_PATH}/ios"
 APP_ROOT_SUFFIX="ios_distributions"
 if test -z $PROJECT_NAME; then
     echo ""
-    echo "Error: please finish setup distribution site, see following url:"
-    echo "       ${FRONTEND_POINT}/${TOP_PATH}/setup.php"
+    echo "Error: please finish setup distribution site, see following path:"
+    echo "       ${FRONTEND_POINT}/${TOP_PATH}/config/config.json"
     exit
 fi
 ###################
