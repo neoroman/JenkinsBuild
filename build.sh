@@ -43,7 +43,7 @@ fi
 if [ -f ${APP_ROOT_PREFIX}/${TOP_PATH}/.htaccess ]; then
   if [ -f ${APP_ROOT_PREFIX}/${TOP_PATH}/installOrUpdate.sh ]; then
     ${APP_ROOT_PREFIX}/${TOP_PATH}/installOrUpdate.sh
-    chmod -R 777 ${APP_ROOT_PREFIX}/${TOP_PATH}/
+    chmod -R 777 ${APP_ROOT_PREFIX}/${TOP_PATH}
   fi
 fi
 ################################################################################
