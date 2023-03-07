@@ -60,17 +60,17 @@ if [ -f $jsonConfig ]; then
     ReactNativeBin=""
   fi
 
-  if test -n "$WORKSPACE"; then
-    if [[ "$INPUT_OS" == "android" ]]; then
-      TEMP_WORKSPACE_AOS=$(cat $jsonConfig | $JQ '.android.jenkinsWorkspace' | tr -d '"')
-      if [[ "$WORKSPACE" != "$TEMP_WORKSPACE_AOS" ]]; then
-        $JQ -i '.android.jenkinsWorkspace = "'$WORKSPACE'"' $jsonConfig
-      fi
-    elif [[ "$INPUT_OS" == "ios" ]]; then
-      TEMP_WORKSPACE_IOS=$(cat $jsonConfig | $JQ '.ios.jenkinsWorkspace' | tr -d '"')
-      if [[ "$WORKSPACE" != "$TEMP_WORKSPACE_IOS" ]]; then
-        $JQ -i '.ios.jenkinsWorkspace = "'$WORKSPACE'"' $jsonConfig
-      fi
-    fi
-  fi
+  # if test -n "$WORKSPACE"; then
+  #   if [[ "$INPUT_OS" == "android" ]]; then
+  #     TEMP_WORKSPACE_AOS=$(cat $jsonConfig | $JQ '.android.jenkinsWorkspace' | tr -d '"')
+  #     if [[ "$WORKSPACE" != "$TEMP_WORKSPACE_AOS" ]]; then
+  #       $JQ -i '.android.jenkinsWorkspace = "'$WORKSPACE'"' $jsonConfig
+  #     fi
+  #   elif [[ "$INPUT_OS" == "ios" ]]; then
+  #     TEMP_WORKSPACE_IOS=$(cat $jsonConfig | $JQ '.ios.jenkinsWorkspace' | tr -d '"')
+  #     if [[ "$WORKSPACE" != "$TEMP_WORKSPACE_IOS" ]]; then
+  #       $JQ -i '.ios.jenkinsWorkspace = "'$WORKSPACE'"' $jsonConfig
+  #     fi
+  #   fi
+  # fi
 fi
