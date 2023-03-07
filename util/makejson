@@ -81,7 +81,7 @@ if [[ "$lastJsonFile" != "" ]]; then
     jiraProjectKey=$(cat $jsonConfig | $JQ '.jira.projectKey' | tr -d '"')
     #####################
     if [ $IS_RELEASE -eq 1 ]; then
-      GIT_LAST_LOG_ORG=$(cd ${WORKSPACE} && $GIT log --date=format:"%Y%m%d" --pretty=format:"<li><span class=\"tit\">%ad</span><p class=\"txt\">%s</p></li>" --no-merges ${GIT_BRANCH} --since="${lastBuildDate}" | sort -r | uniq)
+      GIT_LAST_LOG_ORG=$(cd ${WORKSPACE} && $GIT log --date=format:"%Y%m%d %H:%M" --pretty=format:"<li><span class=\"tit\">%ad</span><p class=\"txt\">%s</p></li>" --no-merges ${GIT_BRANCH} --since="${lastBuildDate}" | sort -r | uniq)
       GIT_LAST_LOG=$(echo ${GIT_LAST_LOG_ORG} | sed -e "s/\(${jiraProjectKey}-[0-9]*\)/<a href=${jiraUrl}\1>\1<\/a>/g")
     else
       if [[ "$INPUT_OS" == "ios" ]]; then
@@ -96,19 +96,18 @@ if [[ "$lastJsonFile" != "" ]]; then
     fi
 
     # DONE: Add gitLastLogs: [Array] here
-    gitLastLogsJson=$(cd ${WORKSPACE} && $GIT log --date=format:"%Y%m%d" --pretty=format:"{\"hash\":\"%h\",\"comment\":\"%s\",\"date\":\"%ad\"},"  --no-merges ${GIT_BRANCH} --since="${lastBuildDate}" | sort -r | uniq | tr -d '\n')
+    gitLastLogsJson=$(cd ${WORKSPACE} && $GIT log --date=format:"%Y%m%d %H:%M" --pretty=format:"{\"date\":\"%ad\",\"hash\":\"%h\",\"comment\":\"%s\",\"commiter\":\"%cn\"},"  --no-merges ${GIT_BRANCH} --since="${lastBuildDate}" | sort -r | uniq | tr -d '\n')
     gitLastLogsJson="[${gitLastLogsJson%,}]"
   fi
 fi
 if test -z $GIT_LAST_LOG ; then
-  if test -z $lastBuildDate; then
-    lastBuildDate="10.day"
-  fi
+  lastBuildDate="3.day"
   GIT_LAST_LOG=$(cd ${WORKSPACE} && $GIT log -3 --pretty=%s --no-merges ${GIT_BRANCH} --since="${lastBuildDate}" | sort | uniq | sed -e 's/\[feature development\]//g' | awk '{printf("&nbsp;&nbsp;&nbsp; %s<br \/>\n", $0)}')
-  if test -z $gitLastLogsJson ; then
-    gitLastLogsJson=$(cd ${WORKSPACE} && $GIT log -3 --date=format:"%Y%m%d" --pretty=format:"{\"hash\":\"%h\",\"comment\":\"%s\",\"date\":\"%ad\"},"  --no-merges ${GIT_BRANCH} --since="${lastBuildDate}" | sort -r | uniq | tr -d '\n')
-    gitLastLogsJson="[${gitLastLogsJson%,}]"
-  fi
+fi
+if test -z $gitLastLogsJson ; then
+  lastBuildDate="3.day"
+  gitLastLogsJson=$(cd ${WORKSPACE} && $GIT log -3 --date=format:"%Y%m%d %H:%M" --pretty=format:"{\"date\":\"%ad\",\"hash\":\"%h\",\"comment\":\"%s\",\"commiter\":\"%cn\"},"  --no-merges ${GIT_BRANCH} --since="${lastBuildDate}" | sort -r | uniq | tr -d '\n')
+  gitLastLogsJson="[${gitLastLogsJson%,}]"
 fi
 BUILD_TIME=$(/bin/date "+%Y.%m.%d %H:%M")
 ##################################
@@ -274,17 +273,30 @@ if [ -f $JQ -a $USING_JSON -eq 1 ]; then
         file5Plist=""
       fi
     else
-      LIVE_TITLE=$(cat $jsonConfig | $JQ '.android.LiveServer.title' | tr -d '"')
-      TEST_TITLE=$(cat $jsonConfig | $JQ '.android.TestServer.title' | tr -d '"')
-
-      file1Title="${LIVE_TITLE}"
-      file1Size="${SIZE_LIVE_APP_FILE}B"
-      file1Binary="${OUTPUT_APK_LIVESERVER}"
-      file1Plist=""
-      file2Title="${TEST_TITLE}"
-      file2Size="${SIZE_TEST_APP_FILE}B"
-      file2Binary="${OUTPUT_APK_TESTSERVER}"
-      file2Plist=""
+      if [ $USING_LIVESERVER -eq 1 ]; then
+        LIVE_TITLE=$(cat $jsonConfig | $JQ '.android.LiveServer.title' | tr -d '"')
+        file1Title="${LIVE_TITLE}"
+        file1Size="${SIZE_LIVE_APP_FILE}B"
+        file1Binary="${OUTPUT_APK_LIVESERVER}"
+        file1Plist=""
+      else
+        file1Title=""
+        file1Size=""
+        file1Binary=""
+        file1Plist=""
+      fi
+      if [ $USING_TESTSERVER -eq 1 ]; then
+        TEST_TITLE=$(cat $jsonConfig | $JQ '.android.TestServer.title' | tr -d '"')
+        file2Title="${TEST_TITLE}"
+        file2Size="${SIZE_TEST_APP_FILE}B"
+        file2Binary="${OUTPUT_APK_TESTSERVER}"
+        file2Plist=""
+      else
+        file2Title=""
+        file2Size=""
+        file2Binary=""
+        file2Plist=""
+      fi
       file3Title=""
       file3Size=""
       file3Binary=""
@@ -362,9 +374,9 @@ if [ -f $JQ -a $USING_JSON -eq 1 ]; then
   echo "${JSON_STRING}" >$OUTPUT_FOLDER/$OUTPUT_FILENAME_JSON
   chmod 777 $OUTPUT_FOLDER/$OUTPUT_FILENAME_JSON
 
-  # TODO: error jq: invalid JSON text passed to --argjson for multibyte characters
-  if test -n "$gitLastLogsJson"; then
-    JSON_ADDER=$($JQ --argjson git_last_log_json "${gitLastLogsJson}" '.gitLastLogs = $git_last_log_json')
+  # DONE: error jq: invalid JSON text passed to --argjson for multibyte characters
+  if test -n "${gitLastLogsJson}"; then
+    JSON_ADDER=$($JQ --argjson git_last_log_json "${gitLastLogsJson}" '.gitLastLogs = $git_last_log_json' $OUTPUT_FOLDER/$OUTPUT_FILENAME_JSON)
     if test -n "${JSON_ADDER}"; then
       echo "${JSON_ADDER}" >$OUTPUT_FOLDER/$OUTPUT_FILENAME_JSON
     fi
