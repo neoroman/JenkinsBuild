@@ -94,6 +94,10 @@ if [[ "$lastJsonFile" != "" ]]; then
         GIT_LAST_LOG=$(echo ${GIT_LAST_LOG} | sed -e "s/\(${jiraProjectKey}-[0-9]*\)/<a href=${jiraUrl}\1>\1<\/a>/g")
       fi
     fi
+
+    # DONE: Add gitLastLogs: [Array] here
+    gitLastLogsJson=$(cd ${WORKSPACE} && $GIT log --date=format:"%Y%m%d" --pretty=format:"{\"hash\":\"%h\",\"comment\":\"%s\",\"date\":\"%ad\"},"  --no-merges ${GIT_BRANCH} --since="${lastBuildDate}" | sort -r | uniq | tr -d '\n')
+    gitLastLogsJson="[${gitLastLogsJson%,}]"
   fi
 fi
 if test -z $GIT_LAST_LOG ; then
@@ -101,6 +105,10 @@ if test -z $GIT_LAST_LOG ; then
     lastBuildDate="10.day"
   fi
   GIT_LAST_LOG=$(cd ${WORKSPACE} && $GIT log -3 --pretty=%s --no-merges ${GIT_BRANCH} --since="${lastBuildDate}" | sort | uniq | sed -e 's/\[feature development\]//g' | awk '{printf("&nbsp;&nbsp;&nbsp; %s<br \/>\n", $0)}')
+  if test -z $gitLastLogsJson ; then
+    gitLastLogsJson=$(cd ${WORKSPACE} && $GIT log -3 --date=format:"%Y%m%d" --pretty=format:"{\"hash\":\"%h\",\"comment\":\"%s\",\"date\":\"%ad\"},"  --no-merges ${GIT_BRANCH} --since="${lastBuildDate}" | sort -r | uniq | tr -d '\n')
+    gitLastLogsJson="[${gitLastLogsJson%,}]"
+  fi
 fi
 BUILD_TIME=$(/bin/date "+%Y.%m.%d %H:%M")
 ##################################
@@ -354,6 +362,10 @@ if [ -f $JQ -a $USING_JSON -eq 1 ]; then
   echo "${JSON_STRING}" >$OUTPUT_FOLDER/$OUTPUT_FILENAME_JSON
   chmod 777 $OUTPUT_FOLDER/$OUTPUT_FILENAME_JSON
 
+  # TODO: error jq: invalid JSON text passed to --argjson for multibyte characters
+  # if test -n "$gitLastLogsJson"; then
+  #   $JQ --argjson git_last_log_json $gitLastLogsJson '.gitLastLogs = $git_last_log_json' $OUTPUT_FOLDER/$OUTPUT_FILENAME_JSON > $OUTPUT_FOLDER/$OUTPUT_FILENAME_JSON
+  # fi
 fi
 
 ##################################
