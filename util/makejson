@@ -96,7 +96,7 @@ if [[ "$lastJsonFile" != "" ]]; then
     fi
 
     # DONE: Add gitLastLogs: [Array] here
-    gitLastLogsJson=$(cd ${WORKSPACE} && $GIT log --date=format:"%Y%m%d %H:%M" --pretty=format:"{\"date\":\"%ad\",\"hash\":\"%h\",\"comment\":\"%s\",\"commiter\":\"%cn\"},"  --no-merges ${GIT_BRANCH} --since="${lastBuildDate}" | sort -r | uniq | tr -d '\n')
+    gitLastLogsJson=$(cd ${WORKSPACE} && $GIT log --date=format:"%Y%m%d %H:%M" --pretty=format:"{\"date\":\"%ad\",\"hash\":\"%h\",\"comment\":\"%s\",\"committer\":\"%cn\"},"  --no-merges ${GIT_BRANCH} --since="${lastBuildDate}" | sort -r | uniq | tr -d '\n')
     gitLastLogsJson="[${gitLastLogsJson%,}]"
   fi
 fi
@@ -106,7 +106,7 @@ if test -z $GIT_LAST_LOG ; then
 fi
 if test -z $gitLastLogsJson ; then
   lastBuildDate="3.day"
-  gitLastLogsJson=$(cd ${WORKSPACE} && $GIT log -3 --date=format:"%Y%m%d %H:%M" --pretty=format:"{\"date\":\"%ad\",\"hash\":\"%h\",\"comment\":\"%s\",\"commiter\":\"%cn\"},"  --no-merges ${GIT_BRANCH} --since="${lastBuildDate}" | sort -r | uniq | tr -d '\n')
+  gitLastLogsJson=$(cd ${WORKSPACE} && $GIT log -3 --date=format:"%Y%m%d %H:%M" --pretty=format:"{\"date\":\"%ad\",\"hash\":\"%h\",\"comment\":\"%s\",\"committer\":\"%cn\"},"  --no-merges ${GIT_BRANCH} --since="${lastBuildDate}" | sort -r | uniq | tr -d '\n')
   gitLastLogsJson="[${gitLastLogsJson%,}]"
 fi
 BUILD_TIME=$(/bin/date "+%Y.%m.%d %H:%M")
