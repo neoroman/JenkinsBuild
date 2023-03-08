@@ -96,7 +96,7 @@ if [[ "$lastJsonFile" != "" ]]; then
     fi
 
     # DONE: Add gitLastLogs: [Array] here
-    gitLastLogsJson=$(cd ${WORKSPACE} && $GIT log --date=format:"%Y%m%d %H:%M" --pretty=format:"{\"date\":\"%ad\",\"hash\":\"%h\",\"comment\":\"%s\",\"committer\":\"%cn\"},"  --no-merges ${GIT_BRANCH} --since="${lastBuildDate}" | sort -r | uniq | tr -d '\n')
+    gitLastLogsJson=$(cd ${WORKSPACE} && $GIT log --date=format:"%Y%m%d %H:%M" --pretty=format:'{"date":"%ad","hash":"%h","comment":"%s","committer":"%cn"},'  --no-merges ${GIT_BRANCH} --since="${lastBuildDate}" | sort -r | uniq | tr -d '\n')
     gitLastLogsJson="[${gitLastLogsJson%,}]"
   fi
 fi
@@ -106,7 +106,7 @@ if test -z $GIT_LAST_LOG ; then
 fi
 if test -z $gitLastLogsJson ; then
   lastBuildDate="3.day"
-  gitLastLogsJson=$(cd ${WORKSPACE} && $GIT log -3 --date=format:"%Y%m%d %H:%M" --pretty=format:"{\"date\":\"%ad\",\"hash\":\"%h\",\"comment\":\"%s\",\"committer\":\"%cn\"},"  --no-merges ${GIT_BRANCH} --since="${lastBuildDate}" | sort -r | uniq | tr -d '\n')
+  gitLastLogsJson=$(cd ${WORKSPACE} && $GIT log -3 --date=format:"%Y%m%d %H:%M" --pretty=format:'{"date":"%ad","hash":"%h","comment":"%s","committer":"%cn"},'  --no-merges ${GIT_BRANCH} --since="${lastBuildDate}" | sort -r | uniq | tr -d '\n')
   gitLastLogsJson="[${gitLastLogsJson%,}]"
 fi
 BUILD_TIME=$(/bin/date "+%Y.%m.%d %H:%M")
@@ -376,9 +376,11 @@ if [ -f $JQ -a $USING_JSON -eq 1 ]; then
 
   # DONE: error jq: invalid JSON text passed to --argjson for multibyte characters
   if test -n "${gitLastLogsJson}"; then
-    JSON_ADDER=$($JQ --argjson git_last_log_json "${gitLastLogsJson}" '.gitLastLogs = $git_last_log_json' $OUTPUT_FOLDER/$OUTPUT_FILENAME_JSON)
-    if test -n "${JSON_ADDER}"; then
-      echo "${JSON_ADDER}" >$OUTPUT_FOLDER/$OUTPUT_FILENAME_JSON
+    if $JQ -e . >/dev/null 2>&1 <<<"${gitLastLogsJson}"; then
+      JSON_ADDER=$($JQ --argjson git_last_log_json "${gitLastLogsJson}" '.gitLastLogs = $git_last_log_json' $OUTPUT_FOLDER/$OUTPUT_FILENAME_JSON)
+      if test -n "${JSON_ADDER}"; then
+        echo "${JSON_ADDER}" >$OUTPUT_FOLDER/$OUTPUT_FILENAME_JSON
+      fi
     fi
   fi
 fi
