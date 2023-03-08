@@ -96,18 +96,16 @@ if [[ "$lastJsonFile" != "" ]]; then
     fi
 
     # DONE: Add gitLastLogs: [Array] here
-    gitLastLogsJson=$(cd ${WORKSPACE} && $GIT log --date=format:"%Y%m%d %H:%M" --pretty=format:'{"date":"%ad","hash":"%h","comment":"%s","committer":"%cn"},'  --no-merges ${GIT_BRANCH} --since="${lastBuildDate}" | sort -r | uniq | tr -d '\n')
-    gitLastLogsJson="[${gitLastLogsJson%,}]"
+    gitLastLogsJson=$(cd ${WORKSPACE} && $GIT log --date=format:"%Y.%m.%d %H:%M" --pretty=format:'{"date":"%ad","hash":"%h","comment":"%f","committer":"%cn"}'  --no-merges ${GIT_BRANCH} --since="${lastBuildDate}" | $JQ -s '.')
   fi
 fi
-if test -z $GIT_LAST_LOG ; then
+if test -z "$GIT_LAST_LOG"; then
   lastBuildDate="3.day"
   GIT_LAST_LOG=$(cd ${WORKSPACE} && $GIT log -3 --pretty=%s --no-merges ${GIT_BRANCH} --since="${lastBuildDate}" | sort | uniq | sed -e 's/\[feature development\]//g' | awk '{printf("&nbsp;&nbsp;&nbsp; %s<br \/>\n", $0)}')
 fi
-if test -z $gitLastLogsJson ; then
+if test -z "$gitLastLogsJson" ; then
   lastBuildDate="3.day"
-  gitLastLogsJson=$(cd ${WORKSPACE} && $GIT log -3 --date=format:"%Y%m%d %H:%M" --pretty=format:'{"date":"%ad","hash":"%h","comment":"%s","committer":"%cn"},'  --no-merges ${GIT_BRANCH} --since="${lastBuildDate}" | sort -r | uniq | tr -d '\n')
-  gitLastLogsJson="[${gitLastLogsJson%,}]"
+  gitLastLogsJson=$(cd ${WORKSPACE} && $GIT log -3 --date=format:"%Y.%m.%d %H:%M" --pretty=format:'{"date":"%ad","hash":"%h","comment":"%f","committer":"%cn"}'  --no-merges ${GIT_BRANCH} --since="${lastBuildDate}" | $JQ -s '.')
 fi
 BUILD_TIME=$(/bin/date "+%Y.%m.%d %H:%M")
 ##################################
@@ -375,12 +373,10 @@ if [ -f $JQ -a $USING_JSON -eq 1 ]; then
   chmod 777 $OUTPUT_FOLDER/$OUTPUT_FILENAME_JSON
 
   # DONE: error jq: invalid JSON text passed to --argjson for multibyte characters
-  if test -n "${gitLastLogsJson}"; then
-    if $JQ -e . >/dev/null 2>&1 <<<"${gitLastLogsJson}"; then
-      JSON_ADDER=$($JQ --argjson git_last_log_json "${gitLastLogsJson}" '.gitLastLogs = $git_last_log_json' $OUTPUT_FOLDER/$OUTPUT_FILENAME_JSON)
-      if test -n "${JSON_ADDER}"; then
-        echo "${JSON_ADDER}" >$OUTPUT_FOLDER/$OUTPUT_FILENAME_JSON
-      fi
+  if $JQ -e . >/dev/null 2>&1 <<<"${gitLastLogsJson}"; then
+    JSON_ADDER=$($JQ --argjson git_last_log_json "${gitLastLogsJson}" '.gitLastLogs = $git_last_log_json' $OUTPUT_FOLDER/$OUTPUT_FILENAME_JSON)
+    if test -n "${JSON_ADDER}"; then
+      echo "${JSON_ADDER}" >$OUTPUT_FOLDER/$OUTPUT_FILENAME_JSON
     fi
   fi
 fi
