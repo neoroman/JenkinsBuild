@@ -25,12 +25,12 @@ fi
 #
 ##
 # Git
-if test -n $(git config user.name); then
+if test -n "$(git config user.name)"; then
     GIT_USER=$(git config user.name)
 else
     GIT_USER="AppDevTeam"
 fi
-if test -n $(git config user.email); then
+if test -n "$(git config user.email)"; then
     GIT_EMAIL=$(git config user.email)
 else
     GIT_EMAIL="app.support@company.com"
