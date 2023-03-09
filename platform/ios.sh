@@ -41,6 +41,11 @@ if [ $isFlutterEnabled -eq 1 ]; then
 elif [ $isReactNativeEnabled -eq 1 ]; then
     cd ${WORKSPACE}
     $ReactNativeBin install --legacy-peer-deps
+        if [ $? -ne 0 ]; then
+        # Fail-over for `Error: Cannot find module ...`
+        $ReactNativeBin install
+        $ReactNativeBin install --legacy-peer-deps
+    fi
     $ReactNativeBin run build
 fi
 if test ! -z $(grep 'CFBundleShortVersionString' "${WORKSPACE}/${INFO_PLIST}"); then

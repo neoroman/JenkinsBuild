@@ -169,6 +169,11 @@ fi
 if [ $isReactNativeEnabled -eq 1 ]; then
     cd ${WORKSPACE}
     $ReactNativeBin install --legacy-peer-deps
+    if [ $? -ne 0 ]; then
+        # Fail-over for `Error: Cannot find module ...`
+        $ReactNativeBin install
+        $ReactNativeBin install --legacy-peer-deps
+    fi
     $ReactNativeBin run build
     $ReactNativeBin run build:android
 fi
