@@ -30,20 +30,27 @@ Language: BASH Shell Script
 
 
 ## Jenkins Item Configuration for Build Section
-- for ``iOS`` into ``{WebServer}/{DocumentRoot}/NeoRoman/AppProject``
+- Just put following line if you don't want add as submodule
+  ```
+    git submodule add https://github.com/neoroman/JenkinsBuild.git jenkins
+  ```
+
+- Update submodule for ``iOS`` into ``{WebServer}/{DocumentRoot}/NeoRoman/AppProject``
   ```
     git config -f .gitmodules submodule.jenkins.url https://github.com/neoroman/JenkinsBuild.git
     git submodule sync
     git submodule update --force --recursive --init --remote
     git submodule foreach git pull origin master
+    ## Actual script for executing build
     bash -ex ${WORKSPACE}/jenkins/build.sh -p ios -tp "NeoRoman/AppProject"
   ```
-- for ``Android`` into ``{WebServer}/{DocumentRoot}/NeoRoman/AppProject``
+- Update submodule for ``Android`` into ``{WebServer}/{DocumentRoot}/NeoRoman/AppProject``
   ```
     git config -f .gitmodules submodule.jenkins.url https://github.com/neoroman/JenkinsBuild.git
     git submodule sync
     git submodule update --force --recursive --init --remote
     git submodule foreach git pull origin master
+    ## Actual script for executing build
     bash -ex ${WORKSPACE}/jenkins/build.sh -p android -tp "NeoRoman/AppProject"
   ```
 
