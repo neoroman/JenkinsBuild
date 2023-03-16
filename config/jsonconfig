@@ -1,11 +1,13 @@
 #!/bin/sh
 #
+#####
+CP=$(command -v cp)
 ##
 jsonConfig="${APP_ROOT_PREFIX}/${TOP_PATH}/config/config.json"
 if [ ! -f $jsonConfig ]; then
   SAMPLE_FILE="${APP_ROOT_PREFIX}/${TOP_PATH}/src/config/config.json.default"
   if [ -f $SAMPLE_FILE ]; then
-    cp  $SAMPLE_FILE  $jsonConfig
+    $CP  $SAMPLE_FILE  $jsonConfig
   fi
 fi
 if [ -f $jsonConfig ]; then
