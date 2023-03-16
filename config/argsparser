@@ -178,7 +178,7 @@ if [ ! -d ${APP_ROOT_PREFIX}/${TOP_PATH} ]; then
     # Update distribution site source
     if [ -f ${APP_ROOT_PREFIX}/${TOP_PATH}/.htaccess ]; then
       if [ -f ${APP_ROOT_PREFIX}/${TOP_PATH}/installOrUpdate.sh ]; then
-        ./installOrUpdate.sh
+        cd ${APP_ROOT_PREFIX}/${TOP_PATH} && ./installOrUpdate.sh
       fi
     fi
   fi
