@@ -18,9 +18,6 @@ if [ -f $jsonConfig ]; then
   else
     config=$(cat $jsonConfig | $JQ '.production')
   fi
-  if [ ${TOP_PATH%"$TOP_PATH_NAME"} == ${TOP_PATH} ]; then
-    TOP_PATH=$(echo $config | $JQ '.topPath' | tr -d '"')
-  fi
   OUTPUT_PREFIX=$(echo $config | $JQ '.outputPrefix' | tr -d '"')
   USING_SLACK=$(test $(cat $jsonConfig | $JQ '.slack.enabled') = true && echo 1 || echo 0)
   SLACK_CHANNEL=$(cat $jsonConfig | $JQ '.slack.channel' | tr -d '"')
@@ -60,6 +57,16 @@ if [ -f $jsonConfig ]; then
   else
     NodePath=""
     ReactNativeBin=""
+  fi
+
+  tempTopPath=$(echo $config | $JQ '.topPath' | tr -d '"')
+  if [[ "$tempTopPath" != "$TOP_PATH" ]]; then
+    if [ $DEBUGGING -eq 1 ]; then
+      TEMP_JSON=$($JQ '.development.topPath = "'$TOP_PATH'"' $jsonConfig)
+    else
+      TEMP_JSON=$($JQ '.production.topPath = "'$TOP_PATH'"' $jsonConfig)
+    fi
+    echo "${TEMP_JSON}" > $jsonConfig
   fi
 
   if test -n "$WORKSPACE"; then
