@@ -40,19 +40,21 @@ Language: BASH Shell Script
     git config -f .gitmodules submodule.jenkins.url https://github.com/neoroman/JenkinsBuild.git
     git submodule sync
     git submodule update --force --recursive --init --remote
-    git submodule foreach git pull origin master
+    git submodule foreach git pull origin main
     ## Actual script for executing build
-    bash -ex ${WORKSPACE}/jenkins/build.sh -p ios -tp "NeoRoman/AppProject"
+    bash -ex ${WORKSPACE}/jenkins/build.sh -p ios --toppath "NeoRoman/AppProject"
   ```
 - Update submodule for ``Android`` into ``{WebServer}/{DocumentRoot}/NeoRoman/AppProject``
   ```
     git config -f .gitmodules submodule.jenkins.url https://github.com/neoroman/JenkinsBuild.git
     git submodule sync
     git submodule update --force --recursive --init --remote
-    git submodule foreach git pull origin master
+    git submodule foreach git pull origin main
     ## Actual script for executing build
-    bash -ex ${WORKSPACE}/jenkins/build.sh -p android -tp "NeoRoman/AppProject"
+    bash -ex ${WORKSPACE}/jenkins/build.sh -p android --toppath "NeoRoman/AppProject"
   ```
+- Here's a sample screenshot of the jenkins configuration
+![help](images/JenkinsConfigHelp.png)
 
 
 ## Author
