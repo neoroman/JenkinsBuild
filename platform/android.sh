@@ -2,9 +2,9 @@
 ##
 # Android Shell Script
 #
-if test -z $ConfigJavaHome; then
+if test -z $ConfigJavaHome || test -z ${JAVA_NULL%null}; then
     if type java >/dev/null 2>&1; then
-        JAVA_EXEC=`which java`
+        JAVA_EXEC=$(command -v java)
         ConfigJavaHome=$(dirname ${JAVA_EXEC%java})
     fi
 fi
@@ -52,7 +52,7 @@ if [[ "${APP_VERSION}" == ".." ]]; then
         fi
     else
         APP_VERSION=$(grep 'versionName[[:space:]]"' ${BUILD_GRADLE_CONFIG} | grep -v '^\/\/' | sed -e 's/versionName "\(.*\)"/\1/' | tr -d ' \r')
-        if [[ $APP_VERSION == "versionName"* ]]; then
+        if [[ $APP_VERSION != "versionName"* ]]; then
             APP_VERSION=$(grep 'versionName' ${BUILD_GRADLE_CONFIG} | grep -v '^\/\/' | sed -e "s/versionName '\(.*\)'/\1/" | tr -d ' \r')
         fi
         if [ $isReactNativeEnabled -eq 1 ]; then
