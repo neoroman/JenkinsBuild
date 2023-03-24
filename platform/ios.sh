@@ -236,7 +236,7 @@ if [ $USING_APPSTORE -eq 1 -a $IS_RELEASE -eq 1 ]; then
     TEMP_APPSTORE_APP_FOLDER="${OUTPUT_FILENAME_APPSTORE}.app"
     OUTPUT_FILE="${OUTPUT_FOLDER}/${TARGET_APPSTORE}"
     if [ -f "${OUTPUT_FILE}" ]; then
-        mv $OUTPUT_FILE "${OUTPUT_FOLDER}/${OUTPUT_FILENAME_APPSTORE_IPA}"
+        mv "$OUTPUT_FILE" "${OUTPUT_FOLDER}/${OUTPUT_FILENAME_APPSTORE_IPA}"
         SIZE_STORE_APP_FILE=$(du -sh "${OUTPUT_FOLDER}/${OUTPUT_FILENAME_APPSTORE_IPA}" | awk '{print $1}')
 
         if [ ! -d $OUTPUT_FOLDER/$TEMP_APPSTORE_APP_FOLDER ]; then
@@ -304,7 +304,7 @@ if [ $USING_ADHOC -eq 1 ]; then
         mv "${DST_ROOT}/Applications/${TARGET_ADHOC}" "${DST_ROOT}/Applications/Payload"
         cd "${DST_ROOT}/Applications"
         $ZIP -r "${OUTPUT_FILE}" Payload
-        mv $OUTPUT_FILE "${OUTPUT_FOLDER}/"
+        mv "$OUTPUT_FILE" "${OUTPUT_FOLDER}/"
         SIZE_ADHOC_APP_FILE=$(du -sh ${OUTPUT_FOLDER}/${OUTPUT_FILENAME_ADHOC_IPA} | awk '{print $1}')
     fi
 fi
@@ -324,7 +324,7 @@ if [ $USING_ENTERPRISE -eq 1 ]; then
         mv "${DST_ROOT}/Applications/${TARGET_ENTER}" "${DST_ROOT}/Applications/Payload"
         cd "${DST_ROOT}/Applications"
         $ZIP -r "${OUTPUT_FILE}" Payload
-        mv $OUTPUT_FILE "${OUTPUT_FOLDER}/"
+        mv "$OUTPUT_FILE" "${OUTPUT_FOLDER}/"
         SIZE_ENTER_APP_FILE=$(du -sh ${OUTPUT_FOLDER}/${OUTPUT_FILENAME_ENTER_IPA} | awk '{print $1}')
     fi
 fi
@@ -344,7 +344,7 @@ if [ $USING_ENTER4WEB -eq 1 ]; then
         mv "${DST_ROOT}/Applications/${TARGET_ENTER4WEB}" "${DST_ROOT}/Applications/Payload"
         cd "${DST_ROOT}/Applications"
         $ZIP -r "${OUTPUT_FILE}" Payload
-        mv $OUTPUT_FILE "${OUTPUT_FOLDER}/"
+        mv "$OUTPUT_FILE" "${OUTPUT_FOLDER}/"
         SIZE_ENTER4WEB_APP_FILE=$(du -sh ${OUTPUT_FOLDER}/${OUTPUT_FILENAME_ENTER4WEB_IPA} | awk '{print $1}')
     fi
 fi
