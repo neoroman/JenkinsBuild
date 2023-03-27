@@ -2,7 +2,8 @@
 ##
 # Android Shell Script
 #
-if test -z $ConfigJavaHome || test -z ${JAVA_NULL%null}; then
+# if test -z $ConfigJavaHome || test -z ${JAVA_NULL%null}; then
+if test -z $ConfigJavaHome; then
     if type java >/dev/null 2>&1; then
         JAVA_EXEC=$(command -v java)
         ConfigJavaHome=$(dirname ${JAVA_EXEC%java})
