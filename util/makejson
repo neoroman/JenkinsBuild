@@ -96,7 +96,7 @@ if [[ "$lastJsonFile" != "" ]]; then
     fi
 
     # DONE: Add gitLastLogs: [Array] here
-    gitLastLogsJson=$(cd ${WORKSPACE} && $GIT log --date=format:"%Y.%m.%d %H:%M" --pretty=format:'{^^^^date^^^^:^^^^%ad^^^^,^^^^hash^^^^:^^^^%h^^^^,^^^^comment^^^^:^^^^%s^^^^,^^^^committer^^^^:^^^^%cn^^^^}'  --no-merges ${GIT_BRANCH} --since="${lastBuildDate}" | sed 's/"/\\"/g' | sed 's/\^^^^/"/g' | $JQ -s '.')
+    gitLastLogsJson=$(cd ${WORKSPACE} && $GIT log --date=format:"%Y.%m.%d %H:%M" --pretty=format:'{^^^^date^^^^:^^^^%ad^^^^,^^^^hash^^^^:^^^^%h^^^^,^^^^comment^^^^:^^^^%s^^^^,^^^^committer^^^^:^^^^%cn^^^^}'  --no-merges ${GIT_BRANCH} --since="${lastBuildDate}" | sed 's/"/\\"/g' | sed 's/	//g' | sed 's/\^^^^/"/g' | $JQ -s '.')
   fi
 fi
 if test -z "$GIT_LAST_LOG"; then
@@ -105,7 +105,7 @@ if test -z "$GIT_LAST_LOG"; then
 fi
 if test -z "$gitLastLogsJson" ; then
   lastBuildDate="3.day"
-  gitLastLogsJson=$(cd ${WORKSPACE} && $GIT log -3 --date=format:"%Y.%m.%d %H:%M" --pretty=format:'{^^^^date^^^^:^^^^%ad^^^^,^^^^hash^^^^:^^^^%h^^^^,^^^^comment^^^^:^^^^%s^^^^,^^^^committer^^^^:^^^^%cn^^^^}'  --no-merges ${GIT_BRANCH} --since="${lastBuildDate}" | sed 's/"/\\"/g' | sed 's/\^^^^/"/g' | $JQ -s '.')
+  gitLastLogsJson=$(cd ${WORKSPACE} && $GIT log -3 --date=format:"%Y.%m.%d %H:%M" --pretty=format:'{^^^^date^^^^:^^^^%ad^^^^,^^^^hash^^^^:^^^^%h^^^^,^^^^comment^^^^:^^^^%s^^^^,^^^^committer^^^^:^^^^%cn^^^^}'  --no-merges ${GIT_BRANCH} --since="${lastBuildDate}" | sed 's/"/\\"/g' | sed 's/	//g' | sed 's/\^^^^/"/g' | $JQ -s '.')
 fi
 BUILD_TIME=$(/bin/date "+%Y.%m.%d %H:%M")
 ##################################
