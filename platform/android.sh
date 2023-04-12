@@ -230,6 +230,7 @@ else
             FILE_EXTENSION="aab"
         fi
         if [ $isFlutterEnabled -eq 1 ]; then
+            $FlutterBin clean
             $FlutterBin pub get
 
             if test -z $FLUTTER_FLAG; then
@@ -271,7 +272,7 @@ else
                 BUNDLE_APK_FILE="$OUTPUT_FOLDER/${APK_GOOGLESTORE%.aab}.apks"
                 STOREPASS=$(cat $jsonConfig | $JQ '.android.keyStorePassword' | tr -d '"')
                 KEYSTORE_FILE=$(cat $jsonConfig | $JQ '.android.keyStoreFile' | tr -d '"')
-                KEYSTORE_FILE="${APP_ROOT_PREFIX}/${TOP_PATH}/android/${KEYSTORE_FILE}"
+                KEYSTORE_FILE="${WORKSPACE}/${KEYSTORE_FILE}"
                 KEYSTORE_ALIAS=$(cat $jsonConfig | $JQ '.android.keyStoreAlias' | tr -d '"')
                 if [ -f $KEYSTORE_FILE ]; then
                     $BUNDLE_TOOL build-apks --bundle="$OUTPUT_FOLDER/$APK_GOOGLESTORE" --output="$BUNDLE_APK_FILE" --mode=universal --ks="$KEYSTORE_FILE" --ks-pass="pass:$STOREPASS" --ks-key-alias="$KEYSTORE_ALIAS"
@@ -303,6 +304,7 @@ else
             FILE_EXTENSION="aab"
         fi
         if [ $isFlutterEnabled -eq 1 ]; then
+            $FlutterBin clean
             $FlutterBin pub get
 
             if test -z $FLUTTER_FLAG; then
@@ -344,7 +346,7 @@ else
                 BUNDLE_APK_FILE="$OUTPUT_FOLDER/${APK_ONESTORE%.aab}.apks"
                 STOREPASS=$(cat $jsonConfig | $JQ '.android.keyStorePassword' | tr -d '"')
                 KEYSTORE_FILE=$(cat $jsonConfig | $JQ '.android.keyStoreFile' | tr -d '"')
-                KEYSTORE_FILE="${APP_ROOT_PREFIX}/${TOP_PATH}/android/${KEYSTORE_FILE}"
+                KEYSTORE_FILE="${WORKSPACE}/${KEYSTORE_FILE}"
                 KEYSTORE_ALIAS=$(cat $jsonConfig | $JQ '.android.keyStoreAlias' | tr -d '"')
                 if [ -f $KEYSTORE_FILE ]; then
                     $BUNDLE_TOOL build-apks --bundle="$OUTPUT_FOLDER/$APK_ONESTORE" --output="$BUNDLE_APK_FILE" --mode=universal --ks="$KEYSTORE_FILE" --ks-pass="pass:$STOREPASS" --ks-key-alias="$KEYSTORE_ALIAS"
@@ -379,6 +381,7 @@ else
             FILE_EXTENSION="aab"
         fi
         if [ $isFlutterEnabled -eq 1 ]; then
+            $FlutterBin clean
             $FlutterBin pub get
 
             if test -z $FLUTTER_FLAG; then
@@ -420,7 +423,7 @@ else
                 BUNDLE_APK_FILE="$OUTPUT_FOLDER/${OUTPUT_APK_LIVESERVER%.aab}.apks"
                 STOREPASS=$(cat $jsonConfig | $JQ '.android.keyStorePassword' | tr -d '"')
                 KEYSTORE_FILE=$(cat $jsonConfig | $JQ '.android.keyStoreFile' | tr -d '"')
-                KEYSTORE_FILE="${APP_ROOT_PREFIX}/${TOP_PATH}/android/${KEYSTORE_FILE}"
+                KEYSTORE_FILE="${WORKSPACE}/${KEYSTORE_FILE}"
                 KEYSTORE_ALIAS=$(cat $jsonConfig | $JQ '.android.keyStoreAlias' | tr -d '"')
                 if [ -f $KEYSTORE_FILE ]; then
                     $BUNDLE_TOOL build-apks --bundle="$OUTPUT_FOLDER/$OUTPUT_APK_LIVESERVER" --output="$BUNDLE_APK_FILE" --mode=universal --ks="$KEYSTORE_FILE" --ks-pass="pass:$STOREPASS" --ks-key-alias="$KEYSTORE_ALIAS"
@@ -466,6 +469,7 @@ else
             FILE_EXTENSION="aab"
         fi
         if [ $isFlutterEnabled -eq 1 ]; then
+            $FlutterBin clean
             $FlutterBin pub get
 
             if test -z $FLUTTER_FLAG; then
@@ -507,7 +511,7 @@ else
                 BUNDLE_APK_FILE="$OUTPUT_FOLDER/${OUTPUT_APK_TESTSERVER%.aab}.apks"
                 STOREPASS=$(cat $jsonConfig | $JQ '.android.keyStorePassword' | tr -d '"')
                 KEYSTORE_FILE=$(cat $jsonConfig | $JQ '.android.keyStoreFile' | tr -d '"')
-                KEYSTORE_FILE="${APP_ROOT_PREFIX}/${TOP_PATH}/android/${KEYSTORE_FILE}"
+                KEYSTORE_FILE="${WORKSPACE}/${KEYSTORE_FILE}"
                 KEYSTORE_ALIAS=$(cat $jsonConfig | $JQ '.android.keyStoreAlias' | tr -d '"')
                 if [ -f $KEYSTORE_FILE ]; then
                     $BUNDLE_TOOL build-apks --bundle="$OUTPUT_FOLDER/$OUTPUT_APK_TESTSERVER" --output="$BUNDLE_APK_FILE" --mode=universal --ks="$KEYSTORE_FILE" --ks-pass="pass:$STOREPASS" --ks-key-alias="$KEYSTORE_ALIAS"
