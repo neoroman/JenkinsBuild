@@ -7,64 +7,64 @@ if [ $USING_MAIL -eq 1 ]; then
         MAIL_APPSTORE_DOWN_STR=""
         MAIL_APPSTORE_ATTACH_STR=""
         if [ $USING_APPSTORE -eq 1 ]; then
-        MAIL_APPSTORE_DOWN_STR="${APPSTORE_TITLE} IPA 다운로드(${SIZE_STORE_APP_FILE}B): <a href=${HTTPS_PREFIX}${OUTPUT_FILENAME_APPSTORE_IPA}>${HTTPS_PREFIX}${OUTPUT_FILENAME_APPSTORE_IPA}</a><br />"
-        MAIL_APPSTORE_ATTACH_STR="첨부파일: <a href=${HTTPS_PREFIX}${OUTPUT_FILENAME_APPSTORE_IX_SHIELD_CHECK}>${HTTPS_PREFIX}${OUTPUT_FILENAME_APPSTORE_IX_SHIELD_CHECK}</a>"
+            MAIL_APPSTORE_DOWN_STR="${APPSTORE_TITLE} IPA 다운로드(${SIZE_STORE_APP_FILE}B): <a href=${HTTPS_PREFIX}${OUTPUT_FILENAME_APPSTORE_IPA}>${HTTPS_PREFIX}${OUTPUT_FILENAME_APPSTORE_IPA}</a><br />"
+            MAIL_APPSTORE_ATTACH_STR="첨부파일: <a href=${HTTPS_PREFIX}${OUTPUT_FILENAME_APPSTORE_IX_SHIELD_CHECK}>${HTTPS_PREFIX}${OUTPUT_FILENAME_APPSTORE_IX_SHIELD_CHECK}</a>"
         fi
         MAIL_ADHOC_DOWN_STR=""
         MAIL_ADHOC_ITMS_STR=""
         if [ $USING_ADHOC -eq 1 ]; then
-        MAIL_ADHOC_DOWN_STR="${ADHOC_TITLE} IPA 다운로드(${SIZE_ADHOC_APP_FILE}B): <a href=${HTTPS_PREFIX}${OUTPUT_FILENAME_ADHOC_IPA}>${HTTPS_PREFIX}${OUTPUT_FILENAME_ADHOC_IPA}</a><br />"
-        MAIL_ADHOC_ITMS_STR="${ADHOC_TITLE} Plist: ${ITMS_PREFIX}${ADHOC_PLIST_ITMS_URL}<br />"
+            MAIL_ADHOC_DOWN_STR="${ADHOC_TITLE} IPA 다운로드(${SIZE_ADHOC_APP_FILE}B): <a href=${HTTPS_PREFIX}${OUTPUT_FILENAME_ADHOC_IPA}>${HTTPS_PREFIX}${OUTPUT_FILENAME_ADHOC_IPA}</a><br />"
+            MAIL_ADHOC_ITMS_STR="${ADHOC_TITLE} Plist: ${ITMS_PREFIX}${ADHOC_PLIST_ITMS_URL}<br />"
         fi
         MAIL_ENTER_DOWN_STR=""
         MAIL_ENTER_ITMS_STR=""
         if [ $USING_ENTERPRISE -eq 1 ]; then
-        MAIL_ENTER_DOWN_STR="${ENTER_TITLE} IPA 다운로드(${SIZE_ENTER_APP_FILE}B): <a href=${HTTPS_PREFIX}${OUTPUT_FILENAME_ENTER_IPA}>${HTTPS_PREFIX}${OUTPUT_FILENAME_ENTER_IPA}</a><br /><br />"
-        MAIL_ENTER_ITMS_STR="${ENTER_TITLE} Plist: ${ITMS_PREFIX}${ENTER_PLIST_ITMS_URL}<br />"
+            MAIL_ENTER_DOWN_STR="${ENTER_TITLE} IPA 다운로드(${SIZE_ENTER_APP_FILE}B): <a href=${HTTPS_PREFIX}${OUTPUT_FILENAME_ENTER_IPA}>${HTTPS_PREFIX}${OUTPUT_FILENAME_ENTER_IPA}</a><br /><br />"
+            MAIL_ENTER_ITMS_STR="${ENTER_TITLE} Plist: ${ITMS_PREFIX}${ENTER_PLIST_ITMS_URL}<br />"
         fi
         if [ -f $OUTPUT_FOLDER/$OUTPUT_FILENAME_APPSTORE_IX_SHIELD_CHECK -a $IS_RELEASE -eq 1 ]; then
-        $CURL --data-urlencode "subject1=[iOS ${APP_NAME}.app > ${HOSTNAME}] Jenkins(${BUILD_NUMBER}) ${DEBUG_MSG} -" \
-            --data-urlencode "subject2=iOS ${GIT_BRANCH} - ${CHANGE_TITLE}(commit: ${GIT_COMMIT})" \
-            --data-urlencode "message_header=${MAIL_APPSTORE_DOWN_STR}${MAIL_ADHOC_DOWN_STR}${MAIL_ENTER_DOWN_STR}${MAIL_APPSTORE_ATTACH_STR}" \
-            --data-urlencode "message_description=${SHORT_GIT_LOG}<br />${GIT_LAST_LOG}<br />${MAIL_ADHOC_ITMS_STR}${MAIL_ENTER_ITMS_STR}<br /><br /><br /><pre>${OTHER_BUILD_ENV}$($XCODE -version)</pre><br /><br /><a href=${BUILD_URL}>${BUILD_URL}</a>" \
-            --data-urlencode "message_attachment=난독화스크립트 - ${OUTPUT_FILENAME_APPSTORE_IX_SHIELD_CHECK}" \
-            --data-urlencode "attachment_path=$OUTPUT_FOLDER/$OUTPUT_FILENAME_APPSTORE_IX_SHIELD_CHECK" \
-            ${FRONTEND_POINT}/${TOP_PATH}/sendmail_domestic.php
+            $CURL --data-urlencode "subject1=[iOS ${APP_NAME}.app > ${HOSTNAME}] Jenkins(${BUILD_NUMBER}) ${DEBUG_MSG} -" \
+                --data-urlencode "subject2=iOS ${GIT_BRANCH} - ${CHANGE_TITLE}(commit: ${GIT_COMMIT})" \
+                --data-urlencode "message_header=${MAIL_APPSTORE_DOWN_STR}${MAIL_ADHOC_DOWN_STR}${MAIL_ENTER_DOWN_STR}${MAIL_APPSTORE_ATTACH_STR}" \
+                --data-urlencode "message_description=${SHORT_GIT_LOG}<br />${GIT_LAST_LOG}<br />${MAIL_ADHOC_ITMS_STR}${MAIL_ENTER_ITMS_STR}<br /><br /><br /><pre>${OTHER_BUILD_ENV}$($XCODE -version)</pre><br /><br /><a href=${BUILD_URL}>${BUILD_URL}</a>" \
+                --data-urlencode "message_attachment=난독화스크립트 - ${OUTPUT_FILENAME_APPSTORE_IX_SHIELD_CHECK}" \
+                --data-urlencode "attachment_path=$OUTPUT_FOLDER/$OUTPUT_FILENAME_APPSTORE_IX_SHIELD_CHECK" \
+                ${FRONTEND_POINT}/${TOP_PATH}/phpmodules/sendmail_domestic.php
         elif [ $IS_RELEASE -eq 1 ]; then
-        $CURL --data-urlencode "subject1=[iOS ${APP_NAME}.app > ${HOSTNAME}] Jenkins(${BUILD_NUMBER}) ${DEBUG_MSG} -" \
-            --data-urlencode "subject2=iOS ${GIT_BRANCH} - ${CHANGE_TITLE}(commit: ${GIT_COMMIT})" \
-            --data-urlencode "message_header=${MAIL_APPSTORE_DOWN_STR}${MAIL_ADHOC_DOWN_STR}${MAIL_ENTER_DOWN_STR}첨부파일: 없음" \
-            --data-urlencode "message_description=${SHORT_GIT_LOG}<br />${GIT_LAST_LOG}<br />${MAIL_ADHOC_ITMS_STR}${MAIL_ENTER_ITMS_STR}<br /><br /><br /><pre>${OTHER_BUILD_ENV}$($XCODE -version)</pre><br /><br /><a href=${BUILD_URL}>${BUILD_URL}</a>" \
-            ${FRONTEND_POINT}/${TOP_PATH}/sendmail_domestic.php
+            $CURL --data-urlencode "subject1=[iOS ${APP_NAME}.app > ${HOSTNAME}] Jenkins(${BUILD_NUMBER}) ${DEBUG_MSG} -" \
+                --data-urlencode "subject2=iOS ${GIT_BRANCH} - ${CHANGE_TITLE}(commit: ${GIT_COMMIT})" \
+                --data-urlencode "message_header=${MAIL_APPSTORE_DOWN_STR}${MAIL_ADHOC_DOWN_STR}${MAIL_ENTER_DOWN_STR}첨부파일: 없음" \
+                --data-urlencode "message_description=${SHORT_GIT_LOG}<br />${GIT_LAST_LOG}<br />${MAIL_ADHOC_ITMS_STR}${MAIL_ENTER_ITMS_STR}<br /><br /><br /><pre>${OTHER_BUILD_ENV}$($XCODE -version)</pre><br /><br /><a href=${BUILD_URL}>${BUILD_URL}</a>" \
+                ${FRONTEND_POINT}/${TOP_PATH}/phpmodules/sendmail_domestic.php
         else
-        $CURL --data-urlencode "subject1=[iOS ${APP_NAME}.app > ${HOSTNAME}] Jenkins(${BUILD_NUMBER}) ${DEBUG_MSG} -" \
-            --data-urlencode "subject2=iOS ${GIT_BRANCH} - ${CHANGE_TITLE}(commit: ${GIT_COMMIT})" \
-            --data-urlencode "message_header=iOS 테스트 ${APP_NAME} 전달합니다.<br /><br />${MAIL_ADHOC_DOWN_STR}${MAIL_ENTER_DOWN_STR}" \
-            --data-urlencode "message_description=${SHORT_GIT_LOG}<br />${GIT_LAST_LOG}<br />${MAIL_ADHOC_ITMS_STR}${MAIL_ENTER_ITMS_STR}<br /><br /><br /><pre>${OTHER_BUILD_ENV}$($XCODE -version)</pre><br /><br /><a href=${BUILD_URL}>${BUILD_URL}</a>" \
-            ${FRONTEND_POINT}/${TOP_PATH}/sendmail_domestic.php
+            $CURL --data-urlencode "subject1=[iOS ${APP_NAME}.app > ${HOSTNAME}] Jenkins(${BUILD_NUMBER}) ${DEBUG_MSG} -" \
+                --data-urlencode "subject2=iOS ${GIT_BRANCH} - ${CHANGE_TITLE}(commit: ${GIT_COMMIT})" \
+                --data-urlencode "message_header=iOS 테스트 ${APP_NAME} 전달합니다.<br /><br />${MAIL_ADHOC_DOWN_STR}${MAIL_ENTER_DOWN_STR}" \
+                --data-urlencode "message_description=${SHORT_GIT_LOG}<br />${GIT_LAST_LOG}<br />${MAIL_ADHOC_ITMS_STR}${MAIL_ENTER_ITMS_STR}<br /><br /><br /><pre>${OTHER_BUILD_ENV}$($XCODE -version)</pre><br /><br /><a href=${BUILD_URL}>${BUILD_URL}</a>" \
+                ${FRONTEND_POINT}/${TOP_PATH}/phpmodules/sendmail_domestic.php
         fi
     else # Android from here
         OTHER_BUILD_ENV=${OTHER_BUILD_ENV//\\n/"<BR \/>"}
         if [ -f $OUTPUT_FOLDER/$Obfuscation_OUTPUT_FILE -a $IS_RELEASE -eq 1 ]; then
-        ATTACHMENT_DOWN=""
-        ATTACHMENT_STR=""
-        if [ $USING_OBFUSCATION -eq 1 ]; then
-            ATTACHMENT_DOWN="첨부파일: <br />난독화파일 - <a href=${HTTPS_PREFIX}${Obfuscation_OUTPUT_FILE}>${HTTPS_PREFIX}${Obfuscation_OUTPUT_FILE}</a><br />난독화스크립트 - <a href=${HTTPS_PREFIX}${Obfuscation_SCREENSHOT}>${HTTPS_PREFIX}${Obfuscation_SCREENSHOT}</a><br /><br />"
-            ATTACHMENT_STR="message_attachment=난독화파일 - ${Obfuscation_OUTPUT_FILE}<br />난독화스크립트 - ${Obfuscation_SCREENSHOT}"
-        fi
-        $CURL --data-urlencode "subject1=[AOS ${APP_NAME}.app > ${HOSTNAME}] Jenkins(${BUILD_NUMBER}) 자동빌드 -" \
-            --data-urlencode "subject2=Android ${GIT_BRANCH} - ${CHANGE_TITLE}(commit: ${GIT_COMMIT})" \
-            --data-urlencode "message_header=안드로이드 1차 난독화 버전 전달합니다.<br /><br /><br />${MAIL_TEXT}<br /><br />${ATTACHMENT_DOWN}" \
-            --data-urlencode "message_description=${SHORT_GIT_LOG}<br />${GIT_LAST_LOG}<br /><br /><br /><pre>${OTHER_BUILD_ENV}$(cd ${WORKSPACE} && $BUILD_COMMAND --version)</pre><br /><br /><a href=${BUILD_URL}>${BUILD_URL}</a>" \
-            --data-urlencode "${ATTACHMENT_STR}" \
-            --data-urlencode "attachment_path=$OUTPUT_FOLDER/$Obfuscation_OUTPUT_FILE;$OUTPUT_FOLDER/$Obfuscation_SCREENSHOT" \
-            ${FRONTEND_POINT}/${TOP_PATH}/sendmail_domestic.php
+            ATTACHMENT_DOWN=""
+            ATTACHMENT_STR=""
+            if [ $USING_OBFUSCATION -eq 1 ]; then
+                ATTACHMENT_DOWN="첨부파일: <br />난독화파일 - <a href=${HTTPS_PREFIX}${Obfuscation_OUTPUT_FILE}>${HTTPS_PREFIX}${Obfuscation_OUTPUT_FILE}</a><br />난독화스크립트 - <a href=${HTTPS_PREFIX}${Obfuscation_SCREENSHOT}>${HTTPS_PREFIX}${Obfuscation_SCREENSHOT}</a><br /><br />"
+                ATTACHMENT_STR="message_attachment=난독화파일 - ${Obfuscation_OUTPUT_FILE}<br />난독화스크립트 - ${Obfuscation_SCREENSHOT}"
+            fi
+            $CURL --data-urlencode "subject1=[AOS ${APP_NAME}.app > ${HOSTNAME}] Jenkins(${BUILD_NUMBER}) 자동빌드 -" \
+                --data-urlencode "subject2=Android ${GIT_BRANCH} - ${CHANGE_TITLE}(commit: ${GIT_COMMIT})" \
+                --data-urlencode "message_header=안드로이드 1차 난독화 버전 전달합니다.<br /><br /><br />${MAIL_TEXT}<br /><br />${ATTACHMENT_DOWN}" \
+                --data-urlencode "message_description=${SHORT_GIT_LOG}<br />${GIT_LAST_LOG}<br /><br /><br /><pre>${OTHER_BUILD_ENV}$(cd ${WORKSPACE} && $BUILD_COMMAND --version)</pre><br /><br /><a href=${BUILD_URL}>${BUILD_URL}</a>" \
+                --data-urlencode "${ATTACHMENT_STR}" \
+                --data-urlencode "attachment_path=$OUTPUT_FOLDER/$Obfuscation_OUTPUT_FILE;$OUTPUT_FOLDER/$Obfuscation_SCREENSHOT" \
+                ${FRONTEND_POINT}/${TOP_PATH}/phpmodules/sendmail_domestic.php
         else
-        $CURL --data-urlencode "subject1=[AOS ${APP_NAME}.app > ${HOSTNAME}] Jenkins(${BUILD_NUMBER}) 자동빌드 -" \
-            --data-urlencode "subject2=Android ${GIT_BRANCH} - ${CHANGE_TITLE}(commit: ${GIT_COMMIT})" \
-            --data-urlencode "message_header=안드로이드 테스트 ${APP_NAME} 전달합니다.<br /><br /><br />${MAIL_TEXT}<br />" \
-            --data-urlencode "message_description=$(echo ${GIT_LAST_LOG} | sed -e 's/\[uDev\]/<br \/>\&nbsp;\&nbsp;\&nbsp;/g' | sed -e 's/\\n/<br \/>\&nbsp;\&nbsp;\&nbsp;/g')<br /><br /><br /><br /><pre>${OTHER_BUILD_ENV}$(cd ${WORKSPACE} && $BUILD_COMMAND --version)</pre><br /><a href=${BUILD_URL}>${BUILD_URL}</a>" \
-            ${FRONTEND_POINT}/${TOP_PATH}/sendmail_domestic.php
+            $CURL --data-urlencode "subject1=[AOS ${APP_NAME}.app > ${HOSTNAME}] Jenkins(${BUILD_NUMBER}) 자동빌드 -" \
+                --data-urlencode "subject2=Android ${GIT_BRANCH} - ${CHANGE_TITLE}(commit: ${GIT_COMMIT})" \
+                --data-urlencode "message_header=안드로이드 테스트 ${APP_NAME} 전달합니다.<br /><br /><br />${MAIL_TEXT}<br />" \
+                --data-urlencode "message_description=$(echo ${GIT_LAST_LOG} | sed -e 's/\[uDev\]/<br \/>\&nbsp;\&nbsp;\&nbsp;/g' | sed -e 's/\\n/<br \/>\&nbsp;\&nbsp;\&nbsp;/g')<br /><br /><br /><br /><pre>${OTHER_BUILD_ENV}$(cd ${WORKSPACE} && $BUILD_COMMAND --version)</pre><br /><a href=${BUILD_URL}>${BUILD_URL}</a>" \
+                ${FRONTEND_POINT}/${TOP_PATH}/phpmodules/sendmail_domestic.php
         fi
     fi # Android
 fi
