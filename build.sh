@@ -42,8 +42,8 @@ fi
 # Update distribution site source ##############################################
 if [ -f ${APP_ROOT_PREFIX}/${TOP_PATH}/.htaccess ]; then
   if [ -f ${APP_ROOT_PREFIX}/${TOP_PATH}/installOrUpdate.sh ]; then
-    ${APP_ROOT_PREFIX}/${TOP_PATH}/installOrUpdate.sh
-    chmod -R 777 ${APP_ROOT_PREFIX}/${TOP_PATH}
+    ${APP_ROOT_PREFIX}/${TOP_PATH}/installOrUpdate.sh  2>&1
+    chmod -R 777 ${APP_ROOT_PREFIX}/${TOP_PATH}  2>&1
   fi
 fi
 ################################################################################
