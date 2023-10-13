@@ -213,17 +213,31 @@ if [ $DEBUGGING -eq 0 ]; then
         $XCODE $XCODE_OPTION "${XCODE_WORKSPACE}" -scheme "${SCHEME_APPSTORE}" -sdk iphoneos -skip-test-configuration -configuration archive -archivePath ${ARCHIVE_PATH}
         $XCODE -exportArchive -archivePath ${ARCHIVE_PATH} -exportOptionsPlist ${EXPORT_PLIST} -exportPath ${OUTPUT_FOLDER}
     fi
+    xcodeArgument="SYMROOT=${DST_ROOT} DSTROOT=${DST_ROOT}"
+    # xcodeArgument="DSTROOT=\"${DST_ROOT}\""
+    xcodeVer="$($XCODE -version | grep Xcode | sed -e 's/Xcode //g')"
+    usingXcodeAbove_14_3=0
+    # TODO: why error occurred by return 2 on 2023.10.17
+    if [[ "$xcodeVer" != "14.1" ]]; then
+        compareVer="14.3.1"
+        vercomp $xcodeVer $compareVer # return 0 mean same, 1 mean $xcodeVer > $compareVer, 2 mean $xcodeVer < $compareVer
+        if [ $? -lt 2 ]; then
+            xcodeArgument="-derivedDataPath ${DST_ROOT} -archivePath ${DST_ROOT}"
+            # xcodeArgument="-archivePath \"${DST_ROOT}\""
+            usingXcodeAbove_14_3=1
+        fi
+    fi
     if [ $USING_ADHOC -eq 1 ]; then
         # Step 1.2: Build target for AdHoc
-        $XCODE $XCODE_OPTION "${XCODE_WORKSPACE}" -scheme "${SCHEME_ADHOC}" DSTROOT="${DST_ROOT}" -destination "generic/platform=iOS" archive
+        $XCODE $XCODE_OPTION "${XCODE_WORKSPACE}" -scheme "${SCHEME_ADHOC}" -destination "generic/platform=iOS" archive ${xcodeArgument}/${SCHEME_ADHOC}
     fi
     if [ $USING_ENTERPRISE -eq 1 ]; then
-        # Step 1.1: Build target for Enterprise
-        $XCODE $XCODE_OPTION "${XCODE_WORKSPACE}" -scheme "${SCHEME_ENTER}" DSTROOT="${DST_ROOT}" -destination "generic/platform=iOS" archive
+        # Step 1.3: Build target for Enterprise
+        $XCODE $XCODE_OPTION "${XCODE_WORKSPACE}" -scheme "${SCHEME_ENTER}" -destination "generic/platform=iOS" archive ${xcodeArgument}/${SCHEME_ENTER}
     fi
     if [ $USING_ENTER4WEB -eq 1 ]; then
-        # Step 1.1: Build target for Enterprise
-        $XCODE $XCODE_OPTION "${XCODE_WORKSPACE}" -scheme "${SCHEME_ENTER4WEB}" DSTROOT="${DST_ROOT}" -destination "generic/platform=iOS" archive
+        # Step 1.4: Build target for Enterprise
+        $XCODE $XCODE_OPTION "${XCODE_WORKSPACE}" -scheme "${SCHEME_ENTER4WEB}" -destination "generic/platform=iOS" archive ${xcodeArgument}/${SCHEME_ENTER4WEB}
     fi
 fi
 ###################
@@ -235,7 +249,6 @@ elif [ "$APP_VERSION" != "" ]; then
 else
     VERSION_STRING=""
 fi
-PAYLOAD_FOLDER="${DST_ROOT}/Applications/Payload"
 if [ $USING_APPSTORE -eq 1 -a $IS_RELEASE -eq 1 ]; then
     ###################
     # Step 2.1: Copy ``App Store'' target from Applications to OUTPUT_FOLDER
@@ -305,17 +318,23 @@ if [ $USING_ADHOC -eq 1 ]; then
     OUTPUT_FILENAME_ADHOC="${OUTPUT_PREFIX}${VERSION_STRING}_${FILE_TODAY}${OUTPUT_FILENAME_ADHOC_SUFFIX}"
     OUTPUT_FILENAME_ADHOC_IPA="${OUTPUT_FILENAME_ADHOC}.ipa"
     OUTPUT_FILENAME_ADHOC_PLIST="${OUTPUT_FILENAME_ADHOC}.plist"
-    OUTPUT_FILE="${DST_ROOT}/Applications/${OUTPUT_FILENAME_ADHOC_IPA}"
-    if [ -d "${DST_ROOT}/Applications/${TARGET_ADHOC}" ]; then
-        if [ -d $PAYLOAD_FOLDER ]; then
-            rm -rf $PAYLOAD_FOLDER
+    INSTALL_ROOT=${DST_ROOT}
+    if [ $usingXcodeAbove_14_3 -eq 1 ]; then
+        INSTALL_ROOT="${DST_ROOT}/${SCHEME_ADHOC}.xcarchive/Products"
+    fi
+    OUTPUT_FILE="${INSTALL_ROOT}/Applications/${OUTPUT_FILENAME_ADHOC_IPA}"
+    if [ -d "${INSTALL_ROOT}/Applications/${TARGET_ADHOC}" ]; then
+        if [ -d ${INSTALL_ROOT}/Applications/Payload ]; then
+            rm -rf ${INSTALL_ROOT}/Applications/Payload
         fi
-        mkdir -p $PAYLOAD_FOLDER
-        mv "${DST_ROOT}/Applications/${TARGET_ADHOC}" "${DST_ROOT}/Applications/Payload"
-        cd "${DST_ROOT}/Applications"
+        mkdir -p ${INSTALL_ROOT}/Applications/Payload
+        mv "${INSTALL_ROOT}/Applications/${TARGET_ADHOC}" "${INSTALL_ROOT}/Applications/Payload"
+        cd "${INSTALL_ROOT}/Applications"
         $ZIP -r "${OUTPUT_FILE}" Payload
         mv "$OUTPUT_FILE" "${OUTPUT_FOLDER}/"
         SIZE_ADHOC_APP_FILE=$(du -sh ${OUTPUT_FOLDER}/${OUTPUT_FILENAME_ADHOC_IPA} | awk '{print $1}')
+    else
+        exit -1
     fi
 fi
 ###################
@@ -325,17 +344,23 @@ if [ $USING_ENTERPRISE -eq 1 ]; then
     OUTPUT_FILENAME_ENTER="${OUTPUT_PREFIX}${VERSION_STRING}_${FILE_TODAY}${OUTPUT_FILENAME_ENTER_SUFFIX}"
     OUTPUT_FILENAME_ENTER_IPA="${OUTPUT_FILENAME_ENTER}.ipa"
     OUTPUT_FILENAME_ENTER_PLIST="${OUTPUT_FILENAME_ENTER}.plist"
-    OUTPUT_FILE="${DST_ROOT}/Applications/${OUTPUT_FILENAME_ENTER_IPA}"
-    if [ -d "${DST_ROOT}/Applications/${TARGET_ENTER}" ]; then
-        if [ -d $PAYLOAD_FOLDER ]; then
-            rm -rf $PAYLOAD_FOLDER
+    INSTALL_ROOT=${DST_ROOT}
+    if [ $usingXcodeAbove_14_3 -eq 1 ]; then
+        INSTALL_ROOT="${DST_ROOT}/${SCHEME_ENTER}.xcarchive/Products"
+    fi
+    OUTPUT_FILE="${INSTALL_ROOT}/Applications/${OUTPUT_FILENAME_ENTER_IPA}"
+    if [ -d "${INSTALL_ROOT}/Applications/${TARGET_ENTER}" ]; then
+        if [ -d ${INSTALL_ROOT}/Applications/Payload ]; then
+            rm -rf ${INSTALL_ROOT}/Applications/Payload
         fi
-        mkdir -p $PAYLOAD_FOLDER
-        mv "${DST_ROOT}/Applications/${TARGET_ENTER}" "${DST_ROOT}/Applications/Payload"
-        cd "${DST_ROOT}/Applications"
+        mkdir -p ${INSTALL_ROOT}/Applications/Payload
+        mv "${INSTALL_ROOT}/Applications/${TARGET_ENTER}" "${INSTALL_ROOT}/Applications/Payload"
+        cd "${INSTALL_ROOT}/Applications"
         $ZIP -r "${OUTPUT_FILE}" Payload
         mv "$OUTPUT_FILE" "${OUTPUT_FOLDER}/"
         SIZE_ENTER_APP_FILE=$(du -sh ${OUTPUT_FOLDER}/${OUTPUT_FILENAME_ENTER_IPA} | awk '{print $1}')
+    else
+        exit -1
     fi
 fi
 ###################
@@ -345,17 +370,24 @@ if [ $USING_ENTER4WEB -eq 1 ]; then
     OUTPUT_FILENAME_ENTER4WEB="${OUTPUT_PREFIX}${VERSION_STRING}_${FILE_TODAY}${OUTPUT_FILENAME_ENTER4WEB_SUFFIX}"
     OUTPUT_FILENAME_ENTER4WEB_IPA="${OUTPUT_FILENAME_ENTER4WEB}.ipa"
     OUTPUT_FILENAME_ENTER4WEB_PLIST="${OUTPUT_FILENAME_ENTER4WEB}.plist"
+    INSTALL_ROOT=${DST_ROOT}
+    if [ $usingXcodeAbove_14_3 -eq 1 ]; then
+        tmpRoot=${DST_ROOT}
+        DST_ROOT="${tmpRoot}/${SCHEME_ENTER4WEB}.xcarchive/Products"
+    fi
     OUTPUT_FILE="${DST_ROOT}/Applications/${OUTPUT_FILENAME_ENTER4WEB_IPA}"
     if [ -d "${DST_ROOT}/Applications/${TARGET_ENTER4WEB}" ]; then
-        if [ -d $PAYLOAD_FOLDER ]; then
-            rm -rf $PAYLOAD_FOLDER
+        if [ -d ${INSTALL_ROOT}/Applications/Payload ]; then
+            rm -rf ${INSTALL_ROOT}/Applications/Payload
         fi
-        mkdir -p $PAYLOAD_FOLDER
+        mkdir -p ${INSTALL_ROOT}/Applications/Payload
         mv "${DST_ROOT}/Applications/${TARGET_ENTER4WEB}" "${DST_ROOT}/Applications/Payload"
         cd "${DST_ROOT}/Applications"
         $ZIP -r "${OUTPUT_FILE}" Payload
         mv "$OUTPUT_FILE" "${OUTPUT_FOLDER}/"
         SIZE_ENTER4WEB_APP_FILE=$(du -sh ${OUTPUT_FOLDER}/${OUTPUT_FILENAME_ENTER4WEB_IPA} | awk '{print $1}')
+    else
+        exit -1
     fi
 fi
 ###################
