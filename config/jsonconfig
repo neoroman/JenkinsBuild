@@ -58,6 +58,11 @@ if [ -f $jsonConfig ]; then
     NodePath=""
     ReactNativeBin=""
   fi
+  # CocoaPods Ruby Gem Path
+  GEM_PATH=$(cat $jsonConfig | $JQ '.ios.rubyGemPath' | tr -d '"')
+  if [[ "$GEM_PATH" == "null" ]]; then
+    unset GEM_PATH
+  fi
 
   tempTopPath=$(echo $config | $JQ '.topPath' | tr -d '"')
   if [[ "$tempTopPath" != "$TOP_PATH" ]]; then

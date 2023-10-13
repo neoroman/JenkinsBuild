@@ -32,7 +32,9 @@ fi
 if [ $isFlutterEnabled -eq 1 ]; then
     export SDKROOT="/Applications/Xcode.app/Contents/Developer/Platforms/iPhoneOS.platform/Developer/SDKs/iPhoneOS.sdk"
     export LANG=en_US.UTF-8
-    export GEM_PATH="/System/Library/Frameworks/Ruby.framework/Versions/2.6/usr/lib/ruby/gems/2.6.0"
+    if test -z ${GEM_PATH}; then
+        export GEM_PATH="/System/Library/Frameworks/Ruby.framework/Versions/2.6/usr/lib/ruby/gems/2.6.0"
+    fi
 
     POD_EXEC_DIR=$(dirname ${POD})
     export PATH=${POD_EXEC_DIR}:$PATH
@@ -139,7 +141,9 @@ if [ $isFlutterEnabled -ne 1 -a -f ${WORKSPACE}/${POD_FILE} ]; then
     POD_LOCK_FILE="${WORKSPACE}/${POD_FILE}.lock"
     cd $(dirname ${WORKSPACE}/${POD_FILE})
     export LANG=en_US.UTF-8
-    export GEM_PATH="/System/Library/Frameworks/Ruby.framework/Versions/2.6/usr/lib/ruby/gems/2.6.0"
+    if test -z ${GEM_PATH}; then
+        export GEM_PATH="/System/Library/Frameworks/Ruby.framework/Versions/2.6/usr/lib/ruby/gems/2.6.0"
+    fi
     if [ ! -f $POD_LOCK_FILE ]; then
         if [ $(uname -p) == "arm" ]; then
             arch -x86_64 $POD install
