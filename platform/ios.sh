@@ -43,10 +43,13 @@ if [ $isFlutterEnabled -eq 1 ]; then
 elif [ $isReactNativeEnabled -eq 1 ]; then
     cd ${WORKSPACE}
     $ReactNativeBin install --legacy-peer-deps
-        if [ $? -ne 0 ]; then
+    if [ $? -ne 0 ]; then
         # Fail-over for `Error: Cannot find module ...`
         $ReactNativeBin install
         $ReactNativeBin install --legacy-peer-deps
+    fi
+    if test ! -z $NODE_OPTION_FLAG; then
+        export NODE_OPTIONS=${NODE_OPTION_FLAG}
     fi
     $ReactNativeBin run build
 fi
@@ -321,6 +324,8 @@ if [ $USING_ADHOC -eq 1 ]; then
     INSTALL_ROOT=${DST_ROOT}
     if [ $usingXcodeAbove_14_3 -eq 1 ]; then
         INSTALL_ROOT="${DST_ROOT}/${SCHEME_ADHOC}.xcarchive/Products"
+    else
+        INSTALL_ROOT="${DST_ROOT}/${SCHEME_ADHOC}"
     fi
     OUTPUT_FILE="${INSTALL_ROOT}/Applications/${OUTPUT_FILENAME_ADHOC_IPA}"
     if [ -d "${INSTALL_ROOT}/Applications/${TARGET_ADHOC}" ]; then
@@ -347,6 +352,8 @@ if [ $USING_ENTERPRISE -eq 1 ]; then
     INSTALL_ROOT=${DST_ROOT}
     if [ $usingXcodeAbove_14_3 -eq 1 ]; then
         INSTALL_ROOT="${DST_ROOT}/${SCHEME_ENTER}.xcarchive/Products"
+    else
+        INSTALL_ROOT="${DST_ROOT}/${SCHEME_ENTER}"
     fi
     OUTPUT_FILE="${INSTALL_ROOT}/Applications/${OUTPUT_FILENAME_ENTER_IPA}"
     if [ -d "${INSTALL_ROOT}/Applications/${TARGET_ENTER}" ]; then
@@ -372,17 +379,18 @@ if [ $USING_ENTER4WEB -eq 1 ]; then
     OUTPUT_FILENAME_ENTER4WEB_PLIST="${OUTPUT_FILENAME_ENTER4WEB}.plist"
     INSTALL_ROOT=${DST_ROOT}
     if [ $usingXcodeAbove_14_3 -eq 1 ]; then
-        tmpRoot=${DST_ROOT}
-        DST_ROOT="${tmpRoot}/${SCHEME_ENTER4WEB}.xcarchive/Products"
+        INSTALL_ROOT="${DST_ROOT}/${SCHEME_ENTER4WEB}.xcarchive/Products"
+    else
+        INSTALL_ROOT="${DST_ROOT}/${SCHEME_ENTER4WEB}"
     fi
-    OUTPUT_FILE="${DST_ROOT}/Applications/${OUTPUT_FILENAME_ENTER4WEB_IPA}"
-    if [ -d "${DST_ROOT}/Applications/${TARGET_ENTER4WEB}" ]; then
+    OUTPUT_FILE="${INSTALL_ROOT}/Applications/${OUTPUT_FILENAME_ENTER4WEB_IPA}"
+    if [ -d "${INSTALL_ROOT}/Applications/${TARGET_ENTER4WEB}" ]; then
         if [ -d ${INSTALL_ROOT}/Applications/Payload ]; then
             rm -rf ${INSTALL_ROOT}/Applications/Payload
         fi
         mkdir -p ${INSTALL_ROOT}/Applications/Payload
-        mv "${DST_ROOT}/Applications/${TARGET_ENTER4WEB}" "${DST_ROOT}/Applications/Payload"
-        cd "${DST_ROOT}/Applications"
+        mv "${INSTALL_ROOT}/Applications/${TARGET_ENTER4WEB}" "${INSTALL_ROOT}/Applications/Payload"
+        cd "${INSTALL_ROOT}/Applications"
         $ZIP -r "${OUTPUT_FILE}" Payload
         mv "$OUTPUT_FILE" "${OUTPUT_FOLDER}/"
         SIZE_ENTER4WEB_APP_FILE=$(du -sh ${OUTPUT_FOLDER}/${OUTPUT_FILENAME_ENTER4WEB_IPA} | awk '{print $1}')

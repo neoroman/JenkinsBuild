@@ -175,6 +175,9 @@ if [ $isReactNativeEnabled -eq 1 ]; then
         $ReactNativeBin install
         $ReactNativeBin install --legacy-peer-deps
     fi
+    if test ! -z $NODE_OPTION_FLAG; then
+        export NODE_OPTIONS=${NODE_OPTION_FLAG}
+    fi
     $ReactNativeBin run build
     $ReactNativeBin run build:android
 fi
