@@ -220,15 +220,12 @@ if [ $DEBUGGING -eq 0 ]; then
     # xcodeArgument="DSTROOT=\"${DST_ROOT}\""
     xcodeVer="$($XCODE -version | grep Xcode | sed -e 's/Xcode //g')"
     usingXcodeAbove_14_3=0
-    # TODO: why error occurred by return 2 on 2023.10.17
-    if [[ "$xcodeVer" != "14.1" ]]; then
-        compareVer="14.3.1"
-        vercomp $xcodeVer $compareVer # return 0 mean same, 1 mean $xcodeVer > $compareVer, 2 mean $xcodeVer < $compareVer
-        if [ $? -lt 2 ]; then
-            xcodeArgument="-derivedDataPath ${DST_ROOT} -archivePath ${DST_ROOT}"
-            # xcodeArgument="-archivePath \"${DST_ROOT}\""
-            usingXcodeAbove_14_3=1
-        fi
+    compareVer="14.3.1"
+    resultcomp=$(vercomp $xcodeVer $compareVer) # return 0 mean same, 1 mean $xcodeVer > $compareVer, 2 mean $xcodeVer < $compareVer
+    if [ $resultcomp -lt 2 ]; then
+        xcodeArgument="-derivedDataPath ${DST_ROOT} -archivePath ${DST_ROOT}"
+        # xcodeArgument="-archivePath \"${DST_ROOT}\""
+        usingXcodeAbove_14_3=1
     fi
     if [ $USING_ADHOC -eq 1 ]; then
         # Step 1.2: Build target for AdHoc
