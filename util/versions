@@ -2,7 +2,8 @@
 vercomp () {
     if [[ $1 == $2 ]]
     then
-        return 0
+        echo 0
+        return
     fi
     local IFS=.
     local i ver1=($1) ver2=($2)
@@ -20,12 +21,14 @@ vercomp () {
         fi
         if ((10#${ver1[i]} > 10#${ver2[i]}))
         then
-            return 1
+            echo 1
+            return
         fi
         if ((10#${ver1[i]} < 10#${ver2[i]}))
         then
-            return 2
+            echo 2
+            return
         fi
     done
-    return 0
+    echo 0
 }
