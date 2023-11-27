@@ -25,7 +25,11 @@ APP_ROOT_SUFFIX="ios_distributions"
 if test -z $PROJECT_NAME; then
     echo ""
     echo "Error: please finish setup distribution site, see following path:"
-    echo "       ${FRONTEND_POINT}/${TOP_PATH}/config/config.json"
+    if [ $CUSTOM_CONFIG -eq 1 ]; then
+        echo "       ${CUSTOM_CONFIG_PATH}"
+    else
+        echo "       ${DEFAULT_CONFIG_JSON}"
+    fi
     exit
 fi
 ###################

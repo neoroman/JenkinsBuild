@@ -2,10 +2,25 @@
 #
 #####
 CP=$(command -v cp)
+DEFAULT_CONFIG_JSON="${APP_ROOT_PREFIX}/${TOP_PATH}/config/config.json"
 ##
-jsonConfig="${APP_ROOT_PREFIX}/${TOP_PATH}/config/config.json"
+if [ $CUSTOM_CONFIG -eq 1 ]; then
+  if test ! -z "$CUSTOM_CONFIG_PATH"; then
+    jsonConfig="${CUSTOM_CONFIG_PATH}"
+    if [ -f $CUSTOM_CONFIG_PATH ]; then
+      $CP  $CUSTOM_CONFIG_PATH  $DEFAULT_CONFIG_JSON
+    fi
+    echo "       ┍━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━┑"
+    echo "           FYI - Config file is in '${CUSTOM_CONFIG_PATH}'"
+    echo "       ┕━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━┙"
+  else
+    jsonConfig="${DEFAULT_CONFIG_JSON}"
+  fi
+else
+  jsonConfig="${DEFAULT_CONFIG_JSON}"
+fi
 if [ ! -f $jsonConfig ]; then
-  SAMPLE_FILE="${APP_ROOT_PREFIX}/${TOP_PATH}/src/config/config.json.default"
+  SAMPLE_FILE="${DEFAULT_CONFIG_JSON}.default"
   if [ -f $SAMPLE_FILE ]; then
     $CP  $SAMPLE_FILE  $jsonConfig
   fi
