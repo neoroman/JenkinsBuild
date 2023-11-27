@@ -11,14 +11,23 @@ else
     VERSION_STRING="v${APP_VERSION}.${BUILD_VERSION} "
 fi
 ###########
-DEFAULT_LANG_JSON="${APP_ROOT_PREFIX}/${TOP_PATH}/lang/default.json"
+DEFAULT_LANG_PATH="${APP_ROOT_PREFIX}/${TOP_PATH}/lang"
+DEFAULT_LANG_JSON="${DEFAULT_LANG_PATH}/default.json"
 if [ ! -f $DEFAULT_LANG_JSON ]; then
     SRC_DEFAULT_LANG_JSON="${APP_ROOT_PREFIX}/${TOP_PATH}/src/lang/default.json"
     if [ -f $SRC_DEFAULT_LANG_JSON ]; then
         cp $SRC_DEFAULT_LANG_JSON $DEFAULT_LANG_JSON
     fi
 fi
-if [ -f $DEFAULT_LANG_FILE ]; then
+if [ $CUSTOM_LANG -eq 1 ]; then
+    lang_file="${CUSTOM_LANG_PATH}" # language file for distribution site
+    filename="$(basename $lang_file)"
+    cp $lang_file $DEFAULT_LANG_PATH/$filename
+    fileonly="${filename%%.*}"
+    language="${fileonly#*_}" # default language, ex) ko, en, ...
+    TEMP_JSON=$($JQ '.LANGUAGE = "'$language'"' $DEFAULT_LANG_JSON)
+    echo "${TEMP_JSON}" > $DEFAULT_LANG_JSON
+else
     language=$(cat $DEFAULT_LANG_JSON | $JQ '.LANGUAGE' | tr -d '"')
     lang_file="${APP_ROOT_PREFIX}/${TOP_PATH}/lang/lang_${language}.json"
     if [ ! -f $lang_file ]; then
@@ -27,6 +36,8 @@ if [ -f $DEFAULT_LANG_FILE ]; then
             cp  $src_lang_file  $lang_file
         fi
     fi
+fi
+if [ -f $lang_file ]; then
     CLIENT_NAME=$(cat $lang_file | $JQ '.client.title' | tr -d '"')
     APP_NAME=$(cat $lang_file | $JQ '.app.name' | tr -d '"')
     CLIENT_TITLE=$(cat $lang_file | $JQ '.title.h2_client' | tr -d '"')

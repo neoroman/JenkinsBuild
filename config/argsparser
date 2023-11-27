@@ -4,6 +4,22 @@
 while [[ $# -gt 0 ]]; do
   key="$1"
   case $key in
+  -c | --config)
+    CUSTOM_CONFIG_PATH="$2"
+    if [ -f $CUSTOM_CONFIG_PATH ]; then
+      CUSTOM_CONFIG=1
+    fi
+    shift # past argument
+    shift # past value
+    ;;
+  -l | --language)
+    CUSTOM_LANG_PATH="$2"
+    if [ -f $CUSTOM_LANG_PATH ]; then
+      CUSTOM_LANG=1
+    fi
+    shift # past argument
+    shift # past value
+    ;;
   -p | --platform)
     INPUT_OS="$2"
     shift # past argument
@@ -143,10 +159,14 @@ while [[ $# -gt 0 ]]; do
     echo ""
     echo "optional arguments:"
     echo "   -h, --help        show this help message and exit:"
-    echo "   -p, --platform   {ios,android}"
+    echo "   -p, --platform    {ios,android}"
     echo "                     assign platform as iOS or Android to processing"
-    echo "   -tp, --toppath   {TOP_PATH}"
+    echo "   -tp, --toppath    {TOP_PATH}"
     echo "                     assign TOP_PATH to installing output of iOS or Android"
+    echo "   -c, --config      {SITE_CONFIG.json}"
+    echo "                     ex) ${WORKSPACE}/jankins_config/config.json"
+    echo "   -l, --language    {SITE_LANGUAGE.json}"
+    echo "                     ex) ${WORKSPACE}/jankins_config/lang_en.json"
     echo "   -d, --debug       debugging mode"
     exit
     ;;
@@ -155,6 +175,9 @@ done
 ################################################################################
 if test -z $TOP_PATH; then
   TOP_PATH="Company/Projects"
+  echo ""
+  echo "Warning: make sure your distribution site is in $TOP_PATH...!!!"
+  echo ""
 fi
 USING_SLACK=0
 ### Using Teams or Not, 0=Not Using, 1=Using Teams
