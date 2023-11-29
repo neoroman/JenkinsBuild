@@ -65,6 +65,7 @@ GIT=$(which git)
 SCRIPT_NAME=$(basename $0)
 DEBUGGING=0
 PRODUCE_OUTPUT_USE=1 # Exit if output not using for distribution, maybe it's for SonarQube
+OUTPUT_AND_EXIT_USE=0
 USING_MAIL=0
 WITH_TAG_PUSH=1
 FOR_MASTER_BRANCH=0
