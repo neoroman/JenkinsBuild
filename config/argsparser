@@ -59,11 +59,11 @@ while [[ $# -gt 0 ]]; do
     DEBUGGING=1
     shift # past argument
     ;;
-  no-output)
+  no-output | -no | --no-output)
     PRODUCE_OUTPUT_USE=0
     shift # past argument
     ;;
-  output-exit)
+  output-exit | -oe | --output-exit)
     PRODUCE_OUTPUT_USE=0
     OUTPUT_AND_EXIT_USE=1
     shift # past argument
