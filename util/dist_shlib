@@ -1,0 +1,332 @@
+###############################################################################
+### Functions START ###########################################################
+###############################################################################
+function getPrefixOnly() {
+  testString="${GIT_TAG_FULL}"
+  if test ! -z "$1"; then
+    testString="$1"
+  fi
+  onlyPrefixString="$(echo "${testString}" | tr -d '[0-9]._()' | tr '[:lower:]' '[:upper:]')"
+  if test ! -z "${onlyPrefixString}"; then
+    BUILD_TYPE="${onlyPrefixString}"
+  fi
+}
+function getVersionOnly() {
+  testString="${GIT_TAG_FULL}"
+  if test ! -z "$1"; then
+    testString="$1"
+  fi
+  onlyVersionString="$(echo "${testString}" | tr -d '[A-Za-z]-')"
+  if test ! -z "${onlyVersionString}"; then
+    VERSIONS="${onlyVersionString}"
+  fi
+}
+function getParsedVersion() {
+  testString="${VERSIONS}"
+  if test ! -z "$1"; then
+    testString="$1"
+  fi
+  if test ! -z "${testString}"; then
+    VERSION_STRING=( ${testString//./ })
+    MAJOR="$(echo ${VERSION_STRING[0]} | tr -d '()._-')"
+    MINOR="$(echo ${VERSION_STRING[1]} | tr -d '()._-')"
+    POINT="$(echo ${VERSION_STRING[2]} | sed -e 's/\(.*\)[(_.].*/\1/')"
+    if test ! -z "$1"; then
+      echo "${MAJOR}.${MINOR}.${POINT}"
+    else
+      MARKET_VERSION="${MAJOR}.${MINOR}.${POINT}"
+      BUILD_NUMBER="${VERSION_STRING[3]}"
+    fi
+    if test -z "${BUILD_NUMBER}"; then
+      VERSION_STRING=( ${VERSIONS//(/ })
+      if test -z "$1"; then
+        BUILD_NUMBER="$(echo ${VERSION_STRING[1]} | tr -d '()._-')"
+      fi
+    fi
+  fi
+}
+function getLastTag() {
+  LAST_FULL_TAG=$(git describe --tags --abbrev=0)
+  getPrefixOnly ${LAST_FULL_TAG}
+  getVersionOnly ${LAST_FULL_TAG}
+  LAST_BUILD_TYPE="${BUILD_TYPE}"
+  LAST_TAG="${VERSIONS}"
+}
+function getConfigPrefix() {
+  if [ $USING_CONFIG -eq 1 ]; then
+    tempOS="${INPUT_OS}"
+    if [[ "$INPUT_OS" == "both" ]]; then
+      tempOS="android"
+    fi
+    TAG_PREFIX="$(git config -f $CONFIG_FILE --get "${tempOS}.tagPrefix.${RELEASE_TYPE}")"
+  fi
+}
+function getInputTag() {
+  getVersionOnly
+  if [ $USING_CONFIG -eq 1 ]; then
+    getConfigPrefix
+    upperGitFullTag="$(echo ${GIT_TAG_FULL} | tr '[:lower:]' '[:upper:]')"
+    if [[ "${upperGitFullTag}" == "${TAG_PREFIX}"* ]]; then
+      BUILD_TYPE="${TAG_PREFIX}"
+    elif [[ "${VERSIONS}" == "${GIT_TAG_FULL}" ]]; then
+      BUILD_TYPE="${TAG_PREFIX}"
+    else
+      printInputTag
+      printUncorrectTagPrefixError
+      exit
+    fi
+  else
+    getPrefixOnly
+  fi
+  getParsedVersion
+  FINAL_TAG="${BUILD_TYPE}${VERSIONS}"
+}
+function printLastTag() {
+  getLastTag
+  if test -n "$LAST_FULL_TAG"; then
+    echo "  ┍━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━┑"
+    echo "       FYI - The last tag is '${LAST_FULL_TAG}'"
+    echo "  ┕━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━┙"
+  fi
+}
+function printInputTag() {
+  echo " ┍━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━┑"
+  echo "     Input tag is '${GIT_TAG_FULL}'"
+  echo "     Input platform is '${INPUT_OS}'"
+  echo "     Input release type is '${RELEASE_TYPE}'"
+  if test ! -z "$CONFIG_FILE"; then
+    if test -f "$CONFIG_FILE"; then
+      echo "     Input config file is '${CONFIG_FILE}'"
+      echo "     Parsed tag prefix is '${TAG_PREFIX}'" 
+    fi
+  fi
+  if [ $DRY_RUN -eq 1 ]; then
+    echo "     Is dry-run? ........................[YES]"
+  fi
+  echo " ┕━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━┙"
+}
+function printResult() {
+  echo " ┍━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━┑"
+  echo "     Result - Jenkins build as tag '$FINAL_TAG' started..."
+  echo " ┕━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━┙"
+}
+function printUntrackError() {
+  echo " ┍━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━┑"
+  echo "     There are some issues, maybe untracked files remained..."
+  echo "     You can 'git stash' untracked files for push!"
+  echo " ┕━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━┙"
+}
+function printNotMainError() {
+  echo " ┍━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━┑"
+  echo "     Branch is not 'main', you should checkout main branch"
+  echo " ┕━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━┙"
+}
+function printUncommitError() {
+  echo " ┍━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━┑"
+  echo "     WARNING: There are some issues, maybe uncommited files remained..."
+  echo "            run git commit first..."
+  echo " ┕━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━┙"
+}
+function printUncorrectTagPrefixError() {
+  echo " ┍━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━┑"
+  echo "     Error: syntax of input tag according to $CONFIG_FILE"
+  echo "          Input tag should be '${TAG_PREFIX}${VERSIONS}', not '${GIT_TAG_FULL}'"
+  echo " ┕━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━┙"
+}
+function printGradleVersionNameError() {
+  getLastTag
+  currentTagVersion=$(getParsedVersion "${LAST_TAG}")
+  GRADLE_VERSION=$(echo "${oldVersionName}" | tr -d ' ')
+  echo " ┍━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━┑"
+  echo "     Error: abnormal 'versionName' in $AOS_FILE"
+  echo "          Current 'versionName' should be '${currentTagVersion}', not '${GRADLE_VERSION}'"
+  echo "          Check your $AOS_FILE"
+  echo " ┕━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━┙"
+}
+function printNoDistConfigWarning() {
+  echo " WARNING: dist.config not exist in $PWD"
+  echo "        cp $SCRIPT_PATH/dist.config.default dist.config"
+}
+function matchPlatformOrNot() {
+  # thanks to https://stackoverflow.com/a/50808490
+  trap "$(shopt -p nocasematch)" RETURN
+  # thanks to https://stackoverflow.com/a/1728814
+  shopt -s nocasematch
+  case "${INPUT_OS}" in
+    "android" ) INPUT_OS="android";;
+    "ios" ) INPUT_OS="ios";;
+    "both" ) INPUT_OS="both";;
+    * ) 
+      $SCRIPT_PATH/$SCRIPT_NAME -h
+      echo "Error: unknown platform was specified => ${INPUT_OS}."
+      echo ""
+      exit
+      ;;
+  esac
+}
+function matchReleaseTypeOrNot() {
+  # thanks to https://stackoverflow.com/a/50808490
+  trap "$(shopt -p nocasematch)" RETURN
+  # thanks to https://stackoverflow.com/a/1728814
+  shopt -s nocasematch
+  case "${RELEASE_TYPE}" in
+    "release" ) RELEASE_TYPE="release";;
+    "develop" ) RELEASE_TYPE="develop";;
+    * ) 
+      $SCRIPT_PATH/$SCRIPT_NAME -h
+      echo "Error: unknown release type was specified => ${RELEASE_TYPE}."
+      echo ""
+      exit
+      ;;
+  esac
+}
+function parsingPrefixAndDeclare() {
+  tmpConfigFile=""
+  if test -f "${CONFIG_FILE}"; then
+    tmpConfigFile="${CONFIG_FILE}"
+  elif test -f "dist.config"; then
+    # TODO: guess how to config without dist.config...
+    tmpConfigFile="dist.config"
+  fi
+
+  if test -f "${tmpConfigFile}"; then
+    if [[ "${GIT_TAG_FULL}" == [A-Za-z]* ]]; then
+      iosReleaseTagPrefix="$(git config -f ${tmpConfigFile} --get "ios.tagPrefix.release" | tr '[:lower:]' '[:upper:]')"
+      aosReleaseTagPrefix="$(git config -f ${tmpConfigFile} --get "android.tagPrefix.release" | tr '[:lower:]' '[:upper:]')"
+      tmpOS="${INPUT_OS}"
+      if [[ "${tmpOS}" == "both" ]]; then
+        tmpOS="android"
+      fi
+      developTagPrefix="$(git config -f ${tmpConfigFile} --get "${tmpOS}.tagPrefix.develop" | tr '[:lower:]' '[:upper:]')"
+      getPrefixOnly
+      if [[ "${BUILD_TYPE}" == "${iosReleaseTagPrefix}" ]]; then
+        RELEASE_TYPE="release"
+        INPUT_OS="ios"
+        TAG_PREFIX="${BUILD_TYPE}"
+        CONFIG_FILE="${tmpConfigFile}"
+        USING_CONFIG=1
+      elif [[ "${BUILD_TYPE}" == "${aosReleaseTagPrefix}" ]]; then
+        RELEASE_TYPE="release"
+        INPUT_OS="android"
+        TAG_PREFIX="${BUILD_TYPE}"
+        CONFIG_FILE="${tmpConfigFile}"
+        USING_CONFIG=1
+      elif [[ "${BUILD_TYPE}" == "${developTagPrefix}" ]]; then
+        RELEASE_TYPE="develop"
+        TAG_PREFIX="${BUILD_TYPE}"
+        CONFIG_FILE="${tmpConfigFile}"
+        USING_CONFIG=1
+      fi
+      if [[ "$(git config -f ${tmpConfigFile} --get "version.autoUpdate")" == "true" ]]; then
+        UPDATE_VERSION=1
+      else
+        UPDATE_VERSION=0
+      fi
+    fi
+  elif test ! -f "dist.config"; then
+    printNoDistConfigWarning
+  fi
+}
+function spinner() {
+    local i sp n
+    sp='/-\|'
+    n=${#sp}
+    printf '  Wait a moment... '
+    while sleep 0.1; do
+        printf "%s\b" "${sp:i++%n:1}"
+    done
+}
+function show_spinner() {
+    tput civis #hide cursor
+    spinner &
+    spinner_pid=$!
+}
+function hide_spinner() {
+  if test ! -z "$spinner_pid"; then
+    kill $spinner_pid # kill the spinner
+    # thanks to https://stackoverflow.com/a/5722874
+    wait $spinner_pid > /dev/null 2>&1
+    tput cnorm #show cursor
+    # thanks to https://unix.stackexchange.com/a/26592
+    echo -e "\033[1K" # remove echoed one line
+  fi
+}
+function help() {
+    echo ""
+    echo "Usage: $SCRIPT_NAME [ -t | --tag <tag name>] [ -p | --platform {ios|android|both}] "
+    echo "          [ -c | --config <config_file>] [ -r | --release-type {release|develop}] "
+    echo "          [ -a | --auto-update] [ --dry-run]"
+    echo ""
+    echo "Examples:"
+    echo "       $SCRIPT_NAME -t '1.0.0.123'"
+    echo "       $SCRIPT_NAME -t '1.0.0.123' -p ios -a -r release"
+    echo "       $SCRIPT_NAME -t '1.0.0.123' -c dist.config -a"
+    echo "       $SCRIPT_NAME -t '1.0.0.123' -c dist.config -a --dry-run"
+    echo ""
+    echo "Mandatory arguments:"
+    echo "   -t, --tag          git tag to be added with <tag name: Major.Minor.Point.Build> such like followings:"
+    echo "                        eg. tag prefix 'D-1.0.0' means test build for both iOS and Android platform"
+    echo "                        eg. tag prefix 'RA-4.1.3.777' means release build for Android platform"
+    echo "                        eg. tag prefix 'RI-7.2.9.450' means release build for iOS platform"
+    echo ""
+    echo "Optional arguments:"
+    echo "   -h, --help         show this help message and exit:"
+    echo "   -c, --config       <config_file>"
+    echo "                      can copy file from $SCRIPT_PATH/dist.config.default"
+    echo "   -p, --platform     {ios|android|both}, default is both"
+    echo "                      assign platform as iOS or Android or both to processing"
+    echo "                      warning: this option will be ignored if dist.config given!"
+    echo "   -r, --release-type {release|develop}, default is develop"
+    echo "                      warning: this option will be ignored if dist.config given!"
+    echo "   -a, --auto-update  update project version string(code) in project. and commit & push automatically"
+    echo "                      warning: this option will be ignored if dist.config given!"
+    echo "   --dry-run          dry run only instead of real processing with git command"
+    echo ""
+    echo "Example of config file: (git config style)"
+    # thanks to ascii from https://en.wikipedia.org/wiki/Box-drawing_character
+    echo "   ┌─────── dist.config ───────────┐"
+    cat $SCRIPT_PATH/dist.config.default | sed -e 's/^\(.*\)$/      \1/g'
+    echo "   └───────────────────────────────┘"
+    echo ""
+    printLastTag
+    echo ""
+    echo "Full documentation <https://github.com/neoroman/JenkinsBuild/wiki/dist.sh#full-documentation-for-distsh>"
+}
+function checkArgumentsAndCope() {
+  if test -z "$GIT_TAG_FULL"; then
+    $SCRIPT_PATH/$SCRIPT_NAME -h
+    if test ! -z "$LAST_FULL_TAG"; then
+        echo ""
+        echo "Error: no tag name specified."
+        echo ""
+    fi
+    exit
+  fi
+  if test ! -z "$INPUT_OS"; then
+      matchPlatformOrNot
+  else
+      INPUT_OS="both"
+  fi
+  if test ! -z "$CONFIG_FILE"; then
+      if test ! -f "$CONFIG_FILE"; then
+        $SCRIPT_PATH/$SCRIPT_NAME -h
+        echo ""
+        echo "Error: no config file in $CONFIG_FILE"
+        echo ""
+        exit
+      fi
+
+      USING_CONFIG=1
+  fi
+  if test ! -z "$RELEASE_TYPE"; then
+      matchReleaseTypeOrNot
+      parsingPrefixAndDeclare # handle with dist.config
+  else
+      # Set default release type as develop
+      RELEASE_TYPE="develop"
+      parsingPrefixAndDeclare # handle with dist.config
+  fi
+}
+###############################################################################
+### Functions E N D ###########################################################
+###############################################################################

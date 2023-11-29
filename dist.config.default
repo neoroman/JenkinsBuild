@@ -1,0 +1,8 @@
+[ios "tagPrefix"]
+	develop = D-
+	release = RI-
+[android "tagPrefix"]
+	release = RA-
+	develop = D-
+[version]
+	autoUpdate = true
