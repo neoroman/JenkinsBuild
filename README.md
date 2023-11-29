@@ -57,6 +57,17 @@ Language: BASH Shell Script
 ![help](images/JenkinsConfigHelp.png)
 
 
+## Jenkins Item Configuration in jenkins/build.sh configuration for Distribution Sites
+  ```
+    ## Actual script for executing build
+    bash -ex ${WORKSPACE}/jenkins/build.sh -p android --toppath "NeoRoman/AppProject" \
+                  --config "${WORKSPACE}/jenkins_config/config.json" \
+                  --language "${WORKSPACE}/jenkins_config/lang_ko.json"
+  ```
+- Add configurations of distribution sites with --config argument.
+- Add language for display messages of distribution sites with --language argument.
+
+
 ## Author
 
 ALTERANT /  neoroman@gmail.com
