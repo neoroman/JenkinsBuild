@@ -42,6 +42,7 @@ if [ $isFlutterEnabled -eq 1 ]; then
 
     POD_EXEC_DIR=$(dirname ${POD})
     export PATH=${POD_EXEC_DIR}:$PATH
+    $FlutterBin clean
     $FlutterBin pub get
     $FlutterBin build ios
 elif [ $isReactNativeEnabled -eq 1 ]; then
