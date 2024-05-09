@@ -95,6 +95,12 @@ while [[ $# -gt 0 ]]; do
     ;;
   --for-master-branch)
     FOR_MASTER_BRANCH=1
+    FOR_ALL_BRANCH=0
+    shift # past argument
+    ;;
+  --for-all-branch)
+    FOR_ALL_BRANCH=1
+    FOR_MASTER_BRANCH=0
     shift # past argument
     ;;
   --force)
@@ -131,22 +137,28 @@ while [[ $# -gt 0 ]]; do
     CURRENT_BRANCH=${CURRENT_BRANCH#"heads/"}
     $GIT branch -r | grep -v '\->' | grep -v 'external/' | grep -v ${CURRENT_BRANCH} | while read remote; do $GIT branch --track "${remote#origin/}" "$remote" --force >/dev/null; done
     $GIT fetch --all
-    if [ $FOR_MASTER_BRANCH -eq 0 ]; then
-      LAST_TAG=$($GIT describe --tags)
-    fi
-    if [ -z $LAST_TAG ]; then
-      LAST_TAG="master"
-      SYNC_TO_BE=${LAST_TAG}
-    else
-      SYNC_TO_BE=$($GIT branch --contains tags/${LAST_TAG} | grep -v 'head' | tail -1 | tr -d ' *')
-    fi
-    if [[ ! -z "$SYNC_TO_BE" ]]; then
-      $GIT checkout ${SYNC_TO_BE}
-      if [ $PUSH_FORCE -eq 1 ]; then
-        $GIT push -uf external ${SYNC_TO_BE}
+    if [ $FOR_ALL_BRANCH -eq 0 ]; then
+      if [ $FOR_MASTER_BRANCH -eq 0 ]; then
+        LAST_TAG=$($GIT describe --tags)
+        if [ -z $LAST_TAG ]; then
+          LAST_TAG=$($GIT config --get init.defaultbranch)
+          SYNC_TO_BE=${LAST_TAG}
+        else
+          SYNC_TO_BE=$($GIT branch --contains tags/${LAST_TAG} | grep -v 'head' | tail -1 | tr -d ' *')
+        fi
       else
-        $GIT push -u external ${SYNC_TO_BE}
+        SYNC_TO_BE="$($GIT config --get init.defaultbranch)"
       fi
+      if [[ ! -z "$SYNC_TO_BE" ]]; then
+        $GIT checkout ${SYNC_TO_BE}
+        if [ $PUSH_FORCE -eq 1 ]; then
+          $GIT push -uf external ${SYNC_TO_BE}
+        else
+          $GIT push -u external ${SYNC_TO_BE}
+        fi
+      fi
+    else
+      $GIT branch -r | grep -v '\->' | grep -v 'remotes/' | grep -v 'external/' | while read remote; do $GIT checkout "${remote#origin/}"; sleep 1; $GIT push -u external >/dev/null; done
     fi
     if [ $WITH_TAG_PUSH -eq 1 ]; then
       $GIT push -u external --tags -f
