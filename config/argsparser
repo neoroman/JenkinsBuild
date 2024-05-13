@@ -103,6 +103,14 @@ while [[ $# -gt 0 ]]; do
     FOR_MASTER_BRANCH=0
     shift # past argument
     ;;
+  --for-specific-branch)
+    FOR_SPECIFIC_BRANCH=1
+    SPECIPIC_BRANCH="$2"
+    FOR_ALL_BRANCH=0
+    FOR_MASTER_BRANCH=0
+    shift # past argument
+    shift # past value
+    ;;
   --force)
     PUSH_FORCE=1
     shift # past argument
@@ -146,6 +154,8 @@ while [[ $# -gt 0 ]]; do
         else
           SYNC_TO_BE=$($GIT branch --contains tags/${LAST_TAG} | grep -v 'head' | tail -1 | tr -d ' *')
         fi
+      elif [ $FOR_SPECIFIC_BRANCH -eq 1 ]; then
+        SYNC_TO_BE="$SPECIPIC_BRANCH"
       else
         SYNC_TO_BE="$($GIT config --get init.defaultbranch)"
       fi
@@ -158,7 +168,16 @@ while [[ $# -gt 0 ]]; do
         fi
       fi
     else
-      $GIT branch -r | grep -v '\->' | grep -v 'remotes/' | grep -v 'external/' | while read remote; do $GIT checkout "${remote#origin/}"; sleep 1; $GIT push -u external >/dev/null; done
+      if test -d jenkins; then
+        $GIT restore --staged .gitmodules jenkins
+      fi
+      # GIT_OPTION="-u"
+      # if [ $PUSH_FORCE -eq 1 ]; then
+      #   GIT_OPTION="-uf"
+      # fi
+      $GIT branch -r | grep -v '\->' | grep -v 'remotes/' | grep -v 'external/' | \
+          while read remote; do $GIT checkout "${remote#origin/}"; $GIT pull origin "${remote#origin/}"; \
+          sleep 1; $GIT push external >/dev/null; done
     fi
     if [ $WITH_TAG_PUSH -eq 1 ]; then
       $GIT push -u external --tags -f
