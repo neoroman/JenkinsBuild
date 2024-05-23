@@ -75,3 +75,22 @@ CUSTOM_CONFIG=0
 CUSTOM_LANG=0
 #
 ##
+function getGitDomainFromUrl() {
+    if [[ "${upstreamUrl#https://}" != "${upstreamUrl}" ]]; then
+      upstreamProtocol="https://"
+      tempUrl="${upstreamUrl#https://}"
+    elif [[ "${upstreamUrl#http://}" != "${upstreamUrl}" ]]; then
+      upstreamProtocol="http://"
+      tempUrl="${upstreamUrl#http://}"
+    fi
+    if [[ "${tempUrl#*:*@}" != "${tempUrl}" ]]; then
+      tempAccount="${tempUrl#*:*@}"
+      upstreamAccount="${tempUrl#@${tempAccount}}"
+      tempUrl="${tempUrl#*:*@}"
+    else
+      exit 1
+    fi
+    if [[ "${tempUrl%%/*}" != "${tempUrl}" ]]; then
+      upstreamDomain="${tempUrl%%/*}"
+    fi
+}

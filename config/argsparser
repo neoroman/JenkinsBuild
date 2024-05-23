@@ -115,25 +115,30 @@ while [[ $# -gt 0 ]]; do
     PUSH_FORCE=1
     shift # past argument
     ;;
+  -pfu | --pull-from-upstream)
+    upstreamUrl="$2"
+    getGitDomainFromUrl
+    if [ $($GIT remote -v | grep "${upstreamDomain}" >/dev/null && [ $? -eq 0 ] && echo 1 || echo 0) -eq 0 ]; then
+      $GIT remote add external $upstreamUrl
+    fi
+    $GIT config user.name $GIT_USER
+    $GIT config user.email $GIT_EMAIL
+    $GIT config core.autocrlf false
+    $GIT fetch --prune
+    $GIT branch -r | grep -v '\->' | grep -v 'origin/' | grep -v "${CURRENT_BRANCH}" | while read remote; do $GIT branch --track "${remote#external/}" "$remote" --force >/dev/null; done
+    $GIT fetch --all
+    if test -d jenkins; then
+      $GIT restore --staged .gitmodules jenkins
+    fi
+    $GIT branch -r | grep -v '\->' | grep -v 'remotes/' | grep -v 'origin/' | grep -v "${SPECIPIC_BRANCH}" | \
+        while read remote; do $GIT checkout --track "${remote}"; $GIT pull external "${remote#external/}"; \
+        sleep 1; $GIT push origin >/dev/null; done
+    shift # past argument
+    shift # past value
+    ;;
   -pu | --push-to-upstream)
     upstreamUrl="$2"
-    if [[ "${upstreamUrl#https://}" != "${upstreamUrl}" ]]; then
-      upstreamProtocol="https://"
-      tempUrl="${upstreamUrl#https://}"
-    elif [[ "${upstreamUrl#http://}" != "${upstreamUrl}" ]]; then
-      upstreamProtocol="http://"
-      tempUrl="${upstreamUrl#http://}"
-    fi
-    if [[ "${tempUrl#*:*@}" != "${tempUrl}" ]]; then
-      tempAccount="${tempUrl#*:*@}"
-      upstreamAccount="${tempUrl#@${tempAccount}}"
-      tempUrl="${tempUrl#*:*@}"
-    else
-      exit 1
-    fi
-    if [[ "${tempUrl%%/*}" != "${tempUrl}" ]]; then
-      upstreamDomain="${tempUrl%%/*}"
-    fi
+    getGitDomainFromUrl
     if [ $($GIT remote -v | grep "${upstreamDomain}" >/dev/null && [ $? -eq 0 ] && echo 1 || echo 0) -eq 0 ]; then
       $GIT remote add external $upstreamUrl
     fi
@@ -143,10 +148,12 @@ while [[ $# -gt 0 ]]; do
     $GIT fetch --prune
     CURRENT_BRANCH=$($GIT rev-parse --abbrev-ref HEAD)
     CURRENT_BRANCH=${CURRENT_BRANCH#"heads/"}
-    $GIT branch -r | grep -v '\->' | grep -v 'external/' | grep -v ${CURRENT_BRANCH} | while read remote; do $GIT branch --track "${remote#origin/}" "$remote" --force >/dev/null; done
+    $GIT branch -r | grep -v '\->' | grep -v 'external/' | grep -v "${CURRENT_BRANCH}" | while read remote; do $GIT branch --track "${remote#origin/}" "$remote" --force >/dev/null; done
     $GIT fetch --all
     if [ $FOR_ALL_BRANCH -eq 0 ]; then
-      if [ $FOR_MASTER_BRANCH -eq 0 ]; then
+      if [ $FOR_SPECIFIC_BRANCH -eq 1 ]; then
+        SYNC_TO_BE="$SPECIPIC_BRANCH"
+      elif [ $FOR_MASTER_BRANCH -eq 0 ]; then
         LAST_TAG=$($GIT describe --tags)
         if [ -z $LAST_TAG ]; then
           LAST_TAG=$($GIT config --get init.defaultbranch)
@@ -154,8 +161,6 @@ while [[ $# -gt 0 ]]; do
         else
           SYNC_TO_BE=$($GIT branch --contains tags/${LAST_TAG} | grep -v 'head' | tail -1 | tr -d ' *')
         fi
-      elif [ $FOR_SPECIFIC_BRANCH -eq 1 ]; then
-        SYNC_TO_BE="$SPECIPIC_BRANCH"
       else
         SYNC_TO_BE="$($GIT config --get init.defaultbranch)"
       fi
@@ -171,10 +176,6 @@ while [[ $# -gt 0 ]]; do
       if test -d jenkins; then
         $GIT restore --staged .gitmodules jenkins
       fi
-      # GIT_OPTION="-u"
-      # if [ $PUSH_FORCE -eq 1 ]; then
-      #   GIT_OPTION="-uf"
-      # fi
       $GIT branch -r | grep -v '\->' | grep -v 'remotes/' | grep -v 'external/' | \
           while read remote; do $GIT checkout "${remote#origin/}"; $GIT pull origin "${remote#origin/}"; \
           sleep 1; $GIT push external >/dev/null; done
