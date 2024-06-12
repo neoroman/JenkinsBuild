@@ -124,6 +124,7 @@ while [[ $# -gt 0 ]]; do
     $GIT config user.name $GIT_USER
     $GIT config user.email $GIT_EMAIL
     $GIT config core.autocrlf false
+    $GIT config pull.rebase true
     $GIT fetch --prune
     $GIT branch -r | grep -v '\->' | grep -v 'origin/' | grep -v "${CURRENT_BRANCH}" | while read remote; do $GIT branch --track "${remote#external/}" "$remote" --force >/dev/null; done
     $GIT fetch --all
@@ -145,6 +146,7 @@ while [[ $# -gt 0 ]]; do
     $GIT config user.name $GIT_USER
     $GIT config user.email $GIT_EMAIL
     $GIT config core.autocrlf false
+    $GIT config pull.rebase true
     $GIT fetch --prune
     CURRENT_BRANCH=$($GIT rev-parse --abbrev-ref HEAD)
     CURRENT_BRANCH=${CURRENT_BRANCH#"heads/"}
