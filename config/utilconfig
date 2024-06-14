@@ -2,17 +2,23 @@
 ##
 HOSTNAME=$(hostname)
 CURRENT=$PWD
-A2PS="/usr/local/bin/a2ps"
-if [ ! -f "$A2PS" ]; then
-  A2PS=$(command -v a2ps)
-fi
-GS="/usr/local/bin/gs"
-if [ ! -f "$GS" ]; then
-  GS=$(command -v gs)
-fi
-CONVERT="/usr/local/bin/convert"
-if [ ! -f "$CONVERT" ]; then
-  CONVERT=$(command -v convert)
+if [ $USING_SCREENSHOT -eq 1 ]; then
+  A2PS="/usr/local/bin/a2ps"
+  if [ ! -f "$A2PS" ]; then
+    A2PS=$(command -v a2ps)
+  fi
+  GS="/usr/local/bin/gs"
+  if [ ! -f "$GS" ]; then
+    GS=$(command -v gs)
+  fi
+  CONVERT="/usr/local/bin/convert"
+  if [ ! -f "$CONVERT" ]; then
+    CONVERT=$(command -v convert)
+  fi
+else
+  A2PS=""
+  GS=""
+  CONVERT=""
 fi
 if type curl >/dev/null 2>&1; then
   CURL=`which curl`
