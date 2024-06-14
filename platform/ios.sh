@@ -56,7 +56,8 @@ elif [ $isReactNativeEnabled -eq 1 ]; then
     if test ! -z $NODE_OPTION_FLAG; then
         export NODE_OPTIONS=${NODE_OPTION_FLAG}
     fi
-    $ReactNativeBin run build
+
+    $ReactNativeBin run build:ios
 fi
 if test ! -z $(grep 'CFBundleShortVersionString' "${WORKSPACE}/${INFO_PLIST}"); then
     if [ -f "${WORKSPACE}/${INFO_PLIST}" ]; then
@@ -234,15 +235,15 @@ if [ $DEBUGGING -eq 0 ]; then
     fi
     if [ $USING_ADHOC -eq 1 ]; then
         # Step 1.2: Build target for AdHoc
-        $XCODE $XCODE_OPTION "${XCODE_WORKSPACE}" -scheme "${SCHEME_ADHOC}" -destination "generic/platform=iOS" archive ${xcodeArgument}/${SCHEME_ADHOC}
+        $XCODE $XCODE_OPTION "${XCODE_WORKSPACE}" -scheme "${SCHEME_ADHOC}" -destination "generic/platform=iOS" archive ${xcodeArgument}/${SCHEME_ADHOC} -verbose
     fi
     if [ $USING_ENTERPRISE -eq 1 ]; then
         # Step 1.3: Build target for Enterprise
-        $XCODE $XCODE_OPTION "${XCODE_WORKSPACE}" -scheme "${SCHEME_ENTER}" -destination "generic/platform=iOS" archive ${xcodeArgument}/${SCHEME_ENTER}
+        $XCODE $XCODE_OPTION "${XCODE_WORKSPACE}" -scheme "${SCHEME_ENTER}" -destination "generic/platform=iOS" archive ${xcodeArgument}/${SCHEME_ENTER} -verbose
     fi
     if [ $USING_ENTER4WEB -eq 1 ]; then
         # Step 1.4: Build target for Enterprise
-        $XCODE $XCODE_OPTION "${XCODE_WORKSPACE}" -scheme "${SCHEME_ENTER4WEB}" -destination "generic/platform=iOS" archive ${xcodeArgument}/${SCHEME_ENTER4WEB}
+        $XCODE $XCODE_OPTION "${XCODE_WORKSPACE}" -scheme "${SCHEME_ENTER4WEB}" -destination "generic/platform=iOS" archive ${xcodeArgument}/${SCHEME_ENTER4WEB} -verbose
     fi
 fi
 ###################
