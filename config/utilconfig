@@ -3,34 +3,16 @@
 HOSTNAME=$(hostname)
 CURRENT=$PWD
 A2PS="/usr/local/bin/a2ps"
-if [ ! -f $A2PS ]; then
-  cd /usr/local/bin
-  if test -n "$sudoPassword"; then
-    if [[ "$sudoPassword" != "qwer1234" ]]; then
-      sudo -S -k ln -s `which a2ps` <<<"${sudoPassword}"
-    fi
-  fi
-  cd $CURRENT
+if [ ! -f "$A2PS" ]; then
+  A2PS=$(command -v a2ps)
 fi
 GS="/usr/local/bin/gs"
-if [ ! -f $GS ]; then
-  cd /usr/local/bin
-  if test -n "$sudoPassword"; then
-    if [[ "$sudoPassword" != "qwer1234" ]]; then
-      sudo -S -k ln -s `which gs` <<<"${sudoPassword}"
-    fi
-  fi
-  cd $CURRENT
+if [ ! -f "$GS" ]; then
+  GS=$(command -v gs)
 fi
 CONVERT="/usr/local/bin/convert"
-if [ ! -f $CONVERT ]; then
-  cd /usr/local/bin
-  if test -n "$sudoPassword"; then
-    if [[ "$sudoPassword" != "qwer1234" ]]; then
-      sudo -S -k ln -s `which convert` <<<"${sudoPassword}"
-    fi
-  fi
-  cd $CURRENT
+if [ ! -f "$CONVERT" ]; then
+  CONVERT=$(command -v convert)
 fi
 if type curl >/dev/null 2>&1; then
   CURL=`which curl`
