@@ -136,7 +136,7 @@ while [[ $# -gt 0 ]]; do
       $GIT restore --staged .gitmodules jenkins
     fi
     $GIT branch -r | grep -v '\->' | grep -v 'remotes/' | grep -v 'origin/' | grep -v "${SPECIPIC_BRANCH}" | \
-        while read remote; do $GIT checkout --track "${remote}"; $GIT pull external "${remote#external/}"; \
+        while read remote; do $GIT stash; $GIT checkout --track "${remote}"; $GIT pull external "${remote#external/}"; \
         sleep 1; $GIT push origin >/dev/null; done
     shift # past argument
     shift # past value
