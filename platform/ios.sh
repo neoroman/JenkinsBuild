@@ -262,6 +262,7 @@ if [ $USING_APPSTORE -eq 1 -a $IS_RELEASE -eq 1 ]; then
     OUTPUT_FILENAME_APPSTORE="${OUTPUT_PREFIX}${VERSION_STRING}_${FILE_TODAY}${OUTPUT_FILENAME_APPSTORE_SUFFIX}"
     OUTPUT_FILENAME_APPSTORE_IPA="${OUTPUT_FILENAME_APPSTORE}.ipa"
     OUTPUT_FILENAME_APPSTORE_IX_SHIELD_CHECK="${OUTPUT_PREFIX}${VERSION_STRING}_${FILE_TODAY}_IxShieldCheck.png"
+    OUTPUT_FILENAME_APPSTORE_DSYM="${OUTPUT_FILENAME_APPSTORE}_dSYM.zip"
     TEMP_APPSTORE_APP_FOLDER="${OUTPUT_FILENAME_APPSTORE}.app"
     OUTPUT_FILE="${OUTPUT_FOLDER}/${TARGET_APPSTORE}"
     if [ -f "${OUTPUT_FILE}" ]; then
@@ -314,7 +315,20 @@ if [ $USING_APPSTORE -eq 1 -a $IS_RELEASE -eq 1 ]; then
     ###################
     # Step 2.1.2: Remove archive folder
     if [ -d $OUTPUT_FOLDER/$TEMP_APPSTORE_APP_FOLDER ]; then
-        rm -rf $OUTPUT_FOLDER/$TEMP_APPSTORE_APP_FOLDER
+        if [ $USING_DSYM -eq 1 ]; then
+            # find dSYM file for App Store binary(IPA)
+            if [ -d /tmp/${PROJECT_NAME}/${LOCAL_BRANCH}/${TEMP_APPSTORE_APP_FOLDER} ]; then
+                rm -rf /tmp/${PROJECT_NAME}/${LOCAL_BRANCH}/${TEMP_APPSTORE_APP_FOLDER}
+            fi
+            mv $OUTPUT_FOLDER/$TEMP_APPSTORE_APP_FOLDER /tmp/${PROJECT_NAME}/${LOCAL_BRANCH}/
+            cd /tmp/${PROJECT_NAME}/${LOCAL_BRANCH}/${TEMP_APPSTORE_APP_FOLDER}/${ARCHIVE_FILE}
+            DSYM_FOLDER=$(find . -name '*.dSYM' | grep -v 'Intermediates')
+            zip -vr ${OUTPUT_FOLDER}/${OUTPUT_FILENAME_APPSTORE_DSYM} ${DSYM_FOLDER} -x "*.DS_Store"
+            cd -
+            SIZE_STORE_DSYM_FILE=$(du -sh "${OUTPUT_FOLDER}/${OUTPUT_FILENAME_APPSTORE_DSYM}" | awk '{print $1}')
+        else
+            rm -rf $OUTPUT_FOLDER/$TEMP_APPSTORE_APP_FOLDER
+        fi
     fi
 fi
 ###################

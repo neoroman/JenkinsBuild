@@ -160,9 +160,15 @@ if [ -f $JQ -a $USING_JSON -eq 1 ]; then
         file4Binary=""
       fi
       file4Plist=""
-      file5Title=""
-      file5Size=""
-      file5Binary=""
+      if [ $USING_DSYM -eq 1 -a -f $OUTPUT_FOLDER/$OUTPUT_FILENAME_APPSTORE_DSYM ]; then
+        file5Title="dSYM.zip 파일"
+        file5Size="${SIZE_STORE_DSYM_FILE}B"
+        file5Binary="${OUTPUT_FILENAME_APPSTORE_DSYM}"
+      else
+        file5Title=""
+        file5Size=""
+        file5Binary=""
+      fi
       file5Plist=""
     else
       if [ $USING_ADHOC -eq 1 ]; then
