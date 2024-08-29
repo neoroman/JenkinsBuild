@@ -134,6 +134,8 @@ while [[ $# -gt 0 ]]; do
     $GIT config core.autocrlf false
     $GIT config pull.rebase true
     $GIT fetch --prune
+    CURRENT_BRANCH=$($GIT rev-parse --abbrev-ref HEAD)
+    CURRENT_BRANCH=${CURRENT_BRANCH#"heads/"}
     $GIT branch -r | grep -v '\->' | grep -v 'origin/' | grep -v "${CURRENT_BRANCH}" | while read remote; do $GIT branch --track "${remote#external/}" "$remote" --force >/dev/null; done
     $GIT fetch --all
     if test -d jenkins; then
@@ -141,7 +143,7 @@ while [[ $# -gt 0 ]]; do
     fi
     $GIT branch -r | grep -v '\->' | grep -v 'remotes/' | grep -v 'origin/' | grep -v "${SPECIPIC_BRANCH}" | \
         while read remote; do $GIT stash; $GIT checkout --track "${remote}"; $GIT pull external "${remote#external/}"; \
-        sleep 1; $GIT push origin >/dev/null; done
+        sleep 1; $GIT push -f origin >/dev/null; done
     shift # past argument
     shift # past value
     ;;
@@ -172,7 +174,8 @@ while [[ $# -gt 0 ]]; do
           SYNC_TO_BE=$($GIT branch --contains tags/${LAST_TAG} | grep -v 'head' | tail -1 | tr -d ' *')
         fi
       else
-        SYNC_TO_BE="$($GIT config --get init.defaultbranch)"
+        default_branch=$(git remote show origin | grep "HEAD branch" | awk '{print $NF}')
+        SYNC_TO_BE="${default_branch}"
       fi
       if [[ ! -z "$SYNC_TO_BE" ]]; then
         $GIT checkout ${SYNC_TO_BE}
