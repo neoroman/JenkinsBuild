@@ -189,9 +189,14 @@ while [[ $# -gt 0 ]]; do
       if test -d jenkins; then
         $GIT restore --staged .gitmodules jenkins
       fi
+      if [ $PUSH_FORCE -eq 1 ]; then
+        GIT_OPTION="-uf"
+      else
+        GIT_OPTION="-u"
+      fi
       $GIT branch -r | grep -v '\->' | grep -v 'remotes/' | grep -v 'external/' | \
           while read remote; do $GIT checkout "${remote#origin/}"; $GIT pull origin "${remote#origin/}"; \
-          sleep 1; $GIT push external >/dev/null; done
+          sleep 1; $GIT push ${GIT_OPTION} external >/dev/null; done
     fi
     if [ $WITH_TAG_PUSH -eq 1 ]; then
       $GIT push -u external --tags -f
