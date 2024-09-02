@@ -242,6 +242,9 @@ else
             gradleBuildKey="bundle"
             flutterBuildKey="appbundle"
             FILE_EXTENSION="aab"
+        else
+            gradleBuildKey="assemble"
+            FILE_EXTENSION="apk"
         fi
         if [ $isFlutterEnabled -eq 1 ]; then
             $FlutterBin clean
@@ -309,6 +312,9 @@ else
             gradleBuildKey="bundle"
             flutterBuildKey="appbundle"
             FILE_EXTENSION="aab"
+        else 
+            gradleBuildKey="assemble"
+            FILE_EXTENSION="apk"
         fi
         if [ $isFlutterEnabled -eq 1 ]; then
             $FlutterBin clean
