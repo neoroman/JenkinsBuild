@@ -22,6 +22,8 @@ function makePathForAndroidOutput() {
     unset BUILD_OUTPUT_FOLDER
     unset OUTPUT_JSON_PATH
     unset OUTPUT_JSON_FILE
+    unset DEBUG_APK_OUTPUT
+    unset DEBUG_OUTPUT_FOLDER
     OUTPUT_JSON_LIST=$(find ${WORKSPACE}/${APK_OUTPUT_PATH} -name 'output*.json')
     for x in $OUTPUT_JSON_LIST; do
         LOWERCASED_PATH=$( echo $x | tr 'A-Z' 'a-z')
@@ -71,6 +73,10 @@ function makePathForAndroidOutput() {
     fi
     BUILD_APK_OUTPUT=$(basename $BUILD_APK_OUTPUT)
     BUILD_OUTPUT_FOLDER=$(find ${WORKSPACE}/${APK_OUTPUT_PATH} -name "${BUILD_APK_OUTPUT}" -exec dirname {} \;)
+
+    # For debug output
+    DEBUG_APK_OUTPUT=$(find ${WORKSPACE}/${APK_OUTPUT_PATH} -name '*debug*.a*' | head -1 | xargs basename $1)
+    DEBUG_OUTPUT_FOLDER=$(find ${WORKSPACE}/${APK_OUTPUT_PATH} -name "${DEBUG_APK_OUTPUT}" -exec dirname {} \;)
 }
 
 ###############################################################################
