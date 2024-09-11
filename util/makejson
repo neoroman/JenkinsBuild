@@ -170,6 +170,10 @@ if [ -f $JQ -a $USING_JSON -eq 1 ]; then
         file5Binary=""
       fi
       file5Plist=""
+      file6Title=""
+      file6Size=""
+      file6Binary=""
+      file6Plist=""
     else
       if [ $USING_ADHOC -eq 1 ]; then
         file1Title="${ADHOC_TITLE}"
@@ -212,6 +216,10 @@ if [ -f $JQ -a $USING_JSON -eq 1 ]; then
       file5Size=""
       file5Binary=""
       file5Plist=""
+      file6Title=""
+      file6Size=""
+      file6Binary=""
+      file6Plist=""
     fi
     ##### Build Environment
     getDevToolInfo
@@ -276,6 +284,17 @@ if [ -f $JQ -a $USING_JSON -eq 1 ]; then
         file5Binary=""
         file5Plist=""
       fi
+      if [ -f "$OUTPUT_FOLDER/$APK_DEBUG" ]; then
+        file6Title="검증용 DEBUG 버전"
+        file6Size="${SIZE_DEBUG_APP_FILE}B"
+        file6Binary="${APK_DEBUG}"
+        file6Plist=""
+      else
+        file6Title=""
+        file6Size=""
+        file6Binary=""
+        file6Plist=""
+      fi
     else
       if [ $USING_LIVESERVER -eq 1 ]; then
         LIVE_TITLE=$(cat $jsonConfig | $JQ '.android.LiveServer.title' | tr -d '"')
@@ -313,6 +332,10 @@ if [ -f $JQ -a $USING_JSON -eq 1 ]; then
       file5Size=""
       file5Binary=""
       file5Plist=""
+      file6Title=""
+      file6Size=""
+      file6Binary=""
+      file6Plist=""
     fi
     ##### Build Environment
     if [ -f ${jsonConfig} ]; then
@@ -363,6 +386,10 @@ if [ -f $JQ -a $USING_JSON -eq 1 ]; then
     --arg file5_size "${file5Size}" \
     --arg file5_binary "${file5Binary}" \
     --arg file5_plist "${file5Plist}" \
+    --arg file6_title "${file6Title}" \
+    --arg file6_size "${file6Size}" \
+    --arg file6_binary "${file6Binary}" \
+    --arg file6_plist "${file6Plist}" \
     --arg git_last_log "${GIT_LAST_LOG}" \
     --arg build_env "${DEV_ENV}" \
 '{"title": $title, "appVersion": $av, "buildVersion": $bv, "versionKey": $vk, '\
@@ -372,7 +399,8 @@ if [ -f $JQ -a $USING_JSON -eq 1 ]; then
 '{ "title": $file2_title, "size": $file2_size, "file": $file2_binary, "plist": $file2_plist }, '\
 '{ "title": $file3_title, "size": $file3_size, "file": $file3_binary, "plist": $file3_plist }, '\
 '{ "title": $file4_title, "size": $file4_size, "file": $file4_binary, "plist": $file4_plist }, '\
-'{ "title": $file5_title, "size": $file5_size, "file": $file5_binary, "plist": $file5_plist } ], '\
+'{ "title": $file5_title, "size": $file5_size, "file": $file5_binary, "plist": $file5_plist }, '\
+'{ "title": $file6_title, "size": $file6_size, "file": $file6_binary, "plist": $file6_plist } ], '\
 '"gitLastLog": $git_last_log, "buildEnv": $build_env}')
 
   echo "${JSON_STRING}" >$OUTPUT_FOLDER/$OUTPUT_FILENAME_JSON
