@@ -236,6 +236,12 @@ if [ $DEBUGGING -eq 0 ]; then
     if [ $USING_ADHOC -eq 1 ]; then
         # Step 1.2: Build target for AdHoc
         $XCODE $XCODE_OPTION "${XCODE_WORKSPACE}" -scheme "${SCHEME_ADHOC}" -destination "generic/platform=iOS" archive ${xcodeArgument}/${SCHEME_ADHOC} -verbose
+
+        # Step 1.2.1: Build target for AdHoc as 'DEBUG' mode
+        if [ $IS_RELEASE -eq 1 -a $USING_APPSTORE -eq 1 ]; then
+            # /usr/bin/xcodebuild -workspace /Users/company/.jenkins/workspace/Gapp4/GApp4-iOS/Gapp3.xcworkspace -scheme GApp3_Adhoc -destination generic/platform=iOS archive -derivedDataPath /tmp/Gapp3/R4.3.1_2 -archivePath /tmp/Gapp3/R4.3.1_2/GApp3_Adhoc_Debug -verbose OTHER_CFLAGS='$(inherited) -DADHOC_DEBUG=1'
+            $XCODE $XCODE_OPTION "${XCODE_WORKSPACE}" -scheme "${SCHEME_ADHOC}" -destination "generic/platform=iOS" archive ${xcodeArgument}/${SCHEME_ADHOC}_Debug -verbose OTHER_CFLAGS='$(inherited) -DDEBUG=1'
+        fi
     fi
     if [ $USING_ENTERPRISE -eq 1 ]; then
         # Step 1.3: Build target for Enterprise
@@ -365,6 +371,24 @@ if [ $USING_ADHOC -eq 1 ]; then
         SIZE_ADHOC_APP_FILE=$(du -sh ${OUTPUT_FOLDER}/${OUTPUT_FILENAME_ADHOC_IPA} | awk '{print $1}')
     else
         exit -1
+    fi
+
+    # Target AdHoc for Debug
+    if [ $IS_RELEASE -eq 1 -a $USING_APPSTORE -eq 1 ]; then
+        INSTALL_ROOT="${DST_ROOT}/${SCHEME_ADHOC}_Debug.xcarchive/Products"
+        OUTPUT_FILENAME_ADHOC_IPA="${OUTPUT_FILENAME_ADHOC}_Debug.ipa"
+        OUTPUT_FILE="${INSTALL_ROOT}/Applications/${OUTPUT_FILENAME_ADHOC_IPA}"
+        if [ -d "${INSTALL_ROOT}/Applications/${TARGET_ADHOC}" ]; then
+            if [ -d ${INSTALL_ROOT}/Applications/Payload ]; then
+                rm -rf ${INSTALL_ROOT}/Applications/Payload
+            fi
+            mkdir -p ${INSTALL_ROOT}/Applications/Payload
+            mv "${INSTALL_ROOT}/Applications/${TARGET_ADHOC}" "${INSTALL_ROOT}/Applications/Payload"
+            cd "${INSTALL_ROOT}/Applications"
+            $ZIP -r "${OUTPUT_FILE}" Payload
+            mv "$OUTPUT_FILE" "${OUTPUT_FOLDER}/"
+            SIZE_ADHOC_DEBUG_FILE=$(du -sh ${OUTPUT_FOLDER}/${OUTPUT_FILENAME_ADHOC_IPA} | awk '{print $1}')
+        fi
     fi
 fi
 ###################
