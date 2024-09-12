@@ -38,11 +38,15 @@ if [ -f $jsonConfig ]; then
   SLACK_CHANNEL=$(cat $jsonConfig | $JQ '.slack.channel' | tr -d '"')
   USING_TEAMS_WEBHOOK=$(test $(cat $jsonConfig | $JQ '.teams.enabled') = true && echo 1 || echo 0)
   TEAMS_WEBHOOK=$(cat $jsonConfig | $JQ '.teams.webhook' | tr -d '"')
+  # for Android
   APP_BUNDLE_IDENTIFIER_ANDROID=$(cat $jsonConfig | $JQ '.android.packageId' | tr -d '"')
   Obfuscation_INPUT_FILE=$(cat $jsonConfig | $JQ '.android.obfuscationInputFile' | tr -d '"')
   outputGoogleStoreSuffix=$(cat $jsonConfig | $JQ '.android.outputGoogleStoreSuffix' | tr -d '"')
   outputOneStoreSuffix=$(cat $jsonConfig | $JQ '.android.outputOneStoreSuffix' | tr -d '"')
+  # for iOS
+  OBFUSCATION_SOURCE=$(cat $jsonConfig | $JQ '.ios.AppStore.obfuscationSource' | tr -d '"')
   INFO_PLIST=$(cat $jsonConfig | $JQ '.ios.InfoPlist' | tr -d '"')
+  # for domain URL
   USING_SCP=$(test $(cat $jsonConfig | $JQ '.ssh.enabled') = true && echo 1 || echo 0)
   frontEndPoint=$(echo $config | $JQ '.frontEndPoint' | tr -d '"')
   frontEndProtocol=$(echo $config | $JQ '.frontEndProtocol' | tr -d '"')
