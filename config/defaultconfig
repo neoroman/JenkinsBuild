@@ -55,12 +55,15 @@ SLACK="/usr/local/bin/slack"
 SLACK_CHANNEL="#app-distribution"
 APP_BUNDLE_IDENTIFIER_ANDROID="com.company.mobile"
 OUTPUT_PREFIX="AppProject_"
+USING_SCP=0
+GIT=$(which git)
+# for Android
 Obfuscation_INPUT_FILE="Obfuscation_File.png"
 outputGoogleStoreSuffix="-GoogleStore-release.apk"
 outputOneStoreSuffix="-OneStore-release.apk"
+# for iOS
 INFO_PLIST="Projects/Info.plist"
-USING_SCP=0
-GIT=$(which git)
+OBFUSCATION_SOURCE=""
 ########
 SCRIPT_NAME=$(basename $0)
 DEBUGGING=0
