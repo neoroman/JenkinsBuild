@@ -48,6 +48,11 @@ if [ -f $lang_file ]; then
     QC_ID=$(cat $jsonConfig | $JQ '.users.qc.userId' | tr -d '"')
     QC_PW=$(cat $jsonConfig | $JQ '.users.qc.password' | tr -d '"')
     QC_ID_PW="${QC_ID}/${QC_PW}"
+
+    # 검증용 => RELEASE_KEYWORD
+    RELEASE_KEYWORD=$(cat $lang_file | $JQ '.mail.releaseKeyword' | tr -d '"')
+    # 테스트 => DEVELOP_KEYWORD
+    DEVELOP_KEYWORD=$(cat $lang_file | $JQ '.mail.developKeyword' | tr -d '"')
 else
     CLIENT_NAME="Company Projects"
     APP_NAME="SomeApp"
@@ -55,6 +60,8 @@ else
     SITE_URL="https://bit.ly/client_site"
     SITE_ID_PW="app/qwer1234"
     QC_ID_PW="qc/insu1234"
+    RELEASE_KEYWORD="Release"
+    DEVELOP_KEYWORD="Debug"
 fi
 OTHER_BUILD_ENV=""
 if [ $isFlutterEnabled -eq 1 ]; then

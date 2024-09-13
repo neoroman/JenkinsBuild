@@ -45,11 +45,17 @@ else
   HTML_DIST_FILE=${APP_HTML}/dist_android.html
 fi
 if [ $IS_RELEASE -eq 1 ]; then
-  VERSION_FOR_HTML="<font color=red>(검증버전)</font>"
-  HTML_TITLE="$(/bin/date "+%m")월 검증 버전"
+  if [[ -z "$RELEASE_KEYWORD" ]]; then
+    RELEASE_KEYWORD="검증용"
+  fi
+  VERSION_FOR_HTML="<font color=red>(${RELEASE_KEYWORD} 버전)</font>"
+  HTML_TITLE="$(/bin/date "+%m")월 ${RELEASE_KEYWORD} 버전"
 else
-  VERSION_FOR_HTML="<font color=red>(테스트버전)</font>"
-  HTML_TITLE="테스트 버전"
+  if [[ -z "$DEVELOP_KEYWORD" ]]; then
+    DEVELOP_KEYWORD="테스트"
+  fi
+  VERSION_FOR_HTML="<font color=red>(${DEVELOP_KEYWORD}버전)</font>"
+  HTML_TITLE="${DEVELOP_KEYWORD} 버전"
 fi
 ##############
 lastJsonFile=$(find ${APP_ROOT} -name "*.json" -and -not -name "${OUTPUT_FILENAME_ONLY}.json" -exec grep -l '"releaseType": "'${RELEASE_TYPE}'"' {} \; | xargs ls -lt | head -1 | awk '{ print $9 }')
@@ -285,7 +291,7 @@ if [ -f $JQ -a $USING_JSON -eq 1 ]; then
         file5Plist=""
       fi
       if [ -f "$OUTPUT_FOLDER/$APK_DEBUG" ]; then
-        file6Title="검증용 DEBUG 버전"
+        file6Title="${RELEASE_KEYWORD} DEBUG Version"
         file6Size="${SIZE_DEBUG_APP_FILE}B"
         file6Binary="${APK_DEBUG}"
         file6Plist=""

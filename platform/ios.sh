@@ -531,7 +531,10 @@ fi
 ###################
 # Step 2.4: Make plist for mobile downloads to OUTPUT_FOLDER
 if [ $IS_RELEASE -eq 1 ]; then
-    VERSION_STRING="v${APP_VERSION}(${BUILD_VERSION})(검증용)"
+    if [[ -z "$RELEASE_KEYWORD" ]]; then
+        RELEASE_KEYWORD="검증용"
+    fi
+    VERSION_STRING="v${APP_VERSION}(${BUILD_VERSION})(${RELEASE_KEYWORD})"
 elif [ "$APP_VERSION" != "" ]; then
     VERSION_STRING="v${APP_VERSION}.${BUILD_VERSION}"
 else
