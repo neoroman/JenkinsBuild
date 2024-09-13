@@ -6,7 +6,7 @@ if [ $USING_TEAMS_WEBHOOK -eq 1 ]; then
         GIT_BROWSER_URL=$(cat $jsonConfig | $JQ '.ios.gitBrowseUrl' | tr -d '"')
         ########
         if [ $IS_RELEASE -eq 1 ]; then
-        BINARY_TITLE="iOS 검증용"
+        BINARY_TITLE="iOS ${RELEASE_KEYWORD}"
         if [ $USING_APPSTORE -eq 1 ]; then
                 BINARY_FACTS="${BINARY_FACTS}{
                                 \"name\": \"${APPSTORE_TITLE}\",
@@ -41,7 +41,7 @@ if [ $USING_TEAMS_WEBHOOK -eq 1 ]; then
                         }"
         fi
         else
-        BINARY_TITLE="iOS 테스트"
+        BINARY_TITLE="iOS ${DEVELOP_KEYWORD}"
         if [ $USING_ADHOC -eq 1 ]; then
                 if [[ "$BINARY_FACTS" != "" ]]; then
                 BINARY_FACTS="${BINARY_FACTS}, "
@@ -98,7 +98,7 @@ if [ $USING_TEAMS_WEBHOOK -eq 1 ]; then
         GIT_BROWSER_URL=$(cat $jsonConfig | $JQ '.android.gitBrowseUrl' | tr -d '"')
         ########
         if [ $IS_RELEASE -eq 1 ]; then
-        BINARY_TITLE="Android 검증용"
+        BINARY_TITLE="Android ${RELEASE_KEYWORD}"
         if [ $USING_GOOGLESTORE -eq 1 ]; then
                 if [[ "$BINARY_FACTS" != "" ]]; then
                 BINARY_FACTS="${BINARY_FACTS}, "
@@ -131,7 +131,7 @@ if [ $USING_TEAMS_WEBHOOK -eq 1 ]; then
                         }"
         fi
         else
-        BINARY_TITLE="Android 테스트"
+        BINARY_TITLE="Android ${DEVELOP_KEYWORD}"
         if [ $USING_TESTSERVER -eq 1 ]; then
                 if [[ "$BINARY_FACTS" != "" ]]; then
                 BINARY_FACTS="${BINARY_FACTS}, "

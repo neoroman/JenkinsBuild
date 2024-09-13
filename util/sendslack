@@ -37,9 +37,9 @@ if [ $USING_SLACK -eq 1 ]; then
         $SLACK chat send --text "${HOSTNAME} > ${FRONTEND_POINT}/${TOP_PATH}/dist_uaqa.php > Go iOS" --channel ${SLACK_CHANNEL} --pretext "${HOSTNAME} > iOS Download Web Page for ${SHORT_GIT_LOG}" --color good
         else
         GIT_BROWSER_URL=$(cat $jsonConfig | $JQ '.ios.gitBrowseUrl' | tr -d '"')
-        BLOCK_TITLE="iOS 테스트"
+        BLOCK_TITLE="iOS ${DEVELOP_KEYWORD}"
         if [ $IS_RELEASE -eq 1 -a $USING_APPSTORE -eq 1 ]; then
-            BLOCK_TITLE="iOS 검증용"
+            BLOCK_TITLE="iOS ${RELEASE_KEYWORD}"
             BLOCK_SECTION="${BLOCK_SECTION}                {
                     \"type\": \"section\",
                     \"text\": {
@@ -184,7 +184,7 @@ if [ $USING_SLACK -eq 1 ]; then
             $SLACK chat send --text "${HOSTNAME} > ${FRONTEND_POINT}/${TOP_PATH}/dist_uaqa.php > Go Android" --channel ${SLACK_CHANNEL} --pretext "${HOSTNAME} > Android Download Web Page for ${SHORT_GIT_LOG}" --color good
         else
             GIT_BROWSER_URL=$(cat $jsonConfig | $JQ '.android.gitBrowseUrl' | tr -d '"')
-            BLOCK_TITLE="Android 테스트"
+            BLOCK_TITLE="Android ${DEVELOP_KEYWORD}"
             BLOCK_SECTION="${BLOCK_SECTION}                {
                         \"type\": \"section\",
                         \"text\": {
@@ -193,7 +193,7 @@ if [ $USING_SLACK -eq 1 ]; then
                         }
                     },"
             if [ $IS_RELEASE -eq 1 ]; then
-                BLOCK_TITLE="Android 검증용"
+                BLOCK_TITLE="Android ${RELEASE_KEYWORD}"
                 if [ $USING_OBFUSCATION -eq 1 ]; then
                 BLOCK_SECTION="${BLOCK_SECTION}                {
                         \"type\": \"section\",
