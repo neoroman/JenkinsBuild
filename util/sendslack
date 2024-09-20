@@ -82,7 +82,7 @@ if [ $USING_SLACK -eq 1 ]; then
                     \"type\": \"header\",
                     \"text\": {
                         \"type\": \"plain_text\",
-                        \"text\": \"${HOSTNAME} > ${BLOCK_TITLE} ${APP_NAME}.App\",
+                        \"text\": \"${HOSTNAME} > ${BLOCK_TITLE} ${APP_NAME}.app > ${VERSION_STRING}\",
                         \"emoji\": true
                     }
                 },
@@ -242,7 +242,7 @@ if [ $USING_SLACK -eq 1 ]; then
                         \"type\": \"header\",
                         \"text\": {
                             \"type\": \"plain_text\",
-                            \"text\": \"${HOSTNAME} > ${BLOCK_TITLE} ${APP_NAME}.App\",
+                            \"text\": \"${HOSTNAME} > ${BLOCK_TITLE} ${APP_NAME}.app > ${VERSION_STRING}\",
                             \"emoji\": true
                         }
                     },
