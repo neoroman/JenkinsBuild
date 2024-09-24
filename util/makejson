@@ -433,3 +433,24 @@ if [ $USING_SCP -eq 1 ]; then
     fi
   fi
 fi
+
+########################################
+# Make source file for release version
+if [ $IS_RELEASE -eq 1 ]; then
+  if [[ "$INPUT_OS" == "ios" ]]; then
+    srcConfigPath=$(cat $jsonConfig | $JQ '.ios.AppStore.sourceCodeAbsPath' | tr -d '"')
+    srcFilePath=$(dirname "${srcConfigPath}")
+    srcFileSuffix=$(cat $jsonConfig | $JQ '.ios.AppStore.sourceCodeFileSuffix' | tr -d '"')
+    realSrcFile="${APP_ROOT_PREFIX}/${srcFilePath}/${OUTPUT_FILENAME_ONLY}${srcFileSuffix}"
+  elif [[ "$INPUT_OS" == "android" ]]; then
+    srcConfigPath=$(cat $jsonConfig | $JQ '.android.GoogleStore.sourceCodeAbsPath' | tr -d '"')
+    srcFilePath=$(dirname "${srcConfigPath}")
+    srcFileSuffix=$(cat $jsonConfig | $JQ '.android.GoogleStore.sourceCodeFileSuffix' | tr -d '"')
+    realSrcFile="${APP_ROOT_PREFIX}/${srcFilePath}/${OUTPUT_FILENAME_ONLY}${srcFileSuffix}"
+  fi
+  if test ! -z "${realSrcFile}"; then
+    cd ${WORKSPACE}
+    $GIT archive --format zip --output "${realSrcFile}" HEAD -0
+    cd -
+  fi
+fi
