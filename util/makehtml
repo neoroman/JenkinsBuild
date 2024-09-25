@@ -131,13 +131,15 @@ else
   if [ -f $APP_HTML/index.html ]; then
     chmod 777 $APP_HTML/index.html
   fi
-  touch $OUTPUT_FOLDER/zzz_$OUTPUT_FILENAME_HTML
-  ##################################
-  if [ $USING_SCP -eq 1 ]; then
-    if [ $DEBUGGING -eq 0 ]; then
-      if [ $(sendFile ${OUTPUT_FOLDER}/zzz_${OUTPUT_FILENAME_HTML} ${NEO2UA_OUTPUT_FOLDER}) -eq 0 ]; then
-        #   echo "Failed to send file"
-        echo "TODO: **NEED** to resend this file => ${OUTPUT_FOLDER}/zzz_${OUTPUT_FILENAME_HTML} to ${NEO2UA_OUTPUT_FOLDER}"
+  if test ! -f "$OUTPUT_FOLDER/$OUTPUT_FILENAME_HTML"; then
+    touch $OUTPUT_FOLDER/zzz_$OUTPUT_FILENAME_HTML
+    ##################################
+    if [ $USING_SCP -eq 1 ]; then
+      if [ $DEBUGGING -eq 0 ]; then
+        if [ $(sendFile ${OUTPUT_FOLDER}/zzz_${OUTPUT_FILENAME_HTML} ${NEO2UA_OUTPUT_FOLDER}) -eq 0 ]; then
+          #   echo "Failed to send file"
+          echo "TODO: **NEED** to resend this file => ${OUTPUT_FOLDER}/zzz_${OUTPUT_FILENAME_HTML} to ${NEO2UA_OUTPUT_FOLDER}"
+        fi
       fi
     fi
   fi
