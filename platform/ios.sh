@@ -299,17 +299,14 @@ if [ $USING_APPSTORE -eq 1 -a $IS_RELEASE -eq 1 ]; then
             if [[ -z "$OBFUSCATION_SOURCE" ]]; then
                 SPLASH_VIEW="${WORKSPACE}/${PROJECT_NAME}/ObjC/SplashViewController.m"
                 SPLASH_TEMP1="${WORKSPACE}/${PROJECT_NAME}/ObjC/zzz1.m"
-                SPLASH_TEMP2="${WORKSPACE}/${PROJECT_NAME}/ObjC/zzz2.m"
             else
                 SPLASH_VIEW="${WORKSPACE}/${OBFUSCATION_SOURCE}"
                 SPLASH_TEMP1="${SPLASH_VIEW}zzz1"
-                SPLASH_TEMP2="${SPLASH_VIEW}zzz2"
             fi
             if [ -f $A2PS -a -f $SPLASH_VIEW ]; then
                 if [ -f $SPLASH_VIEW ]; then
                     sed -e 's/ix_set_debug/zzz1/g' $SPLASH_VIEW >$SPLASH_TEMP1
-                    sed -e 's/ix_sysCheckStart/zzz2/g' $SPLASH_TEMP1 >$SPLASH_TEMP2
-                    mv -f $SPLASH_TEMP2 $SPLASH_VIEW
+                    mv -f $SPLASH_TEMP1 $SPLASH_VIEW
 
                     if command -v $A2PS >/dev/null && command -v $GS >/dev/null; then
                         cd $WORKSPACE && echo "${systemName}:ios appDevTeam$ ./IxShieldCheck.sh -i ./${PROJECT_NAME}" >merong.txt
