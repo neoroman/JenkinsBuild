@@ -251,9 +251,9 @@ else
             $FlutterBin pub get
 
             if test -z $FLUTTER_FLAG; then
-                $FlutterBin build ${flutterBuildKey} --flavor ${GRADLE_TASK_GOOGLESTORE}
+                $FlutterBin build ${flutterBuildKey} --flavor ${GRADLE_TASK_GOOGLESTORE} &>/dev/null
             else
-                $FlutterBin build ${flutterBuildKey} --flavor ${GRADLE_TASK_GOOGLESTORE} ${FLUTTER_FLAG}
+                $FlutterBin build ${flutterBuildKey} --flavor ${GRADLE_TASK_GOOGLESTORE} ${FLUTTER_FLAG} &>/dev/null
             fi
         elif [ $isReactNativeEnabled -eq 1 ]; then
             if [ -d ${WORKSPACE}/android ]; then
