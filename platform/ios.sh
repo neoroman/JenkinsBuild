@@ -105,6 +105,7 @@ if [ $USING_ADHOC -eq 1 ]; then
     TARGET_ADHOC=$(cat $jsonConfig | $JQ '.ios.Adhoc.targetName' | tr -d '"')
     BUNDLE_ID_ADHOC=$(cat $jsonConfig | $JQ '.ios.Adhoc.bundleId' | tr -d '"')
     BUNDLE_NAME_ADHOC=$(cat $jsonConfig | $JQ '.ios.Adhoc.bundleName' | tr -d '"')
+    USING_ADHOC_DEBUG=$(test $(cat $jsonConfig | $JQ '.ios.Adhoc.buildDebugVersion') = true && echo 1 || echo 0)
 fi
 USING_ENTERPRISE=$(test $(cat $jsonConfig | $JQ '.ios.Enterprise.enabled') = true && echo 1 || echo 0)
 if [ $USING_ENTERPRISE -eq 1 ]; then
@@ -238,7 +239,7 @@ if [ $DEBUGGING -eq 0 ]; then
         $XCODE $XCODE_OPTION "${XCODE_WORKSPACE}" -scheme "${SCHEME_ADHOC}" -destination "generic/platform=iOS" archive ${xcodeArgument}/${SCHEME_ADHOC} -verbose
 
         # Step 1.2.1: Build target for AdHoc as 'DEBUG' mode
-        if [ $IS_RELEASE -eq 1 -a $USING_APPSTORE -eq 1 ]; then
+        if [ $USING_ADHOC_DEBUG -eq 1 -a $IS_RELEASE -eq 1 -a $USING_APPSTORE -eq 1 ]; then
             # /usr/bin/xcodebuild -workspace /Users/company/.jenkins/workspace/Gapp4/GApp4-iOS/Gapp3.xcworkspace -scheme GApp3_Adhoc -destination generic/platform=iOS archive -derivedDataPath /tmp/Gapp3/R4.3.1_2 -archivePath /tmp/Gapp3/R4.3.1_2/GApp3_Adhoc_Debug -verbose OTHER_CFLAGS='$(inherited) -DADHOC_DEBUG=1'
             $XCODE $XCODE_OPTION "${XCODE_WORKSPACE}" -scheme "${SCHEME_ADHOC}" -destination "generic/platform=iOS" archive ${xcodeArgument}/${SCHEME_ADHOC}_Debug -verbose OTHER_CFLAGS='$(inherited) -DDEBUG=1'
         fi
