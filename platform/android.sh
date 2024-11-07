@@ -73,6 +73,9 @@ OUTPUT_FOLDER="${APP_ROOT}/${APP_VERSION}"
 HTTPS_PREFIX="${FRONTEND_POINT}/${TOP_PATH}/${APP_ROOT_SUFFIX}/${APP_VERSION}/"
 ###################
 USING_GOOGLESTORE=$(test $(cat $jsonConfig | $JQ '.android.GoogleStore.enabled') = true && echo 1 || echo 0)
+if [ $USING_GOOGLESTORE -eq 1 ]; then
+    USING_ADHOC_DEBUG=$(test $(cat $jsonConfig | $JQ '.android.GoogleStore.buildDebugVersion') = true && echo 1 || echo 0)
+fi
 GRADLE_TASK_GOOGLESTORE=$(cat $jsonConfig | $JQ '.android.GoogleStore.taskName' | tr -d '"')
 USING_BUNDLE_GOOGLESTORE=$(test $(cat $jsonConfig | $JQ '.android.GoogleStore.usingBundleAAB') = true && echo 1 || echo 0)
 RELEASE_TYPE_GOOGLESTORE=$(cat $jsonConfig | $JQ '.android.GoogleStore.releaseType' | tr -d '"')
