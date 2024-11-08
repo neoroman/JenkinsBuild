@@ -448,6 +448,10 @@ if [ $IS_RELEASE -eq 1 ]; then
     srcFileSuffix=$(cat $jsonConfig | $JQ '.android.GoogleStore.sourceCodeFileSuffix' | tr -d '"')
     realSrcFile="${APP_ROOT_PREFIX}/${srcFilePath}/${OUTPUT_FILENAME_ONLY}${srcFileSuffix}"
   fi
+  realSrcPath=$(dirname "${realSrcFile}")
+  if test ! -d "${realSrcPath}"; then
+    mkdir -p $realSrcPath
+  fi
   if test ! -z "${realSrcFile}"; then
     cd ${WORKSPACE}
     $GIT archive --format zip --output "${realSrcFile}" HEAD -0
