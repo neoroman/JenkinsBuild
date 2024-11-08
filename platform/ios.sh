@@ -295,30 +295,33 @@ if [ $USING_APPSTORE -eq 1 -a $IS_RELEASE -eq 1 ]; then
             mv -f $ARCHIVE_PATH $OUTPUT_FOLDER/$TEMP_APPSTORE_APP_FOLDER/
         fi
         ###################
-        # Step 2.1.1: Run IxShiedCheck script and take screenshot, nees 'a2ps' and 'gs' here...!!!
-        if [ $DEBUGGING -eq 0 -a -f $A2PS ]; then
-            if [[ -z "$OBFUSCATION_SOURCE" ]]; then
-                SPLASH_VIEW="${WORKSPACE}/${PROJECT_NAME}/ObjC/SplashViewController.m"
-                SPLASH_TEMP1="${WORKSPACE}/${PROJECT_NAME}/ObjC/zzz1.m"
-            else
-                SPLASH_VIEW="${WORKSPACE}/${OBFUSCATION_SOURCE}"
-                SPLASH_TEMP1="${SPLASH_VIEW}zzz1"
-            fi
-            if [ -f $A2PS -a -f $SPLASH_VIEW ]; then
-                if [ -f $SPLASH_VIEW ]; then
-                    sed -e 's/ix_set_debug/zzz1/g' $SPLASH_VIEW >$SPLASH_TEMP1
-                    mv -f $SPLASH_TEMP1 $SPLASH_VIEW
+        USING_OBFUSCATION=$(test $(cat $jsonConfig | $JQ '.ios.usingObfuscation') = true && echo 1 || echo 0)
+        if [ $USING_OBFUSCATION -eq 1 ]; then
+            # Step 2.1.1: Run IxShiedCheck script and take screenshot, nees 'a2ps' and 'gs' here...!!!
+            if [ $DEBUGGING -eq 0 -a -f $A2PS ]; then
+                if [[ -z "$OBFUSCATION_SOURCE" ]]; then
+                    SPLASH_VIEW="${WORKSPACE}/${PROJECT_NAME}/ObjC/SplashViewController.m"
+                    SPLASH_TEMP1="${WORKSPACE}/${PROJECT_NAME}/ObjC/zzz1.m"
+                else
+                    SPLASH_VIEW="${WORKSPACE}/${OBFUSCATION_SOURCE}"
+                    SPLASH_TEMP1="${SPLASH_VIEW}zzz1"
+                fi
+                if [ -f $A2PS -a -f $SPLASH_VIEW ]; then
+                    if [ -f $SPLASH_VIEW ]; then
+                        sed -e 's/ix_set_debug/zzz1/g' $SPLASH_VIEW >$SPLASH_TEMP1
+                        mv -f $SPLASH_TEMP1 $SPLASH_VIEW
 
-                    if command -v $A2PS >/dev/null && command -v $GS >/dev/null; then
-                        cd $WORKSPACE && echo "${systemName}:ios appDevTeam$ ./IxShieldCheck.sh -i ./${PROJECT_NAME}" >merong.txt
-                        cd $WORKSPACE && ./IxShieldCheck.sh -i ./${PROJECT_NAME} >>merong.txt
-                        cd $WORKSPACE && cat merong.txt | $A2PS -=book -B -q --medium=A4dj --borders=no -o out1.ps && $GS -sDEVICE=png256 -dNOPAUSE -dBATCH -dSAFER -dTextAlphaBits=4 -q -r300x300 -sOutputFile=out2.png out1.ps
-                        if command -v $CONVERT >/dev/null; then
-                            cd $WORKSPACE && $CONVERT -trim out2.png $OUTPUT_FOLDER/$OUTPUT_FILENAME_APPSTORE_IX_SHIELD_CHECK
-                        else
-                            cd $WORKSPACE && cp out2.png $OUTPUT_FOLDER/$OUTPUT_FILENAME_APPSTORE_IX_SHIELD_CHECK
+                        if command -v $A2PS >/dev/null && command -v $GS >/dev/null; then
+                            cd $WORKSPACE && echo "${systemName}:ios appDevTeam$ ./IxShieldCheck.sh -i ./${PROJECT_NAME}" >merong.txt
+                            cd $WORKSPACE && ./IxShieldCheck.sh -i ./${PROJECT_NAME} >>merong.txt
+                            cd $WORKSPACE && cat merong.txt | $A2PS -=book -B -q --medium=A4dj --borders=no -o out1.ps && $GS -sDEVICE=png256 -dNOPAUSE -dBATCH -dSAFER -dTextAlphaBits=4 -q -r300x300 -sOutputFile=out2.png out1.ps
+                            if command -v $CONVERT >/dev/null; then
+                                cd $WORKSPACE && $CONVERT -trim out2.png $OUTPUT_FOLDER/$OUTPUT_FILENAME_APPSTORE_IX_SHIELD_CHECK
+                            else
+                                cd $WORKSPACE && cp out2.png $OUTPUT_FOLDER/$OUTPUT_FILENAME_APPSTORE_IX_SHIELD_CHECK
+                            fi
+                            cd $WORKSPACE && rm -f out[12].png out[12].ps merong.txt
                         fi
-                        cd $WORKSPACE && rm -f out[12].png out[12].ps merong.txt
                     fi
                 fi
             fi
