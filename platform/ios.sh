@@ -375,7 +375,7 @@ if [ $USING_ADHOC -eq 1 ]; then
     fi
 
     # Target AdHoc for Debug
-    if [ $IS_RELEASE -eq 1 -a $USING_APPSTORE -eq 1 ]; then
+    if [ $USING_ADHOC_DEBUG -eq 1 -a $IS_RELEASE -eq 1 -a $USING_APPSTORE -eq 1 ]; then
         INSTALL_ROOT="${DST_ROOT}/${SCHEME_ADHOC}_Debug.xcarchive/Products"
         OUTPUT_FILENAME_ADHOC_IPA="${OUTPUT_FILENAME_ADHOC}_Debug.ipa"
         OUTPUT_FILE="${INSTALL_ROOT}/Applications/${OUTPUT_FILENAME_ADHOC_IPA}"
