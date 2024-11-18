@@ -253,7 +253,7 @@ else
             $FlutterBin clean
             $FlutterBin pub get
 
-            if test -z $FLUTTER_FLAG; then
+            if test -z "$FLUTTER_FLAG"; then
                 $FlutterBin build ${flutterBuildKey} --flavor ${GRADLE_TASK_GOOGLESTORE} &>/dev/null
             else
                 $FlutterBin build ${flutterBuildKey} --flavor ${GRADLE_TASK_GOOGLESTORE} ${FLUTTER_FLAG} &>/dev/null
@@ -311,27 +311,29 @@ else
                 SIZE_GOOGLE_APP_FILE=$(du -sh ${BUNDLE_APK_FILE} | awk '{print $1}')
 
                 # for debug build APK
-                if [[ "$DEBUG_APK_OUTPUT" == *".aab" ]]; then
-                    BUNDLE_DEBUG_FILE="$DEBUG_OUTPUT_FOLDER/${DEBUG_APK_OUTPUT%.aab}.apks"
-                    $BUNDLE_TOOL build-apks --bundle="$DEBUG_OUTPUT_FOLDER/$DEBUG_APK_OUTPUT" --output="$BUNDLE_DEBUG_FILE" --mode=universal
-                    BUNDLE_APK2ZIP="${BUNDLE_DEBUG_FILE%.apks}.zip"
-                    mv -f "${BUNDLE_DEBUG_FILE}" "${BUNDLE_APK2ZIP}"
-                    unzip -o "${BUNDLE_APK2ZIP}"
-                    APK_DEBUG="${APK_FILE_TITLE}${outputGoogleStoreSuffix%release.*}debug.apk"
-                    BUNDLE_DEBUG_FILE="$OUTPUT_FOLDER/$APK_DEBUG"
-                    if [ -f universal.apk ]; then
-                        touch universal.apk
+                if [ $USING_ADHOC_DEBUG -eq 1 ]; then
+                    if [[ "$DEBUG_APK_OUTPUT" == *".aab" ]]; then
+                        BUNDLE_DEBUG_FILE="$DEBUG_OUTPUT_FOLDER/${DEBUG_APK_OUTPUT%.aab}.apks"
+                        $BUNDLE_TOOL build-apks --bundle="$DEBUG_OUTPUT_FOLDER/$DEBUG_APK_OUTPUT" --output="$BUNDLE_DEBUG_FILE" --mode=universal
+                        BUNDLE_APK2ZIP="${BUNDLE_DEBUG_FILE%.apks}.zip"
+                        mv -f "${BUNDLE_DEBUG_FILE}" "${BUNDLE_APK2ZIP}"
+                        unzip -o "${BUNDLE_APK2ZIP}"
+                        APK_DEBUG="${APK_FILE_TITLE}${outputGoogleStoreSuffix%release.*}debug.apk"
+                        BUNDLE_DEBUG_FILE="$OUTPUT_FOLDER/$APK_DEBUG"
+                        if [ -f universal.apk ]; then
+                            touch universal.apk
 
-                        # Move APK(extract from AAB) to DocRoot
-                        mv -f universal.apk "$BUNDLE_DEBUG_FILE"
-                        find . -name 'toc.*' -exec rm {} \;
-                        if [ -f $BUNDLE_APK2ZIP ]; then
-                            rm $BUNDLE_APK2ZIP
+                            # Move APK(extract from AAB) to DocRoot
+                            mv -f universal.apk "$BUNDLE_DEBUG_FILE"
+                            find . -name 'toc.*' -exec rm {} \;
+                            if [ -f $BUNDLE_APK2ZIP ]; then
+                                rm $BUNDLE_APK2ZIP
+                            fi
                         fi
+                        SIZE_DEBUG_APP_FILE=$(du -sh ${BUNDLE_DEBUG_FILE} | awk '{print $1}')
                     fi
-                    SIZE_DEBUG_APP_FILE=$(du -sh ${BUNDLE_DEBUG_FILE} | awk '{print $1}')
                 fi
-            elif [ -f "$DEBUG_OUTPUT_FOLDER/$DEBUG_APK_OUTPUT" ]; then
+            elif [ $USING_ADHOC_DEBUG -eq 1 -a -f "$DEBUG_OUTPUT_FOLDER/$DEBUG_APK_OUTPUT" ]; then
                 # for debug build APK
                 APK_DEBUG="${APK_FILE_TITLE}${outputGoogleStoreSuffix%release.*}debug.apk"
                 mv "$DEBUG_OUTPUT_FOLDER/$DEBUG_APK_OUTPUT" "$OUTPUT_FOLDER/$APK_DEBUG"
@@ -354,7 +356,7 @@ else
             $FlutterBin clean
             $FlutterBin pub get
 
-            if test -z $FLUTTER_FLAG; then
+            if test -z "$FLUTTER_FLAG"; then
                 $FlutterBin build ${flutterBuildKey} --flavor ${GRADLE_TASK_ONESTORE}
             else
                 $FlutterBin build ${flutterBuildKey} --flavor ${GRADLE_TASK_ONESTORE} ${FLUTTER_FLAG}
@@ -413,7 +415,7 @@ else
             #     fi
             #     SIZE_ONE_APP_FILE=$(du -sh ${BUNDLE_APK_FILE} | awk '{print $1}')
             # fi
-            if [ -f "$DEBUG_OUTPUT_FOLDER/$DEBUG_APK_OUTPUT" -a ! -f "$OUTPUT_FOLDER/$APK_DEBUG" ]; then
+            if [ $USING_ADHOC_DEBUG -eq 1 -a -f "$DEBUG_OUTPUT_FOLDER/$DEBUG_APK_OUTPUT" -a ! -f "$OUTPUT_FOLDER/$APK_DEBUG" ]; then
                 APK_DEBUG="${APK_FILE_TITLE}${outputOneStoreSuffix%release.*}debug.apk"
                 mv "$DEBUG_OUTPUT_FOLDER/$DEBUG_APK_OUTPUT" "$OUTPUT_FOLDER/$APK_DEBUG"
                 SIZE_DEBUG_APP_FILE=$(du -sh "$OUTPUT_FOLDER/$APK_DEBUG" | awk '{print $1}')
@@ -433,7 +435,7 @@ else
             $FlutterBin clean
             $FlutterBin pub get
 
-            if test -z $FLUTTER_FLAG; then
+            if test -z "$FLUTTER_FLAG"; then
                 $FlutterBin build ${flutterBuildKey} --flavor ${GRADLE_TASK_LIVESERVER}
             else
                 $FlutterBin build ${flutterBuildKey} --flavor ${GRADLE_TASK_LIVESERVER} ${FLUTTER_FLAG}
@@ -516,7 +518,7 @@ else
             $FlutterBin clean
             $FlutterBin pub get
 
-            if test -z $FLUTTER_FLAG; then
+            if test -z "$FLUTTER_FLAG"; then
                 $FlutterBin build ${flutterBuildKey} --flavor ${GRADLE_TASK_TESTSERVER}
             else
                 $FlutterBin build ${flutterBuildKey} --flavor ${GRADLE_TASK_TESTSERVER} ${FLUTTER_FLAG}
