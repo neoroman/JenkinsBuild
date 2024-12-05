@@ -44,7 +44,11 @@ if [ $isFlutterEnabled -eq 1 ]; then
     export PATH=${POD_EXEC_DIR}:$PATH
     $FlutterBin clean
     $FlutterBin pub get
-    $FlutterBin build ios
+    if test -z "$FLUTTER_FLAG"; then
+        $FlutterBin build ios
+    else
+        $FlutterBin build ios ${FLUTTER_FLAG}
+    fi
 elif [ $isReactNativeEnabled -eq 1 ]; then
     cd ${WORKSPACE}
     $ReactNativeBin install --legacy-peer-deps
