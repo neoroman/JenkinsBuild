@@ -247,6 +247,7 @@ else
             FILE_EXTENSION="aab"
         else
             gradleBuildKey="assemble"
+            flutterBuildKey="apk"
             FILE_EXTENSION="apk"
         fi
         if [ $isFlutterEnabled -eq 1 ]; then
@@ -350,6 +351,7 @@ else
             FILE_EXTENSION="aab"
         else 
             gradleBuildKey="assemble"
+            flutterBuildKey="apk"
             FILE_EXTENSION="apk"
         fi
         if [ $isFlutterEnabled -eq 1 ]; then
