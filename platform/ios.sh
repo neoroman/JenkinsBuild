@@ -206,7 +206,11 @@ if [ $DEBUGGING -eq 0 ]; then
         fi
         ARCHIVE_FILE="${OUTPUT_PREFIX}${VERSION_STRING}_${FILE_TODAY}.xcarchive"
         ARCHIVE_PATH="${OUTPUT_FOLDER}/${ARCHIVE_FILE}"
-        plistConfig="${APP_ROOT_PREFIX}/${TOP_PATH}/config/ExportOptions_AppStore.plist"
+        if [ $CUSTOM_EXPORT_OPTIONS -eq 1 -a -f "$CUSTOM_EXPORT_OPTIONS_PATH" ]; then
+            plistConfig="${CUSTOM_EXPORT_OPTIONS_PATH}"
+        else
+            plistConfig="${APP_ROOT_PREFIX}/${TOP_PATH}/config/ExportOptions_AppStore.plist"
+        fi
         EXPORT_PLIST="${APP_ROOT}/ExportOptions.plist"
         if [ -f $plistConfig ]; then
             cp $plistConfig $EXPORT_PLIST

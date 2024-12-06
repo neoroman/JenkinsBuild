@@ -20,6 +20,14 @@ while [[ $# -gt 0 ]]; do
     shift # past argument
     shift # past value
     ;;
+  -eo | --exportoptions)
+    CUSTOM_EXPORT_OPTIONS_PATH="$2"
+    if [ -f $CUSTOM_EXPORT_OPTIONS_PATH ]; then
+      CUSTOM_EXPORT_OPTIONS=1
+    fi
+    shift # past argument
+    shift # past value
+    ;;
   -p | --platform)
     INPUT_OS="$2"
     shift # past argument
