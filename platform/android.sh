@@ -256,6 +256,8 @@ else
 
             if test -z "$FLUTTER_FLAG"; then
                 $FlutterBin build ${flutterBuildKey} --flavor ${GRADLE_TASK_GOOGLESTORE} &>/dev/null
+            elif [[ ${FLUTTER_FLAG} == *"--flavor"* ]]; then
+                $FlutterBin build ${flutterBuildKey} ${FLUTTER_FLAG} &>/dev/null
             else
                 $FlutterBin build ${flutterBuildKey} --flavor ${GRADLE_TASK_GOOGLESTORE} ${FLUTTER_FLAG} &>/dev/null
             fi
@@ -360,6 +362,8 @@ else
 
             if test -z "$FLUTTER_FLAG"; then
                 $FlutterBin build ${flutterBuildKey} --flavor ${GRADLE_TASK_ONESTORE}
+            elif [[ ${FLUTTER_FLAG} == *"--flavor"* ]]; then
+                $FlutterBin build ${flutterBuildKey} ${FLUTTER_FLAG} &>/dev/null
             else
                 $FlutterBin build ${flutterBuildKey} --flavor ${GRADLE_TASK_ONESTORE} ${FLUTTER_FLAG}
             fi
@@ -439,6 +443,8 @@ else
 
             if test -z "$FLUTTER_FLAG"; then
                 $FlutterBin build ${flutterBuildKey} --flavor ${GRADLE_TASK_LIVESERVER}
+            elif [[ ${FLUTTER_FLAG} == *"--flavor"* ]]; then
+                $FlutterBin build ${flutterBuildKey} ${FLUTTER_FLAG} &>/dev/null
             else
                 $FlutterBin build ${flutterBuildKey} --flavor ${GRADLE_TASK_LIVESERVER} ${FLUTTER_FLAG}
             fi
@@ -522,6 +528,8 @@ else
 
             if test -z "$FLUTTER_FLAG"; then
                 $FlutterBin build ${flutterBuildKey} --flavor ${GRADLE_TASK_TESTSERVER}
+            elif [[ ${FLUTTER_FLAG} == *"--flavor"* ]]; then
+                $FlutterBin build ${flutterBuildKey} ${FLUTTER_FLAG} &>/dev/null
             else
                 $FlutterBin build ${flutterBuildKey} --flavor ${GRADLE_TASK_TESTSERVER} ${FLUTTER_FLAG}
             fi
