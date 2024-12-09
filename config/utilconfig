@@ -60,16 +60,41 @@ fi
 ###################
 FILE_TODAY=$(/bin/date "+%y%m%d")
 ###################
-## Android Bundle Tool for AAB of Google Play Store
-if [[ ${INPUT_OS} == "android" ]]; then
-  if ! command -v bundletool >/dev/null; then
-      if command -v brew >/dev/null; then
-          BREW=$(command -v brew)
-          $BREW install bundletool
-          BUNDLE_TOOL=$(command -v bundletool)
-      fi
-  else
+if [[ "$(uname)" == "Darwin" ]]; then
+  ## Homebrew
+  if ! command -v brew >/dev/null; then
+    echo "Installing Homebrew..."
+    /bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh)" || {
+      echo "Failed to install Homebrew"; exit 1;
+    }
+  fi
+  BREW=$(command -v brew)
+
+  ## Android Bundle Tool for AAB of Google Play Store
+  if [[ "${INPUT_OS:-}" == "android" ]]; then
+    if ! command -v bundletool >/dev/null; then
+      echo "Installing Bundletool..."
+      $BREW install bundletool || { echo "Failed to install Bundletool"; exit 1; }
+    fi
     BUNDLE_TOOL=$(command -v bundletool)
+    export BUNDLE_TOOL
+  fi
+
+  ###################
+  ## FVM (Flutter Version Management) Tools for Flutter
+  if [[ -n "$FLUTTER_VERSION" ]]; then
+    if ! command -v fvm >/dev/null; then
+      echo "Installing FVM..."
+      $BREW tap leoafarias/fvm
+      $BREW install fvm || { echo "Failed to install FVM"; exit 1; }
+    fi
+    FVM=$(command -v fvm)
+
+    echo "Installing Flutter version $FLUTTER_VERSION..."
+    if test -z "$($FVM list | grep -F "$FLUTTER_VERSION")"; then
+      $FVM install "$FLUTTER_VERSION" --setup || { echo "Failed to set up Flutter"; exit 1; }
+    fi
+    FlutterBin="$FVM flutter"
+    export FlutterBin
   fi
 fi
-###################
