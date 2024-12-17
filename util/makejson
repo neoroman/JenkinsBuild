@@ -454,6 +454,16 @@ if [ $IS_RELEASE -eq 1 ]; then
   fi
   if test ! -z "${realSrcFile}"; then
     cd ${WORKSPACE}
+    # TODO: make source distint from the other platform
+    # if [ $isFlutterEnabled -eq 1 ]; then
+    #   if [[ "$INPUT_OS" == "ios" ]]; then
+    #     $GIT archive --format zip --output "${realSrcFile}" --exclude=android/ --exclude=web/ --exclude=test/ --exclude=.vscode/ --exclude=.run/ --exclude=.fvm/ HEAD -0
+    #   elif [[ "$INPUT_OS" == "android" ]]; then
+    #     $GIT archive --format zip --output "${realSrcFile}" --exclude=ios/ --exclude=web/ --exclude=test/ --exclude=.vscode/ --exclude=.run/ --exclude=.fvm/ HEAD -0
+    #   fi
+    # else
+    #   $GIT archive --format zip --output "${realSrcFile}" HEAD -0
+    # fi
     $GIT archive --format zip --output "${realSrcFile}" HEAD -0
     cd -
   fi
