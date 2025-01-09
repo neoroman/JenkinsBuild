@@ -664,7 +664,7 @@ if [ $DEBUGGING -eq 0 ]; then
                 CHECK_SHELL=$(find $WORKSPACE -name 'check.sh' | head -1)
             fi
             if [ -f "$CHECK_SHELL" -a $IS_RELEASE -eq 1 ]; then
-                chmod +x $WORKSPACE/${ANDROID_APP_PATH}/check.sh
+                chmod +x $CHECK_SHELL
                 if command -v $A2PS >/dev/null && command -v $GS >/dev/null; then
                     cd $WORKSPACE/${ANDROID_APP_PATH} && echo "$GIT_USER $(hostname -s) ${WORKSPACE} (${GIT_BRANCH})" >merong.txt
                     cd $WORKSPACE/${ANDROID_APP_PATH} && echo "$ $CHECK_SHELL -a src" >>merong.txt
@@ -677,24 +677,28 @@ if [ $DEBUGGING -eq 0 ]; then
                     fi
                     cd $WORKSPACE/${ANDROID_APP_PATH} && rm -f out[12].png out[12].ps merong.txt
 
-                    if [ -f $WORKSPACE/$Obfuscation_INPUT_FILE ]; then
-                        cp -f $WORKSPACE/$Obfuscation_INPUT_FILE $OUTPUT_FOLDER/$Obfuscation_OUTPUT_FILE
-                    elif [ -f ${APP_ROOT_PREFIX}/${TOP_PATH}/$Obfuscation_INPUT_FILE ]; then
-                        cp -f ${APP_ROOT_PREFIX}/${TOP_PATH}/$Obfuscation_INPUT_FILE $OUTPUT_FOLDER/$Obfuscation_OUTPUT_FILE
-                    fi
-
                     if [ $USING_SCP -eq 1 ]; then
                         if [ $(sendFile ${OUTPUT_FOLDER}/${Obfuscation_SCREENSHOT} ${NEO2UA_OUTPUT_FOLDER}) -eq 0 ]; then
                             #   echo "Failed to send file"
                             echo "TODO: **NEED** to resend this file => ${OUTPUT_FOLDER}/${Obfuscation_SCREENSHOT} to ${NEO2UA_OUTPUT_FOLDER}"
                         fi
-                        if [ $(sendFile ${OUTPUT_FOLDER}/${Obfuscation_OUTPUT_FILE} ${NEO2UA_OUTPUT_FOLDER}) -eq 0 ]; then
-                            #   echo "Failed to send file"
-                            echo "TODO: **NEED** to resend this file => ${OUTPUT_FOLDER}/${Obfuscation_OUTPUT_FILE} to ${NEO2UA_OUTPUT_FOLDER}"
-                        fi
                     fi
                 fi
             fi
+
+            if [ -f $WORKSPACE/$Obfuscation_INPUT_FILE ]; then
+                cp -f $WORKSPACE/$Obfuscation_INPUT_FILE $OUTPUT_FOLDER/$Obfuscation_OUTPUT_FILE
+            elif [ -f ${APP_ROOT_PREFIX}/${TOP_PATH}/$Obfuscation_INPUT_FILE ]; then
+                cp -f ${APP_ROOT_PREFIX}/${TOP_PATH}/$Obfuscation_INPUT_FILE $OUTPUT_FOLDER/$Obfuscation_OUTPUT_FILE
+            fi
+
+            if [ $USING_SCP -eq 1 ]; then
+                if [ $(sendFile ${OUTPUT_FOLDER}/${Obfuscation_OUTPUT_FILE} ${NEO2UA_OUTPUT_FOLDER}) -eq 0 ]; then
+                    #   echo "Failed to send file"
+                    echo "TODO: **NEED** to resend this file => ${OUTPUT_FOLDER}/${Obfuscation_OUTPUT_FILE} to ${NEO2UA_OUTPUT_FOLDER}"
+                fi
+            fi
+
         fi
     fi
 fi
