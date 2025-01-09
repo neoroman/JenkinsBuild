@@ -319,9 +319,14 @@ if [ $USING_APPSTORE -eq 1 -a $IS_RELEASE -eq 1 ]; then
                         sed -e 's/ix_set_debug/zzz1/g' $SPLASH_VIEW >$SPLASH_TEMP1
                         mv -f $SPLASH_TEMP1 $SPLASH_VIEW
 
+                        CHECK_SHELL="./IxShieldCheck.sh"
+                        if test ! -f "$CHECK_SHELL"; then
+                            CHECK_SHELL=$(find $WORKSPACE -name 'check.sh' | head -1)
+                        fi
+
                         if command -v $A2PS >/dev/null && command -v $GS >/dev/null; then
-                            cd $WORKSPACE && echo "${systemName}:ios appDevTeam$ ./IxShieldCheck.sh -i ./${PROJECT_NAME}" >merong.txt
-                            cd $WORKSPACE && ./IxShieldCheck.sh -i ./${PROJECT_NAME} >>merong.txt
+                            cd $WORKSPACE && echo "${systemName}:ios appDevTeam$ $CHECK_SHELL -i ./${PROJECT_NAME}" >merong.txt
+                            cd $WORKSPACE && $CHECK_SHELL -i ./${PROJECT_NAME} >>merong.txt
                             cd $WORKSPACE && cat merong.txt | $A2PS -=book -B -q --medium=A4dj --borders=no -o out1.ps && $GS -sDEVICE=png256 -dNOPAUSE -dBATCH -dSAFER -dTextAlphaBits=4 -q -r300x300 -sOutputFile=out2.png out1.ps
                             if command -v $CONVERT >/dev/null; then
                                 cd $WORKSPACE && $CONVERT -trim out2.png $OUTPUT_FOLDER/$OUTPUT_FILENAME_APPSTORE_IX_SHIELD_CHECK
@@ -584,12 +589,12 @@ if [ $USING_ENTER4WEB -eq 1 ]; then
     >$OUTPUT_FOLDER/$OUTPUT_FILENAME_ENTER4WEB_PLIST
     ENTER4WEB_PLIST_ITMS_URL=${HTTPS_PREFIX}${OUTPUT_FILENAME_ENTER4WEB_PLIST}
     if [ $USING_SCP -eq 1 ]; then
-    if [ -f ${OUTPUT_FOLDER}/${OUTPUT_FILENAME_ENTER4WEB_PLIST} ]; then
-        if [ $(sendFile ${OUTPUT_FOLDER}/${OUTPUT_FILENAME_ENTER4WEB_PLIST} ${NEO2UA_OUTPUT_FOLDER}) -eq 0 ]; then
-        #   echo "Failed to send file"
-        echo "TODO: **NEED** to resend this file => ${OUTPUT_FOLDER}/${OUTPUT_FILENAME_ENTER4WEB_PLIST} to ${NEO2UA_OUTPUT_FOLDER}"
+        if [ -f ${OUTPUT_FOLDER}/${OUTPUT_FILENAME_ENTER4WEB_PLIST} ]; then
+            if [ $(sendFile ${OUTPUT_FOLDER}/${OUTPUT_FILENAME_ENTER4WEB_PLIST} ${NEO2UA_OUTPUT_FOLDER}) -eq 0 ]; then
+            #   echo "Failed to send file"
+            echo "TODO: **NEED** to resend this file => ${OUTPUT_FOLDER}/${OUTPUT_FILENAME_ENTER4WEB_PLIST} to ${NEO2UA_OUTPUT_FOLDER}"
+            fi
         fi
-    fi
     fi
 fi
 APPSTORE_TITLE=$(cat $jsonConfig | $JQ '.ios.AppStore.title' | tr -d '"')
