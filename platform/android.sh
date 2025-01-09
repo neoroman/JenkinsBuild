@@ -659,12 +659,16 @@ if [ $DEBUGGING -eq 0 ]; then
     USING_OBFUSCATION=$(test $(cat $jsonConfig | $JQ '.android.usingObfuscation') = true && echo 1 || echo 0)
     if [ $USING_OBFUSCATION -eq 1 ]; then
         if [ -f ${OUTPUT_FOLDER}/${APK_GOOGLESTORE} ]; then
-            if [ -f $WORKSPACE/${ANDROID_APP_PATH}/check.sh -a $IS_RELEASE -eq 1 ]; then
+            CHECK_SHELL="$WORKSPACE/${ANDROID_APP_PATH}/check.sh"
+            if test ! -f "$CHECK_SHELL"; then
+                CHECK_SHELL=$(find $WORKSPACE -name 'check.sh' | head -1)
+            fi
+            if [ -f "$CHECK_SHELL" -a $IS_RELEASE -eq 1 ]; then
                 chmod +x $WORKSPACE/${ANDROID_APP_PATH}/check.sh
                 if command -v $A2PS >/dev/null && command -v $GS >/dev/null; then
                     cd $WORKSPACE/${ANDROID_APP_PATH} && echo "$GIT_USER $(hostname -s) ${WORKSPACE} (${GIT_BRANCH})" >merong.txt
-                    cd $WORKSPACE/${ANDROID_APP_PATH} && echo "$ ./check.sh -a src" >>merong.txt
-                    cd $WORKSPACE/${ANDROID_APP_PATH} && ./check.sh -a src >>merong.txt
+                    cd $WORKSPACE/${ANDROID_APP_PATH} && echo "$ $CHECK_SHELL -a src" >>merong.txt
+                    cd $WORKSPACE/${ANDROID_APP_PATH} && $CHECK_SHELL -a src >>merong.txt
                     cd $WORKSPACE/${ANDROID_APP_PATH} && cat merong.txt | $A2PS -=book -B -q --medium=A4dj --borders=no -o out1.ps && $GS -sDEVICE=png256 -dNOPAUSE -dBATCH -dSAFER -dTextAlphaBits=4 -q -r300x300 -sOutputFile=out2.png out1.ps
                     if command -v $CONVERT >/dev/null; then
                         cd $WORKSPACE/${ANDROID_APP_PATH} && $CONVERT -trim out2.png $OUTPUT_FOLDER/$Obfuscation_SCREENSHOT
