@@ -441,12 +441,20 @@ if [ $IS_RELEASE -eq 1 ]; then
     srcConfigPath=$(cat $jsonConfig | $JQ '.ios.AppStore.sourceCodeAbsPath' | tr -d '"')
     srcFilePath=$(dirname "${srcConfigPath}")
     srcFileSuffix=$(cat $jsonConfig | $JQ '.ios.AppStore.sourceCodeFileSuffix' | tr -d '"')
-    realSrcFile="${APP_ROOT_PREFIX}/${srcFilePath}/${OUTPUT_FILENAME_ONLY}${srcFileSuffix}"
+    if [[ "$srcFilePath" == "{OutputFolder}" ]]; then
+      realSrcFile="${OUTPUT_FOLDER}/${OUTPUT_FILENAME_ONLY}${srcFileSuffix}"
+    else
+      realSrcFile="${APP_ROOT_PREFIX}/${srcFilePath}/${OUTPUT_FILENAME_ONLY}${srcFileSuffix}"
+    fi
   elif [[ "$INPUT_OS" == "android" ]]; then
     srcConfigPath=$(cat $jsonConfig | $JQ '.android.GoogleStore.sourceCodeAbsPath' | tr -d '"')
     srcFilePath=$(dirname "${srcConfigPath}")
     srcFileSuffix=$(cat $jsonConfig | $JQ '.android.GoogleStore.sourceCodeFileSuffix' | tr -d '"')
-    realSrcFile="${APP_ROOT_PREFIX}/${srcFilePath}/${OUTPUT_FILENAME_ONLY}${srcFileSuffix}"
+    if [[ "$srcFilePath" == "{OutputFolder}" ]]; then
+      realSrcFile="${OUTPUT_FOLDER}/${OUTPUT_FILENAME_ONLY}${srcFileSuffix}"
+    else
+      realSrcFile="${APP_ROOT_PREFIX}/${srcFilePath}/${OUTPUT_FILENAME_ONLY}${srcFileSuffix}"
+    fi
   fi
   realSrcPath=$(dirname "${realSrcFile}")
   if test ! -d "${realSrcPath}"; then
