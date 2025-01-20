@@ -20,7 +20,7 @@ APP_ROOT="${APP_ROOT_PREFIX}/${TOP_PATH}/${APP_ROOT_SUFFIX}"
 if test -z $ANDROID_APP_PATH; then
     ANDROID_APP_PATH="app"
 fi
-if [ -f ${WORKSPACE}/${ANDROID_APP_PATH}/version.properties ]; then
+if [ -f "${WORKSPACE}/${ANDROID_APP_PATH}/version.properties" ]; then
     MAJOR=$(grep '^major' ${WORKSPACE}/${ANDROID_APP_PATH}/version.properties | sed -e 's/.*=\([0-9]\)/\1/')
     MINOR=$(grep '^minor' ${WORKSPACE}/${ANDROID_APP_PATH}/version.properties | sed -e 's/.*=\([0-9]\)/\1/')
     POINT=$(grep '^point' ${WORKSPACE}/${ANDROID_APP_PATH}/version.properties | sed -e 's/.*=\([0-9]\)/\1/')
@@ -167,7 +167,7 @@ if [ $USING_SCP -eq 1 ]; then
     fi
 fi
 cd ${WORKSPACE}
-if [ -f ${WORKSPACE}/gradlew ]; then
+if [ -f "${WORKSPACE}/gradlew" ]; then
     chmod +x ${WORKSPACE}/gradlew
 fi
 if [ $isReactNativeEnabled -eq 1 ]; then
@@ -232,7 +232,7 @@ else
     KEYSTORE_FILE="${WORKSPACE}/${KEYSTORE_FILE}"
     if [ ! -f $KEYSTORE_FILE ]; then
         FOUND_FILE=$(find ${WORKSPACE} -name '*.keystore' -not -name '*debug*' | sed 's/^\.\///g')
-        if [ -f $FOUND_FILE ]; then
+        if [ -f "$FOUND_FILE" ]; then
             KEYSTORE_FILE="${FOUND_FILE}"
         fi
     fi
@@ -283,16 +283,19 @@ else
             makePathForAndroidOutput
             BUILD_APK_GOOGLESTORE="$BUILD_APK_OUTPUT"
         fi
-        if [ -f $BUILD_OUTPUT_FOLDER/$BUILD_APK_GOOGLESTORE ]; then
+        if [ -f "$BUILD_OUTPUT_FOLDER/$BUILD_APK_GOOGLESTORE" ]; then
             mv "$BUILD_OUTPUT_FOLDER/$BUILD_APK_GOOGLESTORE" "$OUTPUT_FOLDER/$APK_GOOGLESTORE"
             SIZE_GOOGLE_APP_FILE=$(du -sh ${OUTPUT_FOLDER}/${APK_GOOGLESTORE} | awk '{print $1}')
             SLACK_TEXT="${SLACK_TEXT}${HOSTNAME} > ${GRADLE_TASK_GOOGLESTORE} 배포용 다운로드(${SIZE_GOOGLE_APP_FILE}B): ${HTTPS_PREFIX}${APK_GOOGLESTORE}\n"
             MAIL_TEXT="${MAIL_TEXT}${GRADLE_TASK_GOOGLESTORE} 배포용 다운로드(${SIZE_GOOGLE_APP_FILE}B): <a href=${HTTPS_PREFIX}${APK_GOOGLESTORE}>${HTTPS_PREFIX}${APK_GOOGLESTORE}</a><br />"
 
             # Make APK from AAB bundle for integrity
-            if [[ $USING_BUNDLE_GOOGLESTORE -eq 1 && -f $BUNDLE_TOOL ]]; then
+            if [[ $USING_BUNDLE_GOOGLESTORE -eq 1 && -f "$BUNDLE_TOOL" ]]; then
                 BUNDLE_APK_FILE="$OUTPUT_FOLDER/${APK_GOOGLESTORE%.aab}.apks"
-                if [ -f $KEYSTORE_FILE ]; then
+                if [ -f "$BUNDLE_APK_FILE" ]; then
+                    rm -f "$BUNDLE_APK_FILE"
+                fi
+                if [ -f "$KEYSTORE_FILE" ]; then
                     $BUNDLE_TOOL build-apks --bundle="$OUTPUT_FOLDER/$APK_GOOGLESTORE" --output="$BUNDLE_APK_FILE" --mode=universal --ks="$KEYSTORE_FILE" --ks-pass="pass:$STOREPASS" --ks-key-alias="$KEYSTORE_ALIAS"
                 else
                     $BUNDLE_TOOL build-apks --bundle="$OUTPUT_FOLDER/$APK_GOOGLESTORE" --output="$BUNDLE_APK_FILE" --mode=universal
@@ -307,7 +310,7 @@ else
                     # Move APK(extract from AAB) to DocRoot
                     mv -f universal.apk "$BUNDLE_APK_FILE"
                     find . -name 'toc.*' -exec rm {} \;
-                    if [ -f $BUNDLE_APK2ZIP ]; then
+                    if [ -f "$BUNDLE_APK2ZIP" ]; then
                         rm $BUNDLE_APK2ZIP
                     fi
                 fi
@@ -315,8 +318,11 @@ else
 
                 # for debug build APK
                 if [ $USING_ADHOC_DEBUG -eq 1 ]; then
-                    if [[ "$DEBUG_APK_OUTPUT" == *".aab" ]]; then
+                    if [[ "$DEBUG_APK_OUTPUT" == *".aab" && -f "$BUNDLE_TOOL" ]]; then
                         BUNDLE_DEBUG_FILE="$DEBUG_OUTPUT_FOLDER/${DEBUG_APK_OUTPUT%.aab}.apks"
+                        if [ -f "$BUNDLE_DEBUG_FILE" ]; then
+                            rm -f "$BUNDLE_DEBUG_FILE"
+                        fi
                         $BUNDLE_TOOL build-apks --bundle="$DEBUG_OUTPUT_FOLDER/$DEBUG_APK_OUTPUT" --output="$BUNDLE_DEBUG_FILE" --mode=universal
                         BUNDLE_APK2ZIP="${BUNDLE_DEBUG_FILE%.apks}.zip"
                         mv -f "${BUNDLE_DEBUG_FILE}" "${BUNDLE_APK2ZIP}"
@@ -329,7 +335,7 @@ else
                             # Move APK(extract from AAB) to DocRoot
                             mv -f universal.apk "$BUNDLE_DEBUG_FILE"
                             find . -name 'toc.*' -exec rm {} \;
-                            if [ -f $BUNDLE_APK2ZIP ]; then
+                            if [ -f "$BUNDLE_APK2ZIP" ]; then
                                 rm $BUNDLE_APK2ZIP
                             fi
                         fi
@@ -389,38 +395,12 @@ else
             makePathForAndroidOutput
             BUILD_APK_ONESTORE="$BUILD_APK_OUTPUT"
         fi
-        if [ -f $BUILD_OUTPUT_FOLDER/$BUILD_APK_ONESTORE ]; then
+        if [ -f "$BUILD_OUTPUT_FOLDER/$BUILD_APK_ONESTORE" ]; then
             mv "$BUILD_OUTPUT_FOLDER/$BUILD_APK_ONESTORE" "$OUTPUT_FOLDER/$APK_ONESTORE"
             SIZE_ONE_APP_FILE=$(du -sh ${OUTPUT_FOLDER}/${APK_ONESTORE} | awk '{print $1}')
             SLACK_TEXT="${SLACK_TEXT}${HOSTNAME} > ${GRADLE_TASK_ONESTORE} 배포용 다운로드(${SIZE_ONE_APP_FILE}B): ${HTTPS_PREFIX}${APK_ONESTORE}\n"
             MAIL_TEXT="${MAIL_TEXT}${GRADLE_TASK_ONESTORE} 배포용 다운로드(${SIZE_ONE_APP_FILE}B): <a href=${HTTPS_PREFIX}${APK_ONESTORE}>${HTTPS_PREFIX}${APK_ONESTORE}</a><br />"
 
-            # Make APK from AAB bundle for integrity (used google play store only)
-            # if [[ $USING_BUNDLE_ONESTORE -eq 1 && -f $BUNDLE_TOOL ]]; then
-            #     BUNDLE_APK_FILE="$OUTPUT_FOLDER/${APK_ONESTORE%.aab}.apks"
-            #     if [ -f $KEYSTORE_FILE ]; then
-            #         $BUNDLE_TOOL build-apks --bundle="$OUTPUT_FOLDER/$APK_ONESTORE" --output="$BUNDLE_APK_FILE" --mode=universal --ks="$KEYSTORE_FILE" --ks-pass="pass:$STOREPASS" --ks-key-alias="$KEYSTORE_ALIAS"
-            #     else
-            #         $BUNDLE_TOOL build-apks --bundle="$OUTPUT_FOLDER/$APK_ONESTORE" --output="$BUNDLE_APK_FILE" --mode=universal
-            #     fi
-            #     BUNDLE_APK2ZIP="${BUNDLE_APK_FILE%.apks}.zip"
-            #     mv "${BUNDLE_APK_FILE}" "${BUNDLE_APK2ZIP}"
-            #     unzip "${BUNDLE_APK2ZIP}"
-            #     BUNDLE_APK_FILE="$OUTPUT_FOLDER/${APK_GOOGLESTORE%.aab}.apk"
-            #     if [ -f universal.apk ]; then
-            #         touch universal.apk
-
-            #         # Move APK(extract from AAB) to DocRoot
-            #         mv universal.apk "$BUNDLE_APK_FILE"
-            #         if [ -f toc.pd ]; then
-            #             rm toc.pd
-            #         fi
-            #         if [ -f $BUNDLE_APK2ZIP ]; then
-            #             rm $BUNDLE_APK2ZIP
-            #         fi
-            #     fi
-            #     SIZE_ONE_APP_FILE=$(du -sh ${BUNDLE_APK_FILE} | awk '{print $1}')
-            # fi
             if [ $USING_ADHOC_DEBUG -eq 1 -a -f "$DEBUG_OUTPUT_FOLDER/$DEBUG_APK_OUTPUT" -a ! -f "$OUTPUT_FOLDER/$APK_DEBUG" ]; then
                 APK_DEBUG="${APK_FILE_TITLE}${outputOneStoreSuffix%release.*}debug.apk"
                 mv "$DEBUG_OUTPUT_FOLDER/$DEBUG_APK_OUTPUT" "$OUTPUT_FOLDER/$APK_DEBUG"
@@ -470,36 +450,11 @@ else
             makePathForAndroidOutput
             APK_LIVESERVER="$BUILD_APK_OUTPUT"
         fi
-        if [ -f $BUILD_OUTPUT_FOLDER/$APK_LIVESERVER ]; then
+        if [ -f "$BUILD_OUTPUT_FOLDER/$APK_LIVESERVER" ]; then
             mv "$BUILD_OUTPUT_FOLDER/$APK_LIVESERVER" "$OUTPUT_FOLDER/$OUTPUT_APK_LIVESERVER"
             SIZE_LIVE_APP_FILE=$(du -sh ${OUTPUT_FOLDER}/${OUTPUT_APK_LIVESERVER} | awk '{print $1}')
             SLACK_TEXT="${SLACK_TEXT}${HOSTNAME} > ${GRADLE_TASK_LIVESERVER}(debug)(${SIZE_LIVE_APP_FILE}B): ${HTTPS_PREFIX}${OUTPUT_APK_LIVESERVER}\n"
             MAIL_TEXT="${MAIL_TEXT}${GRADLE_TASK_LIVESERVER}(debug)(${SIZE_LIVE_APP_FILE}B): <a href=${HTTPS_PREFIX}${OUTPUT_APK_LIVESERVER}>${HTTPS_PREFIX}${OUTPUT_APK_LIVESERVER}</a><br />"
-
-            # Make APK from AAB bundle for integrity (used google play store only)
-            # if [[ $USING_BUNDLE_LIVESERVER -eq 1 && -f $BUNDLE_TOOL ]]; then
-            #     BUNDLE_APK_FILE="$OUTPUT_FOLDER/${OUTPUT_APK_LIVESERVER%.aab}.apks"
-            #     if [ -f $KEYSTORE_FILE ]; then
-            #         $BUNDLE_TOOL build-apks --bundle="$OUTPUT_FOLDER/$OUTPUT_APK_LIVESERVER" --output="$BUNDLE_APK_FILE" --mode=universal --ks="$KEYSTORE_FILE" --ks-pass="pass:$STOREPASS" --ks-key-alias="$KEYSTORE_ALIAS"
-            #     else
-            #         $BUNDLE_TOOL build-apks --bundle="$OUTPUT_FOLDER/$OUTPUT_APK_LIVESERVER" --output="$BUNDLE_APK_FILE" --mode=universal
-            #     fi
-            #     BUNDLE_APK2ZIP="${BUNDLE_APK_FILE%.apks}.zip"
-            #     mv "${BUNDLE_APK_FILE}" "${BUNDLE_APK2ZIP}"
-            #     unzip "${BUNDLE_APK2ZIP}"
-            #     BUNDLE_APK_FILE="$OUTPUT_FOLDER/${APK_GOOGLESTORE%.aab}.apk"
-            #     if [ -f universal.apk ]; then
-            #         touch universal.apk
-            #         mv universal.apk "$BUNDLE_APK_FILE"
-            #         if [ -f toc.pd ]; then
-            #             rm toc.pd
-            #         fi
-            #         if [ -f $BUNDLE_APK2ZIP ]; then
-            #             rm $BUNDLE_APK2ZIP
-            #         fi
-            #     fi
-            #     SIZE_LIVE_APP_FILE=$(du -sh ${BUNDLE_APK_FILE} | awk '{print $1}')
-            # fi
         fi
     fi
     ##########
@@ -508,7 +463,7 @@ else
         if [ $USING_GMMSTB_MODE -eq 1 ]; then
             # Step 1.2: GMMS TB모드 켜기
             MAIN_ACTIVITY=$(find . -name 'MainActivity.java')
-            if [ -f $MAIN_ACTIVITY ]; then
+            if [ -f "$MAIN_ACTIVITY" ]; then
                 grep 'Config.IS_TB_GMMS_SERVER =' $MAIN_ACTIVITY
                 if [ -n $? ]; then
                 sed '/Config.IS_TB_GMMS_SERVER = .*/ a\
@@ -555,36 +510,11 @@ else
             makePathForAndroidOutput
             APK_TESTSERVER="$BUILD_APK_OUTPUT"
         fi
-        if [ -f $BUILD_OUTPUT_FOLDER/$APK_TESTSERVER ]; then
+        if [ -f "$BUILD_OUTPUT_FOLDER/$APK_TESTSERVER" ]; then
             mv "$BUILD_OUTPUT_FOLDER/$APK_TESTSERVER" "$OUTPUT_FOLDER/$OUTPUT_APK_TESTSERVER"
             SIZE_TEST_APP_FILE=$(du -sh ${OUTPUT_FOLDER}/${OUTPUT_APK_TESTSERVER} | awk '{print $1}')
             SLACK_TEXT="${SLACK_TEXT}${HOSTNAME} > ${GRADLE_TASK_TESTSERVER}(${RELEASE_TYPE_TESTSERVER})(${SIZE_TEST_APP_FILE}B): ${HTTPS_PREFIX}${OUTPUT_APK_TESTSERVER}\n"
             MAIL_TEXT="${MAIL_TEXT}${GRADLE_TASK_TESTSERVER}(${RELEASE_TYPE_TESTSERVER})(${SIZE_TEST_APP_FILE}B): <a href=${HTTPS_PREFIX}${OUTPUT_APK_TESTSERVER}>${HTTPS_PREFIX}${OUTPUT_APK_TESTSERVER}</a><br />"
-
-            # Make APK from AAB bundle for integrity (used google play store only)
-            # if [[ $USING_BUNDLE_TESTSERVER -eq 1 && -f $BUNDLE_TOOL ]]; then
-            #     BUNDLE_APK_FILE="$OUTPUT_FOLDER/${OUTPUT_APK_TESTSERVER%.aab}.apks"
-            #     if [ -f $KEYSTORE_FILE ]; then
-            #         $BUNDLE_TOOL build-apks --bundle="$OUTPUT_FOLDER/$OUTPUT_APK_TESTSERVER" --output="$BUNDLE_APK_FILE" --mode=universal --ks="$KEYSTORE_FILE" --ks-pass="pass:$STOREPASS" --ks-key-alias="$KEYSTORE_ALIAS"
-            #     else
-            #         $BUNDLE_TOOL build-apks --bundle="$OUTPUT_FOLDER/$OUTPUT_APK_TESTSERVER" --output="$BUNDLE_APK_FILE" --mode=universal
-            #     fi
-            #     BUNDLE_APK2ZIP="${BUNDLE_APK_FILE%.apks}.zip"
-            #     mv "${BUNDLE_APK_FILE}" "${BUNDLE_APK2ZIP}"
-            #     unzip "${BUNDLE_APK2ZIP}"
-            #     BUNDLE_APK_FILE="$OUTPUT_FOLDER/${APK_GOOGLESTORE%.aab}.apk"
-            #     if [ -f universal.apk ]; then
-            #         touch universal.apk
-            #         mv universal.apk "$BUNDLE_APK_FILE"
-            #         if [ -f toc.pd ]; then
-            #             rm toc.pd
-            #         fi
-            #         if [ -f $BUNDLE_APK2ZIP ]; then
-            #             rm $BUNDLE_APK2ZIP
-            #         fi
-            #     fi
-            #     SIZE_TEST_APP_FILE=$(du -sh ${BUNDLE_APK_FILE} | awk '{print $1}')
-            # fi
         fi
     fi
     fi
@@ -594,22 +524,22 @@ fi
 if [ $PRODUCE_OUTPUT_USE -eq 0 ]; then
     if [ $OUTPUT_AND_EXIT_USE -ne 1 ]; then
         # Exit here with remove all binary outputs
-        if [ -f $OUTPUT_FOLDER/$APK_GOOGLESTORE ]; then
+        if [ -f "$OUTPUT_FOLDER/$APK_GOOGLESTORE" ]; then
             rm -f $OUTPUT_FOLDER/$APK_GOOGLESTORE
             if [ $USING_BUNDLE_GOOGLESTORE -eq 1 ]; then
                 BUNDLE_APK_FILE="$OUTPUT_FOLDER/${APK_GOOGLESTORE%.aab}.apk"
-                if [ -f $BUNDLE_APK_FILE ]; then
+                if [ -f "$BUNDLE_APK_FILE" ]; then
                     rm -f $OUTPUT_FOLDER/$BUNDLE_APK_FILE
                 fi
             fi
         fi
-        if [ -f $OUTPUT_FOLDER/$APK_ONESTORE ]; then
+        if [ -f "$OUTPUT_FOLDER/$APK_ONESTORE" ]; then
             rm -f $OUTPUT_FOLDER/$APK_ONESTORE
         fi
-        if [ -f $OUTPUT_FOLDER/$OUTPUT_APK_LIVESERVER ]; then
+        if [ -f "$OUTPUT_FOLDER/$OUTPUT_APK_LIVESERVER" ]; then
             rm -f $OUTPUT_FOLDER/$OUTPUT_APK_LIVESERVER
         fi
-        if [ -f $OUTPUT_FOLDER/$APK_TESTSERVER ]; then
+        if [ -f "$OUTPUT_FOLDER/$APK_TESTSERVER" ]; then
             rm -f $OUTPUT_FOLDER/$OUTPUT_APK_TESTSERVER
         fi
     fi
@@ -618,14 +548,14 @@ elif [ $DEBUGGING -eq 0 ]; then
     if [ $USING_SCP -eq 1 ]; then
     ###################
     # Step 2.99: Send file to NAS (app.company.com)
-    if [ -f ${OUTPUT_FOLDER}/${APK_GOOGLESTORE} ]; then
+    if [ -f "${OUTPUT_FOLDER}/${APK_GOOGLESTORE}" ]; then
         if [ $(sendFile ${OUTPUT_FOLDER}/${APK_GOOGLESTORE} ${NEO2UA_OUTPUT_FOLDER}) -eq 0 ]; then
             #   echo "Failed to send file"
             echo "TODO: **NEED** to resend this file => ${OUTPUT_FOLDER}/${APK_GOOGLESTORE} to ${NEO2UA_OUTPUT_FOLDER}"
         fi
         if [ $USING_BUNDLE_GOOGLESTORE -eq 1 ]; then
             SCP_BUNDLE_APK_FILE="$OUTPUT_FOLDER/${APK_GOOGLESTORE%.aab}.apk"
-            if [ -f ${SCP_BUNDLE_APK_FILE} ]; then
+            if [ -f "${SCP_BUNDLE_APK_FILE}" ]; then
                 if [ $(sendFile ${SCP_BUNDLE_APK_FILE} ${NEO2UA_OUTPUT_FOLDER}) -eq 0 ]; then
                     #   echo "Failed to send file"
                     echo "TODO: **NEED** to resend this file => ${SCP_BUNDLE_APK_FILE} to ${NEO2UA_OUTPUT_FOLDER}"
@@ -633,19 +563,19 @@ elif [ $DEBUGGING -eq 0 ]; then
             fi
         fi
     fi
-    if [ -f ${OUTPUT_FOLDER}/${APK_ONESTORE} ]; then
+    if [ -f "${OUTPUT_FOLDER}/${APK_ONESTORE}" ]; then
         if [ $(sendFile ${OUTPUT_FOLDER}/${APK_ONESTORE} ${NEO2UA_OUTPUT_FOLDER}) -eq 0 ]; then
             #   echo "Failed to send file"
             echo "TODO: **NEED** to resend this file => ${OUTPUT_FOLDER}/${APK_ONESTORE} to ${NEO2UA_OUTPUT_FOLDER}"
         fi
     fi
-    if [ -f ${OUTPUT_FOLDER}/${OUTPUT_APK_LIVESERVER} ]; then
+    if [ -f "${OUTPUT_FOLDER}/${OUTPUT_APK_LIVESERVER}" ]; then
         if [ $(sendFile ${OUTPUT_FOLDER}/${OUTPUT_APK_LIVESERVER} ${NEO2UA_OUTPUT_FOLDER}) -eq 0 ]; then
             #   echo "Failed to send file"
             echo "TODO: **NEED** to resend this file => ${OUTPUT_FOLDER}/${OUTPUT_APK_LIVESERVER} to ${NEO2UA_OUTPUT_FOLDER}"
         fi
     fi
-    if [ -f ${OUTPUT_FOLDER}/${OUTPUT_APK_TESTSERVER} ]; then
+    if [ -f "${OUTPUT_FOLDER}/${OUTPUT_APK_TESTSERVER}" ]; then
         if [ $(sendFile ${OUTPUT_FOLDER}/${OUTPUT_APK_TESTSERVER} ${NEO2UA_OUTPUT_FOLDER}) -eq 0 ]; then
             #   echo "Failed to send file"
             echo "TODO: **NEED** to resend this file => ${OUTPUT_FOLDER}/${OUTPUT_APK_TESTSERVER} to ${NEO2UA_OUTPUT_FOLDER}"
@@ -658,7 +588,7 @@ fi
 if [ $DEBUGGING -eq 0 ]; then
     USING_OBFUSCATION=$(test $(cat $jsonConfig | $JQ '.android.usingObfuscation') = true && echo 1 || echo 0)
     if [ $USING_OBFUSCATION -eq 1 ]; then
-        if [ -f ${OUTPUT_FOLDER}/${APK_GOOGLESTORE} ]; then
+        if [ -f "${OUTPUT_FOLDER}/${APK_GOOGLESTORE}" ]; then
             CHECK_SHELL="$WORKSPACE/${ANDROID_APP_PATH}/check.sh"
             if test ! -f "$CHECK_SHELL"; then
                 CHECK_SHELL=$(find $WORKSPACE -name 'check.sh' | head -1)
@@ -686,9 +616,9 @@ if [ $DEBUGGING -eq 0 ]; then
                 fi
             fi
 
-            if [ -f $WORKSPACE/$Obfuscation_INPUT_FILE ]; then
+            if [ -f "$WORKSPACE/$Obfuscation_INPUT_FILE" ]; then
                 cp -f $WORKSPACE/$Obfuscation_INPUT_FILE $OUTPUT_FOLDER/$Obfuscation_OUTPUT_FILE
-            elif [ -f ${APP_ROOT_PREFIX}/${TOP_PATH}/$Obfuscation_INPUT_FILE ]; then
+            elif [ -f "${APP_ROOT_PREFIX}/${TOP_PATH}/$Obfuscation_INPUT_FILE" ]; then
                 cp -f ${APP_ROOT_PREFIX}/${TOP_PATH}/$Obfuscation_INPUT_FILE $OUTPUT_FOLDER/$Obfuscation_OUTPUT_FILE
             fi
 
