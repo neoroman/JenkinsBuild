@@ -219,13 +219,23 @@ if [ $DEBUGGING -eq 0 ]; then
             echo "Warning: should modify ``ExportOptions.plist`` for binary(IPK) of App Store"
             echo ""
         fi
-        if [ ! -f $EXPORT_PLIST ]; then
+        if [ ! -f "$EXPORT_PLIST" ]; then
             APPSTORE_BUNDLE_IDENTIFIER=$(cat $jsonConfig | $JQ '.ios.AppStore.bundleId' | tr -d '"')
             APPSTORE_TEAM_ID=$(cat $jsonConfig | $JQ '.ios.AppStore.teamId' | tr -d '"')
             APPSTORE_KEY_STRING=$(cat $jsonConfig | $JQ '.ios.AppStore.appKeyString' | tr -d '"')
             APPSTORE_NOTIFICATION_KEY_STRING=$(cat $jsonConfig | $JQ '.ios.AppStore.notificationKeyString' | tr -d '"')
             printf "<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n<"'!'"DOCTYPE plist PUBLIC \"-//Apple//DTD PLIST 1.0//EN\" \"http://www.apple.com/DTDs/PropertyList-1.0.dtd\">\n<plist version=\"1.0\">\n<dict>\n\t<key>method</key>\n\t<string>app-store-connect</string>\n\t<key>provisioningProfiles</key>\n\t<dict>\n\t\t<key>${APPSTORE_BUNDLE_IDENTIFIER}</key>\n\t\t<string>${APPSTORE_KEY_STRING}</string>\n\t\t<key>${APPSTORE_BUNDLE_IDENTIFIER}.NotificationServiceExtension</key>\n\t\t<string>${APPSTORE_NOTIFICATION_KEY_STRING}</string>\n\t</dict>\n\t<key>signingCertificate</key>\n\t<string>iPhone Distribution</string>\n\t<key>signingStyle</key>\n\t<string>manual</string>\n\t<key>stripSwiftSymbols</key>\n\t<true/>\n\t<key>teamID</key>\n\t<string>${APPSTORE_TEAM_ID}</string>\n\t<key>uploadBitcode</key>\n\t<false/>\n\t<key>uploadSymbols</key>\n\t<true/>\n</dict>\n</plist>\n" \
             >$EXPORT_PLIST
+        elif [ -f "$EXPORT_PLIST" ]; then
+            APPSTORE_BUNDLE_IDENTIFIER=$(cat $jsonConfig | $JQ '.ios.AppStore.bundleId' | tr -d '"')
+            APPSTORE_KEY_STRING=$(/usr/libexec/PlistBuddy -c "Print :provisioningProfiles:${APPSTORE_BUNDLE_IDENTIFIER}" $EXPORT_PLIST)
+            if [[ "$APPSTORE_KEY_STRING" == "company_iphone_Appstore" ]]; then
+                APPSTORE_TEAM_ID=$(cat $jsonConfig | $JQ '.ios.AppStore.teamId' | tr -d '"')
+                APPSTORE_KEY_STRING=$(cat $jsonConfig | $JQ '.ios.AppStore.appKeyString' | tr -d '"')
+                APPSTORE_NOTIFICATION_KEY_STRING=$(cat $jsonConfig | $JQ '.ios.AppStore.notificationKeyString' | tr -d '"')
+                printf "<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n<"'!'"DOCTYPE plist PUBLIC \"-//Apple//DTD PLIST 1.0//EN\" \"http://www.apple.com/DTDs/PropertyList-1.0.dtd\">\n<plist version=\"1.0\">\n<dict>\n\t<key>method</key>\n\t<string>app-store-connect</string>\n\t<key>provisioningProfiles</key>\n\t<dict>\n\t\t<key>${APPSTORE_BUNDLE_IDENTIFIER}</key>\n\t\t<string>${APPSTORE_KEY_STRING}</string>\n\t\t<key>${APPSTORE_BUNDLE_IDENTIFIER}.NotificationServiceExtension</key>\n\t\t<string>${APPSTORE_NOTIFICATION_KEY_STRING}</string>\n\t</dict>\n\t<key>signingCertificate</key>\n\t<string>iPhone Distribution</string>\n\t<key>signingStyle</key>\n\t<string>manual</string>\n\t<key>stripSwiftSymbols</key>\n\t<true/>\n\t<key>teamID</key>\n\t<string>${APPSTORE_TEAM_ID}</string>\n\t<key>uploadBitcode</key>\n\t<false/>\n\t<key>uploadSymbols</key>\n\t<true/>\n</dict>\n</plist>\n" \
+                >$EXPORT_PLIST
+            fi
         fi
         # $XCODE $XCODE_OPTION "${XCODE_WORKSPACE}" -scheme "${SCHEME_APPSTORE}" -sdk iphoneos -configuration AppStoreDistribution archive -archivePath ${ARCHIVE_PATH}
         $XCODE $XCODE_OPTION "${XCODE_WORKSPACE}" -scheme "${SCHEME_APPSTORE}" -sdk iphoneos -skip-test-configuration -configuration archive -archivePath ${ARCHIVE_PATH}
@@ -253,8 +263,22 @@ if [ $DEBUGGING -eq 0 ]; then
         fi
     fi
     if [ $USING_ENTERPRISE -eq 1 ]; then
+        BUILD_CONFIG=""
+        # TODO: add condition for flutter or react-native
+        # # xcodebuild -list 실행 및 Scheme 목록 추출
+        # SCHEMES=$(xcodebuild -list | awk '/Schemes:/ {found=1; next} found && NF')
+        # # "${SCHEME_ENTER}" Scheme 확인
+        # ENTER_SCHEME=$(echo "$SCHEMES" | tr -d " " | grep -E "^${SCHEME_ENTER}$")
+        # # 'enter'가 없으면 다른 Scheme 선택 (첫 번째 값)
+        # if [[ -z "$ENTER_SCHEME" ]]; then
+        #     TMP_SCHEME_ENTER="${SCHEME_ENTER}"
+        #     SCHEME_ENTER=$(echo "$SCHEMES" | head -n 1 | sed 's/^[ \t]*//')
+        #     if xcodebuild -list | awk "/Build Configurations:/ {flag=1; next} /^[[:space:]]*$/ {flag=0} flag && /Release-${TMP_SCHEME_ENTER}/"; then
+        #         BUILD_CONFIG="-configuration Release-${TMP_SCHEME_ENTER}"
+        #     fi
+        # fi
         # Step 1.3: Build target for Enterprise
-        $XCODE $XCODE_OPTION "${XCODE_WORKSPACE}" -scheme "${SCHEME_ENTER}" -destination "generic/platform=iOS" archive ${xcodeArgument}/${SCHEME_ENTER} -verbose
+        $XCODE $XCODE_OPTION "${XCODE_WORKSPACE}" -scheme "${SCHEME_ENTER}" ${BUILD_CONFIG} -destination "generic/platform=iOS" archive ${xcodeArgument}/${SCHEME_ENTER} -verbose
     fi
     if [ $USING_ENTER4WEB -eq 1 ]; then
         # Step 1.4: Build target for Enterprise
