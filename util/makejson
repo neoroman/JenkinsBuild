@@ -90,15 +90,9 @@ if [[ "$lastJsonFile" != "" ]]; then
       GIT_LAST_LOG_ORG=$(cd ${WORKSPACE} && $GIT log --date=format:"%Y%m%d %H:%M" --pretty=format:"<li><span class=\"tit\">%ad</span><p class=\"txt\">%s</p></li>" --no-merges ${GIT_BRANCH} --since="${lastBuildDate}" | sort -r | uniq)
       GIT_LAST_LOG=$(echo ${GIT_LAST_LOG_ORG} | sed -e "s/\(${jiraProjectKey}-[0-9]*\)/<a href=${jiraUrl}\1>\1<\/a>/g")
     else
-      if [[ "$INPUT_OS" == "ios" ]]; then
-        GIT_LAST_LOG_ORG=$(cd ${WORKSPACE} && $GIT log --pretty=format:"<li><span class=\"tit\">%h▶︎</span><p class=\"txt\">%s by %cn</p></li>" --no-merges ${GIT_BRANCH} --since="${lastBuildDate}")
-        GIT_LAST_LOG=$(echo ${GIT_LAST_LOG_ORG} | sed -e "s/\([0-9A-Za-z]*\)▶︎/<a href=${gitUrl}\1>\1<\/a>/g")
-        GIT_LAST_LOG=$(echo ${GIT_LAST_LOG} | sed -e "s/\(${jiraProjectKey}-[0-9]*\)/<a href=${jiraUrl}\1>\1<\/a>/g")
-      else
-        GIT_LAST_LOG_ORG=$(cd ${WORKSPACE} && $GIT log --pretty=format:"<li><span class=\"tit\">%h▶︎</span><p class=\"txt\">%s by %cn</p></li>" --no-merges ${GIT_BRANCH} --since="${lastBuildDate}")
-        GIT_LAST_LOG=$(echo ${GIT_LAST_LOG_ORG} | sed -e "s/\([0-9A-Za-z]*\)▶︎/<a href=${gitUrl}\1>\1<\/a>/g")
-        GIT_LAST_LOG=$(echo ${GIT_LAST_LOG} | sed -e "s/\(${jiraProjectKey}-[0-9]*\)/<a href=${jiraUrl}\1>\1<\/a>/g")
-      fi
+      GIT_LAST_LOG_ORG=$(cd ${WORKSPACE} && $GIT log --pretty=format:"<li><span class=\"tit\">%h▶︎</span><p class=\"txt\">%s by %cn</p></li>" --no-merges ${GIT_BRANCH} --since="${lastBuildDate}")
+      GIT_LAST_LOG=$(echo ${GIT_LAST_LOG_ORG} | sed -e "s/\([0-9A-Za-z]*\)▶︎/<a href=${gitUrl}\1>\1<\/a>/g")
+      GIT_LAST_LOG=$(echo ${GIT_LAST_LOG} | sed -e "s/\(${jiraProjectKey}-[0-9]*\)/<a href=${jiraUrl}\1>\1<\/a>/g")
     fi
 
     # DONE: Add gitLastLogs: [Array] here
