@@ -108,3 +108,6 @@ if [ -f $OUTPUT_FOLDER/$OUTPUT_FILENAME_JSON ]; then
   fi
   ##############################################################################
 fi
+# Export BINARY_PREFIX after platform scripts to ensure VERSION_STRING is set
+export BINARY_PREFIX="${OUTPUT_PREFIX}${VERSION_STRING}_${FILE_TODAY}"
+export OUTPUT_FOLDER
