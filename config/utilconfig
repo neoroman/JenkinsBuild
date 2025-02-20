@@ -94,6 +94,7 @@ if [[ "$(uname)" == "Darwin" ]]; then
     if test -z "$($FVM list | grep -F "$FLUTTER_VERSION")"; then
       $FVM install "$FLUTTER_VERSION" --setup || { echo "Failed to set up Flutter"; exit 1; }
     fi
+    yes | $FVM use "$FLUTTER_VERSION" || true
     FlutterBin="$FVM flutter"
     export FlutterBin
   fi
