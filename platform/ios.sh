@@ -264,19 +264,22 @@ if [ $DEBUGGING -eq 0 ]; then
     fi
     if [ $USING_ENTERPRISE -eq 1 ]; then
         BUILD_CONFIG=""
-        # TODO: add condition for flutter or react-native
-        # # xcodebuild -list 실행 및 Scheme 목록 추출
-        # SCHEMES=$(xcodebuild -list | awk '/Schemes:/ {found=1; next} found && NF')
-        # # "${SCHEME_ENTER}" Scheme 확인
-        # ENTER_SCHEME=$(echo "$SCHEMES" | tr -d " " | grep -E "^${SCHEME_ENTER}$")
-        # # 'enter'가 없으면 다른 Scheme 선택 (첫 번째 값)
-        # if [[ -z "$ENTER_SCHEME" ]]; then
-        #     TMP_SCHEME_ENTER="${SCHEME_ENTER}"
-        #     SCHEME_ENTER=$(echo "$SCHEMES" | head -n 1 | sed 's/^[ \t]*//')
-        #     if xcodebuild -list | awk "/Build Configurations:/ {flag=1; next} /^[[:space:]]*$/ {flag=0} flag && /Release-${TMP_SCHEME_ENTER}/"; then
-        #         BUILD_CONFIG="-configuration Release-${TMP_SCHEME_ENTER}"
-        #     fi
-        # fi
+        # DONE: add condition for flutter or react-native
+        if [ -d "$WORKSPACE/ios" ]; then
+            cd "$WORKSPACE/ios"
+            # xcodebuild -list 실행 및 Scheme 목록 추출
+            SCHEMES=$(xcodebuild -list | awk '/Schemes:/ {found=1; next} found && NF')
+            # "${SCHEME_ENTER}" Scheme 확인
+            ENTER_SCHEME=$(echo "$SCHEMES" | tr -d " " | grep -E "^${SCHEME_ENTER}$")
+            # 'enter'가 없으면 다른 Scheme 선택 (첫 번째 값)
+            if [[ -z "$ENTER_SCHEME" ]]; then
+                TMP_SCHEME_ENTER="${SCHEME_ENTER}"
+                SCHEME_ENTER=$(echo "$SCHEMES" | head -n 1 | sed 's/^[ \t]*//')
+                if xcodebuild -list | awk "/Build Configurations:/ {flag=1; next} /^[[:space:]]*$/ {flag=0} flag && /Release-${TMP_SCHEME_ENTER}/"; then
+                    BUILD_CONFIG="-configuration Release-${TMP_SCHEME_ENTER}"
+                fi
+            fi
+        fi
         # Step 1.3: Build target for Enterprise
         $XCODE $XCODE_OPTION "${XCODE_WORKSPACE}" -scheme "${SCHEME_ENTER}" ${BUILD_CONFIG} -destination "generic/platform=iOS" archive ${xcodeArgument}/${SCHEME_ENTER} -verbose
     fi
