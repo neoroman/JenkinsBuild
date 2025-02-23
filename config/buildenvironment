@@ -22,11 +22,12 @@ fi
 if [ $CUSTOM_LANG -eq 1 ]; then
     lang_file="${CUSTOM_LANG_PATH}" # language file for distribution site
     filename="$(basename $lang_file)"
-    cp $lang_file $DEFAULT_LANG_PATH/$filename
     fileonly="${filename%%.*}"
-    language="${fileonly#*_}" # default language, ex) ko, en, ...
+    # Extract the language code, handling both 'lang_ko', 'lang_student_ko', 'lang_ko-student', and 'lang_ko_student'
+    language=$(echo $fileonly | awk -F'[_-]' '{print $NF}')
     TEMP_JSON=$($JQ '.LANGUAGE = "'$language'"' $DEFAULT_LANG_JSON)
     echo "${TEMP_JSON}" > $DEFAULT_LANG_JSON
+    cp $lang_file $DEFAULT_LANG_PATH/lang_${language}.json
 else
     language=$(cat $DEFAULT_LANG_JSON | $JQ '.LANGUAGE' | tr -d '"')
     lang_file="${APP_ROOT_PREFIX}/${TOP_PATH}/lang/lang_${language}.json"
