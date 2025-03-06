@@ -349,17 +349,35 @@ if [ $USING_APPSTORE -eq 1 -a $IS_RELEASE -eq 1 ]; then
                     if test ! -f "$CHECK_SHELL"; then
                         CHECK_SHELL=$(find $WORKSPACE -name 'check.sh' | head -1)
                     fi
-
-                    if command -v $A2PS >/dev/null && command -v $GS >/dev/null; then
+                fi
+                if [ -f "$CHECK_SHELL" ]; then
+                    REQUIRED_COMMANDS="a2ps gs convert"
+                    MISSING_COMMANDS=""
+                    for cmd in $REQUIRED_COMMANDS; do
+                        if ! command -v $cmd >/dev/null 2>&1; then
+                            MISSING_COMMANDS="$MISSING_COMMANDS $cmd"
+                        fi
+                    done
+                    
+                    if [ ! -z "$MISSING_COMMANDS" ]; then
+                        echo "Warning: Required commands not found:$MISSING_COMMANDS"
+                        echo "Please install missing commands using: brew install a2ps ghostscript imagemagick"
+                    else
+                        A2PS=$(command -v a2ps)
+                        GS=$(command -v gs)
+                        CONVERT=$(command -v convert)
+                        
                         cd $WORKSPACE && echo "${systemName}:ios appDevTeam$ $CHECK_SHELL -i ./${PROJECT_NAME}" >merong.txt
                         cd $WORKSPACE && $CHECK_SHELL -i ./${PROJECT_NAME} >>merong.txt
-                        cd $WORKSPACE && cat merong.txt | $A2PS -=book -B -q --medium=A4dj --borders=no -o out1.ps && $GS -sDEVICE=png256 -dNOPAUSE -dBATCH -dSAFER -dTextAlphaBits=4 -q -r300x300 -sOutputFile=out2.png out1.ps
-                        if command -v $CONVERT >/dev/null; then
-                            cd $WORKSPACE && $CONVERT -trim out2.png $OUTPUT_FOLDER/$OUTPUT_FILENAME_APPSTORE_IX_SHIELD_CHECK
-                        else
-                            cd $WORKSPACE && cp out2.png $OUTPUT_FOLDER/$OUTPUT_FILENAME_APPSTORE_IX_SHIELD_CHECK
+
+                        if [ -f merong.txt ]; then
+                            cd $WORKSPACE && $A2PS -=book -B -q --medium=A4dj --borders=no -o out1.ps merong.txt && \
+                            $GS -sDEVICE=png256 -dNOPAUSE -dBATCH -dSAFER -dTextAlphaBits=4 -q -r300x300 -sOutputFile=out2.png out1.ps && \
+                            $CONVERT -trim out2.png $OUTPUT_FOLDER/$OUTPUT_FILENAME_APPSTORE_IX_SHIELD_CHECK
+                            
+                            # Cleanup
+                            cd $WORKSPACE && rm -f out[12].png out[12].ps merong.txt
                         fi
-                        cd $WORKSPACE && rm -f out[12].png out[12].ps merong.txt
                     fi
                 fi
             fi
