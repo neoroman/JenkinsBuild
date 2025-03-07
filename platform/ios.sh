@@ -371,7 +371,7 @@ if [ $USING_APPSTORE -eq 1 -a $IS_RELEASE -eq 1 ]; then
                         cd $WORKSPACE && $CHECK_SHELL -i ./${PROJECT_NAME} >>merong.txt
 
                         if [ -f merong.txt ]; then
-                            cd $WORKSPACE && $A2PS -=book -B -q --medium=A4dj --borders=no -o out1.ps merong.txt && \
+                            cd $WORKSPACE && $A2PS -=book -B -q --medium=A4 --borders=no -o out1.ps merong.txt && \
                             $GS -sDEVICE=png256 -dNOPAUSE -dBATCH -dSAFER -dTextAlphaBits=4 -q -r300x300 -sOutputFile=out2.png out1.ps && \
                             $CONVERT -trim out2.png $OUTPUT_FOLDER/$OUTPUT_FILENAME_APPSTORE_IX_SHIELD_CHECK
                             

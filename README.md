@@ -19,6 +19,7 @@ Language: BASH Shell Script
 ## Installation
 - First you should get it into your iOS or Android source working copy like following:
   ```
+    git config --local submodule.rebase true
     git submodule add https://github.com/neoroman/JenkinsBuild.git jenkins
     git submodule init
     git submodule update
@@ -37,6 +38,7 @@ Language: BASH Shell Script
 
 - Update submodule for ``iOS`` into ``{WebServer}/{DocumentRoot}/NeoRoman/AppProject``
   ```
+    git config --local submodule.rebase true
     git config -f .gitmodules submodule.jenkins.url https://github.com/neoroman/JenkinsBuild.git
     git submodule sync
     git submodule update --force --recursive --init --remote
@@ -46,6 +48,7 @@ Language: BASH Shell Script
   ```
 - Update submodule for ``Android`` into ``{WebServer}/{DocumentRoot}/NeoRoman/AppProject``
   ```
+    git config --local submodule.rebase true
     git config -f .gitmodules submodule.jenkins.url https://github.com/neoroman/JenkinsBuild.git
     git submodule sync
     git submodule update --force --recursive --init --remote

@@ -216,6 +216,20 @@ while [[ $# -gt 0 ]]; do
     fi
     exit
     ;;
+  "-obfuscation"|"--obfuscation-test")
+    INPUT_OS="$2"
+    case "$2" in
+        "ios")
+            shift
+            OBFUSCATION_TEST="ios"
+            ;;
+        *)
+            echo "Error: Invalid obfuscation test target. Use 'ios' or 'android'."
+            exit 1
+            ;;
+    esac
+    shift
+    ;;
   * | -h | --help) # unknown option
     shift          # past argument
     echo "Usage: $SCRIPT_NAME -p {ios|android} -d"

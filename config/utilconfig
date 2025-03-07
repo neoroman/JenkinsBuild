@@ -28,7 +28,7 @@ fi
 USING_JSON=1
 ###################
 if test -z "${INPUT_OS}"; then
-    $SCRIPT_NAME -h
+    ${TOP_DIR}/${SCRIPT_NAME} -h
     exit
 fi
 if [ $DEBUGGING -eq 1 ]; then
