@@ -40,7 +40,7 @@ fi
 ################################################################################
 ##
 # Update distribution site source ##############################################
-if [ -f ${APP_ROOT_PREFIX}/${TOP_PATH}/.htaccess ]; then
+if [ -z "$OBFUSCATION_TEST" -a -f ${APP_ROOT_PREFIX}/${TOP_PATH}/.htaccess ]; then
   if [ -f ${APP_ROOT_PREFIX}/${TOP_PATH}/installOrUpdate.sh ]; then
       if test -n "$sudoPassword"; then
         sudo -S su ${jenkinsUser} -c "${APP_ROOT_PREFIX}/${TOP_PATH}/installOrUpdate.sh  2>&1" <<<"${sudoPassword}"
