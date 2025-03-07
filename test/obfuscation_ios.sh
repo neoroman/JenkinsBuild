@@ -39,9 +39,9 @@ test_obfuscation() {
         $CHECK_SHELL -i ./${PROJECT_NAME} >> merong.txt
         
         if [ -f merong.txt ]; then
-            $A2PS -=book -B -q --medium=A4 --borders=no -o out1.ps merong.txt && \
+            $A2PS --columns=1 -B -q --medium=A4 --borders=no -o out1.ps merong.txt && \
             $GS -sDEVICE=png256 -dNOPAUSE -dBATCH -dSAFER -dTextAlphaBits=4 -q -r300x300 -sOutputFile=out2.png out1.ps && \
-            $CONVERT -trim out2.png $OUTPUT_FOLDER/IxShieldCheck.png
+            $CONVERT -trim -rotate 90 -bordercolor white -border 5 out2.png $OUTPUT_FOLDER/IxShieldCheck.png
             
             if [ -f "$OUTPUT_FOLDER/IxShieldCheck.png" ]; then
                 echo "✅ IxShield check screenshot generated"
