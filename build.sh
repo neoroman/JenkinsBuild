@@ -68,6 +68,21 @@ elif [[ "$INPUT_OS" == "ios" ]]; then
     ############################################################################
     ##
     ############################################################################
+    if [ ! -z "$OBFUSCATION_TEST" ]; then
+      case "$OBFUSCATION_TEST" in
+          "ios")
+              if [ -f "${TOP_DIR}/test/obfuscation_ios.sh" ]; then
+                  ${TOP_DIR}/test/obfuscation_ios.sh
+                  exit $?
+              else
+                  echo "Error: iOS obfuscation test script not found"
+                  exit 1
+              fi
+              ;;
+      esac
+    fi
+    ##
+    ############################################################################
     . ${TOP_DIR}/platform/ios.sh      ### Import iOS Shell Script ##############
     ############################################################################
 fi
