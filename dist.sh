@@ -182,15 +182,31 @@ if [ -z "$(git status --untracked-files=no --porcelain --ignore-submodules)" ]; 
               echo ""
               CURRENT_BRANCH=$(git rev-parse --abbrev-ref HEAD)
               if [ $UPDATE_VERSION -eq 1 -a $DRY_RUN -eq 0 ]; then
-                git commit -am "Update version $Type v${MARKET_VERSION} build($BUILD_NUMBER) for $OS"
-                git push $REMOTE_REPO $CURRENT_BRANCH
-                echo " ┍━━━ commit & push version changed ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━┑"
-                echo "    git commit -am \"Update version $Type v${MARKET_VERSION} build($BUILD_NUMBER) for $OS\" ..... [DONE]"
-                echo "    git push $REMOTE_REPO $CURRENT_BRANCH ..... [DONE]"
-                echo " ┕━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━┙"
+                  # Check for untracked files that need to be added
+                  UNTRACKED_FILES=$(git ls-files --others --exclude-standard)
+                  if [ ! -z "$UNTRACKED_FILES" ]; then
+                      git add $UNTRACKED_FILES
+                      echo " ┍━━━ adding new files ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━┑"
+                      echo "    git add new files ..... [DONE]"
+                      echo "    Added: $UNTRACKED_FILES"
+                      echo " ┕━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━┙"
+                  fi
+                  
+                  git commit -am "Update version $Type v${MARKET_VERSION} build($BUILD_NUMBER) for $OS"
+                  git push $REMOTE_REPO $CURRENT_BRANCH
+                  echo " ┍━━━ commit & push version changed ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━┑"
+                  echo "    git commit -am \"Update version $Type v${MARKET_VERSION} build($BUILD_NUMBER) for $OS\" ..... [DONE]"
+                  echo "    git push $REMOTE_REPO $CURRENT_BRANCH ..... [DONE]"
+                  echo " ┕━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━┙"
               else
-                echo "(DEBUG) command: git commit -am \"Update version $Type v${MARKET_VERSION} build($BUILD_NUMBER) for $OS\""
-                echo "(DEBUG) command: git push ${REMOTE_REPO} ${CURRENT_BRANCH}"
+                  # Check for untracked files to display in debug mode
+                  UNTRACKED_FILES=$(git ls-files --others --exclude-standard)
+                  if [ ! -z "$UNTRACKED_FILES" ]; then
+                      echo "(DEBUG) command: git add $UNTRACKED_FILES"
+                  fi
+                  
+                  echo "(DEBUG) command: git commit -am \"Update version $Type v${MARKET_VERSION} build($BUILD_NUMBER) for $OS\""
+                  echo "(DEBUG) command: git push ${REMOTE_REPO} ${CURRENT_BRANCH}"
               fi
             break;;
           [Nn]* ) 
