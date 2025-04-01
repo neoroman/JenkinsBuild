@@ -619,7 +619,7 @@ if [ $DEBUGGING -eq 0 ]; then
                             
                             cd $WORKSPACE && $A2PS --columns=1 -B -q --medium=A4 --borders=no -o out1.ps merong.txt && \
                             $GS -sDEVICE=png256 -dNOPAUSE -dBATCH -dSAFER -dTextAlphaBits=4 -q -r300x300 -sOutputFile=out2.png out1.ps && \
-                            $CONVERT -trim -rotate 90 -bordercolor white -border 5 out2.png $OUTPUT_FOLDER/$OUTPUT_FILENAME_APPSTORE_IX_SHIELD_CHECK
+                            $CONVERT -trim -rotate 90 -bordercolor white -border 5 out2.png $OUTPUT_FOLDER/$Obfuscation_SCREENSHOT
 
                             # Cleanup
                             cd $WORKSPACE && rm -f out[12].png out[12].ps merong.txt
