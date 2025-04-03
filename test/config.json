@@ -1,0 +1,219 @@
+{
+    "users": {
+        "app": {
+            "userId": "app",
+            "password": "qwer1234",
+            "status": "1",
+            "email": ""
+        },
+        "qc": {
+            "userId": "qc",
+            "password": "qwer1234",
+            "status": "2",
+            "email": "foobar@company.com"
+        },
+        "git": {
+            "userId": "AppDevTeam",
+            "password": "qwer1234",
+            "status": "2",
+            "email": "foobar@company.com"
+        }
+    },
+    "icon": {
+        "home": "HomeIcon.png"
+    },
+    "mail": {
+        "description": "You should check /var/www/PHPMailer installed",
+        "domesticEnabled": false,
+        "CharSet": "UTF-8",
+        "SMTPDebug": 0,
+        "SMTPAuth": true,
+        "Host": "your_mail_server_domain",
+        "Username": "your_mail_server_user_id",
+        "Password": "your_mail_server_password_here",
+        "SMTPSecure": "tls",
+        "Port": 587,
+        "enabled": false
+    },
+    "slack": {
+        "channel": "#product-distribution",
+        "webhook": "https://hooks.slack.com/services/ABCDEFGHIJ/B026VKKF81F/wUk73EV4W9StGuv8nhKZyZrd",
+        "enabled": false
+    },
+    "teams": {
+        "iconImage": "images/Icon.png",
+        "webhook": "https://company.webhook.office.com/webhookb2/57dae0bf-abb2-43df-b7c1-73121c5a75a4@13a84ba8-5a74-4cdf-a639-57395cf71a8f/IncomingWebhook/abb12c1b7cb74044b535c2dfa5031729/a9b785d5-fbf6-4857-add7-dc64d1dd64c1",
+        "enabled": false
+    },
+    "discord": {
+        "channel": "#app_dist",
+        "webhook": "https://discordapp.com/api/webhooks/106516",
+        "enabled": false
+    },
+    "jira": {
+        "projectKey": "{Jira Project Key}",
+        "url": "http://jira.company.com/browse/"
+    },
+    "ssh": {
+        "enabled": false,
+        "port": "22",
+        "endpoint": "appdevteam@app.company.com",
+        "target": "/Library/WebServer/Documents"
+    },
+    "Flutter": {
+        "path": "/Users/dist_account/.flutter/bin/flutter",
+        "enabled": false
+    },
+    "ReactNative": {
+        "path": "/opt/homebrew/opt/node@16/bin",
+        "enabled": false
+    },
+    "ios": {
+        "enabled": true,
+        "AppStore": {
+            "enabled": false,
+            "title": "App Store",
+            "schemeName": "App_Store",
+            "targetName": "App_Store.ipa",
+            "fileSuffix": "_AppStore",
+            "bundleId": "com.company.mobile-appstore",
+            "bundleName": "Company Projects (App Store)",
+            "teamId": "1234567890",
+            "appKeyString": "company_iphone_Appstore",
+            "notificationKeyString": "company_NotificationServiceExtension_Appstore",
+            "uploadApp": {
+                "enabled": false,
+                "agentEmail": "admin@company.com",
+                "agentAppSpecificPassword": "abcd-efgh-ijkl-mno"
+            },
+            "obfuscationSource": "CompanyProject/FooBar/Objc/IxShield.m",
+            "sourceCodeAbsPath": "Company/file/src/{AppName+Version}-ios_source.zip",
+            "sourceCodeFileSuffix": "-ios_source.zip",
+            "showToClient": false
+        },
+        "Adhoc": {
+            "enabled": false,
+            "title": "Ad-Hoc",
+            "schemeName": "App_Adhoc",
+            "targetName": "App_Adhoc.app",
+            "fileSuffix": "_AdHoc",
+            "bundleId": "com.company.mobile-adhoc",
+            "bundleName": "Company Projects (Ad-Hoc)",
+            "buildDebugVersion": false,
+            "showToClient": false
+        },
+        "Enterprise": {
+            "enabled": true,
+            "title": "Enterprise",
+            "schemeName": "App_Enterprise",
+            "targetName": "App_Enterprise.app",
+            "fileSuffix": "_Enter",
+            "bundleId": "com.company.mobile-enter",
+            "bundleName": "Company Projects (Enterprise)",
+            "showToClient": true
+        },
+        "projectName": "test/ios/test",
+        "podFile": "test/ios/Podfile",
+        "rubyGemPath": "/System/Library/Frameworks/Ruby.framework/Versions/2.6/usr/lib/ruby/gems/2.6.0",
+        "usingObfuscation": true,
+        "jenkinsWorkspace": "/Users/dist_account/.jenkins/workspace/CompanyProject/FooBar-iOS",
+        "gitBrowseUrl": "http://bitbucket.company.com/projects/TGV/repos/app-ios/commits",
+        "clientGitUrl": "",
+        "jenkinsUser": "appdistaccount",
+        "sudoPassword": "qwer1234",
+        "InfoPlist": "Info.plist"
+    },
+    "android": {
+        "enabled": true,
+        "GoogleStore": {
+            "enabled": false,
+            "title": "Google Playstore",
+            "taskName": "GoogleStore",
+            "releaseType": "Release",
+            "usingBundleAAB": false,
+            "buildDebugVersion": false,
+            "sourceCodeAbsPath": "Company/file/src/{AppName+Version}-android_source.zip",
+            "sourceCodeFileSuffix": "-android_source.zip",
+            "showToClient": false
+        },
+        "OneStore": {
+            "enabled": false,
+            "title": "One Store",
+            "taskName": "OneStore",
+            "releaseType": "Release",
+            "usingBundleAAB": false,
+            "showToClient": false
+        },
+        "LiveServer": {
+            "enabled": true,
+            "title": "Live APK",
+            "taskName": "LiveServer",
+            "releaseType": "Release",
+            "usingBundleAAB": false,
+            "showToClient": true
+        },
+        "TestServer": {
+            "enabled": true,
+            "title": "Test APK",
+            "taskName": "TestServer",
+            "releaseType": "Debug",
+            "usingBundleAAB": false,
+            "showToClient": false
+        },
+        "usingAllatori": false,
+        "androidHome": "/Users/dist_account/Library/Android/sdk",
+        "javaHome": "/usr/local/opt/openjdk@8",
+        "packageId": "com.company.mobile",
+        "jenkinsWorkspace": "/Users/dist_account/.jenkins/workspace/CompanyProject/FooBar-Android",
+        "appPath": "test/app",
+        "keyStoreFile": "company.keystore",
+        "keyStorePassword": "your_keystore_password_here",
+        "keyStoreAlias": "<your_company_name_for_key_alias>",
+        "obfuscationInputFile": "images/JenkinsConfigHelp.png",
+        "usingObfuscation": true,
+        "outputSignedPrefix": "signed_",
+        "outputUnsignedPrefix": "unsigned_",
+        "outputGoogleStoreSuffix": "-GoogleStore-release.apk",
+        "outputOneStoreSuffix": "-OneStore-release.apk",
+        "gitBrowseUrl": "http://bitbucket.company.com/projects/TGV/repos/app-android/commits",
+        "clientGitUrl": ""
+    },
+    "custom" : {
+        "enabled": false,
+        "executable": "../shell/cumstom_script.sh"
+    },
+    "development": {
+        "frontEndProtocol": "http",
+        "frontEndPoint": "localhost",
+        "outBoundProtocol": "http",
+        "outBoundPoint": "localhost",
+        "topPath": "Comp/App",
+        "outputPrefix": "Comp_App_",
+        "hideGitCommitter": false,
+        "usingLogin": false,
+        "usingLoginRemoteAPI": false,
+        "usingMySQL": false,
+        "usingRecommandLink": false,
+        "urlLoginRemoteAPI": "https://boan.company.com:4040",
+        "usingHTML": false,
+        "usingPreviousVersion": false,
+        "topPathPreviousVersion": "CompanyProject/oldFooBar"
+    },
+    "production": {
+        "frontEndProtocol": "https",
+        "frontEndPoint": "app.company.com",
+        "outBoundProtocol": "https",
+        "outBoundPoint": "dist.company.com",
+        "topPath": "Comp/App",
+        "outputPrefix": "Comp_App_",
+        "hideGitCommitter": false,
+        "usingLogin": false,
+        "usingLoginRemoteAPI": false,
+        "urlLoginRemoteAPI": "https://boan.company.com:4000",
+        "usingMySQL": false,
+        "usingRecommandLink": false,
+        "usingHTML": false,
+        "usingPreviousVersion": false,
+        "topPathPreviousVersion": "CompanyProject/oldFooBar"
+    }
+}

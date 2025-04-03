@@ -15,9 +15,8 @@
 #     (also use "brew install rockymadden/rockymadden/slack-cli"),
 #     run "slack init", and Enter Slack API token from https://api.slack.com/custom-integrations/legacy-tokens
 #  4. (Optional) Install jq path with "/usr/local/bin/jq" in "/usr/local/bin/slac"
-#  5. (Optional) Install a2ps via HomeBrew, brew install a2ps
-#  6. (Optional) Install gs via HomeBrew, brew install gs
-#  7. (Optional) Install convert(ImageMagick) via HomeBrew, brew install imagemagick
+#  5. (Optional) Install gs via HomeBrew, brew install gs
+#  6. (Optional) Install convert(ImageMagick) via HomeBrew, brew install imagemagick
 #
 ################################################################################
 if test -z $TOP_DIR; then
@@ -57,33 +56,50 @@ if [[ "$INPUT_OS" == "android" ]]; then
     ############################################################################
     . ${TOP_DIR}/util/makePath        ### Import Android Path maker ############
     ############################################################################
+    ## Test only obfuscation code with 
+    # ./build.sh -tp "Comp/App" --config "./test/config.json" -obfuscation "android" --release
+    ############################################################################
+    if [ ! -z "$OBFUSCATION_TEST" ]; then
+      if [[ "$OBFUSCATION_TEST" == "android" ]]; then
+        TOP_PATH="Comp/App"
+        ANDROID_APP_PATH="test/android/app"
+        # Only run obfuscation code
+        echo "Testing obfuscation code..."
+        source ./platform/android.sh
+        # Create dummy APK file
+        touch ${OUTPUT_FOLDER}/${APK_GOOGLESTORE}
+        makeObfuscationScreenshot
+        exit 0
+      fi
+    fi
     ##
     ############################################################################
     . ${TOP_DIR}/platform/android.sh  ### Import Android Shell Script ##########
+    doExecuteAndroid
     ############################################################################
 elif [[ "$INPUT_OS" == "ios" ]]; then
     ## for iOS
     ############################################################################
     . ${TOP_DIR}/util/versions        ### Import version compare func ##########
     ############################################################################
-    ##
+    ## Test only obfuscation code with 
+    # ./build.sh -tp "Comp/App" --config "./test/config.json" -obfuscation "ios" --release
     ############################################################################
     if [ ! -z "$OBFUSCATION_TEST" ]; then
-      case "$OBFUSCATION_TEST" in
-          "ios")
-              if [ -f "${TOP_DIR}/test/obfuscation_ios.sh" ]; then
-                  ${TOP_DIR}/test/obfuscation_ios.sh
-                  exit $?
-              else
-                  echo "Error: iOS obfuscation test script not found"
-                  exit 1
-              fi
-              ;;
-      esac
+      if [[ "$OBFUSCATION_TEST" == "ios" ]]; then
+        TOP_PATH="Comp/App"
+        PROJECT_NAME="test/ios/test"
+        # Only run obfuscation code
+        echo "Testing obfuscation code..."
+        source ./platform/ios.sh
+        makeObfuscationScreenshot
+        exit 0
+      fi
     fi
     ##
     ############################################################################
     . ${TOP_DIR}/platform/ios.sh      ### Import iOS Shell Script ##############
+    doExecuteIOS
     ############################################################################
 fi
 ##

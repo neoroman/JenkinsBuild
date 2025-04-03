@@ -223,6 +223,10 @@ while [[ $# -gt 0 ]]; do
             shift
             OBFUSCATION_TEST="ios"
             ;;
+        "android")
+            shift
+            OBFUSCATION_TEST="android"
+            ;;
         *)
             echo "Error: Invalid obfuscation test target. Use 'ios' or 'android'."
             exit 1

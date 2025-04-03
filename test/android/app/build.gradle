@@ -1,0 +1,10 @@
+android {
+    compileSdk versions.compileSdk
+
+    defaultConfig {
+        minSdk versions.minSdk
+        targetSdk versions.compileSdk
+        versionCode 144
+        versionName "2.0.4"
+    }
+}
