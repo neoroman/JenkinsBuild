@@ -2,6 +2,106 @@
 ##
 # Android Shell Script
 #
+function makeObfuscationScreenshot() {
+    if [ $DEBUGGING -eq 0 ]; then
+        USING_OBFUSCATION=$(test $(cat $jsonConfig | $JQ '.android.usingObfuscation') = true && echo 1 || echo 0)
+        if [ $USING_OBFUSCATION -eq 1 ]; then
+            if [ -f "${OUTPUT_FOLDER}/${APK_GOOGLESTORE}" ]; then
+                CHECK_SHELL="$WORKSPACE/${ANDROID_APP_PATH}/check.sh"
+                if test ! -f "$CHECK_SHELL"; then
+                    CHECK_SHELL=$(find $WORKSPACE -name 'check.sh' | head -1)
+                fi
+                if [ -f "$CHECK_SHELL" -a $IS_RELEASE -eq 1 ]; then
+                    chmod +x $CHECK_SHELL
+                    
+                    # Check required commands
+                    REQUIRED_COMMANDS="gs convert"
+                    MISSING_COMMANDS=""
+                    for cmd in $REQUIRED_COMMANDS; do
+                        if ! command -v $cmd >/dev/null 2>&1; then
+                            MISSING_COMMANDS="$MISSING_COMMANDS $cmd"
+                        fi
+                    done
+                    
+                    if [ ! -z "$MISSING_COMMANDS" ]; then
+                        echo "Warning: Required commands not found:$MISSING_COMMANDS"
+                        echo "Please install missing commands using: brew install ghostscript imagemagick"
+                    else
+                        # Get command paths
+                        GS=$(command -v gs)
+                        CONVERT=$(command -v convert)
+                        
+                        # Execute commands with proper path tracking
+                        MERONG_FILE="$WORKSPACE/$ANDROID_APP_PATH/merong.txt"
+                        
+                        # Create the file in a location we know exists
+                        echo "$GIT_USER $(hostname -s) ${WORKSPACE} (${GIT_BRANCH})" > "$MERONG_FILE"
+                        echo "$ $CHECK_SHELL -a src" >> "$MERONG_FILE"
+                        $CHECK_SHELL -a src >> "$MERONG_FILE"
+                        
+                        if [ -f "$MERONG_FILE" ]; then
+                            echo "Created check output file"
+                            
+                            # Try direct text-to-image conversion with ImageMagick
+                            $CONVERT -background white -fill black -font Courier -pointsize 14 \
+                            label:"$(cat $MERONG_FILE)" \
+                            -rotate 0 -bordercolor white -border 5 \
+                            "$OUTPUT_FOLDER/$Obfuscation_SCREENSHOT"
+                            
+                            if [ -f "$OUTPUT_FOLDER/$Obfuscation_SCREENSHOT" ]; then
+                                echo "Created obfuscation screenshot with ImageMagick"
+                            else
+                                echo "Failed with ImageMagick, trying GhostScript fallback"
+                                
+                                # Create a simple text file that Ghostscript can handle
+                                $GS -sDEVICE=png256 -dNOPAUSE -dBATCH -dSAFER -r300x300 \
+                                -sOutputFile="$OUTPUT_FOLDER/$Obfuscation_SCREENSHOT" \
+                                -c "/Courier findfont 9 scalefont setfont" \
+                                -c "72 720 moveto" \
+                                -c "($(cat $MERONG_FILE | tr '\n' ' ')) show" \
+                                -c "showpage" \
+                                -f
+                                
+                                if [ -f "$OUTPUT_FOLDER/$Obfuscation_SCREENSHOT" ]; then
+                                    echo "Created obfuscation screenshot with GhostScript"
+                                else
+                                    echo "Failed to create screenshot with all methods"
+                                fi
+                            fi
+                            
+                            # Cleanup
+                            rm -f "$MERONG_FILE"
+                        else
+                            echo "Failed to generate check output"
+                        fi
+                    fi
+                fi
+
+                # 입력 파일 확인 및 복사
+                if [ -f "$WORKSPACE/$Obfuscation_INPUT_FILE" ]; then
+                    cp -f $WORKSPACE/$Obfuscation_INPUT_FILE $OUTPUT_FOLDER/$Obfuscation_OUTPUT_FILE
+                    echo "Copied obfuscation file: $OUTPUT_FOLDER/$Obfuscation_OUTPUT_FILE"
+                elif [ -f "${APP_ROOT_PREFIX}/${TOP_PATH}/$Obfuscation_INPUT_FILE" ]; then
+                    cp -f ${APP_ROOT_PREFIX}/${TOP_PATH}/$Obfuscation_INPUT_FILE $OUTPUT_FOLDER/$Obfuscation_OUTPUT_FILE
+                    echo "Copied obfuscation file: $OUTPUT_FOLDER/$Obfuscation_OUTPUT_FILE"
+                else
+                    echo "Obfuscation input file not found: $Obfuscation_INPUT_FILE"
+                fi
+            else
+                echo "APK file not found: ${OUTPUT_FOLDER}/${APK_GOOGLESTORE}"
+            fi
+
+            if [ $USING_SCP -eq 1 ]; then
+                if [ $(sendFile ${OUTPUT_FOLDER}/${Obfuscation_OUTPUT_FILE} ${NEO2UA_OUTPUT_FOLDER}) -eq 0 ]; then
+                    #   echo "Failed to send file"
+                    echo "TODO: **NEED** to resend this file => ${OUTPUT_FOLDER}/${Obfuscation_OUTPUT_FILE} to ${NEO2UA_OUTPUT_FOLDER}"
+                fi
+            fi
+
+        fi
+    fi
+}
+
 # if test -z $ConfigJavaHome || test -z ${JAVA_NULL%null}; then
 if test -z $ConfigJavaHome; then
     if type java >/dev/null 2>&1; then
@@ -170,477 +270,423 @@ cd ${WORKSPACE}
 if [ -f "${WORKSPACE}/gradlew" ]; then
     chmod +x ${WORKSPACE}/gradlew
 fi
-if [ $isReactNativeEnabled -eq 1 ]; then
-    cd ${WORKSPACE}
-    $ReactNativeBin install --legacy-peer-deps
-    if [ $? -ne 0 ]; then
-        # Fail-over for `Error: Cannot find module ...`
-        $ReactNativeBin install
+
+
+function doExecuteAndroid() {
+    if [ $isReactNativeEnabled -eq 1 ]; then
+        cd ${WORKSPACE}
         $ReactNativeBin install --legacy-peer-deps
-    fi
-    if test ! -z $NODE_OPTION_FLAG; then
-        export NODE_OPTIONS=${NODE_OPTION_FLAG}
-    fi
-
-    $ReactNativeBin run build:android
-fi
-###################
-# Step 1.1: Check 'allatori' 난독화 실행 여부
-if [ $IS_RELEASE -eq 1 -a $USING_ALLATORI -eq 1 ]; then
-    ALLATORI_EXEC_PATH="${BUILD_GRADLE_CONFIG}"
-    ALLATORI_EXEC_TEMP="${WORKSPACE}/${ANDROID_APP_PATH}/build.gradle.new"
-    ALLATORI_EXEC=$(grep 'runAllatori(variant)' ${ALLATORI_EXEC_PATH} | grep -v 'def runAllatori(variant)' | awk 'BEGIN{FS=" "; OFS=""} {print $1$2}')
-    if [[ "$ALLATORI_EXEC" = "//"* ]]; then
-    sed 's/^\/\/.*runAllatori(variant)/            runAllatori(variant)/' $ALLATORI_EXEC_PATH >$ALLATORI_EXEC_TEMP
-
-    ALLATORI_EXEC=$(grep 'runAllatori(variant)' ${ALLATORI_EXEC_TEMP} | grep -v 'def runAllatori(variant)' | awk 'BEGIN{FS=" "; OFS=""} {print $1$2}')
-    if [[ "$ALLATORI_EXEC" = "//"* ]]; then
-        sed 's/^.*\/\/runAllatori(variant)/            runAllatori(variant)/' $ALLATORI_EXEC_PATH >$ALLATORI_EXEC_TEMP
-
-        ALLATORI_EXEC=$(grep 'runAllatori(variant)' ${ALLATORI_EXEC_TEMP} | grep -v 'def runAllatori(variant)' | awk 'BEGIN{FS=" "; OFS=""} {print $1$2}')
-        if [[ "$ALLATORI_EXEC" != "//"* ]]; then
-        mv -f $ALLATORI_EXEC_TEMP $ALLATORI_EXEC_PATH
+        if [ $? -ne 0 ]; then
+            # Fail-over for `Error: Cannot find module ...`
+            $ReactNativeBin install
+            $ReactNativeBin install --legacy-peer-deps
         fi
-    else
-        mv -f $ALLATORI_EXEC_TEMP $ALLATORI_EXEC_PATH
-    fi
-    fi
-fi
-if [ $DEBUGGING -eq 1 ]; then
-    if [ $IS_RELEASE -eq 1 ]; then
-        if [ ! -f $OUTPUT_FOLDER/$APK_GOOGLESTORE ]; then
-            touch $OUTPUT_FOLDER/$APK_GOOGLESTORE
-        fi
-        if [ ! -f $OUTPUT_FOLDER/$APK_ONESTORE ]; then
-            touch $OUTPUT_FOLDER/$APK_ONESTORE
-        fi
-    else
-        if [ ! -f $OUTPUT_FOLDER/$OUTPUT_APK_LIVESERVER ]; then
-            touch $OUTPUT_FOLDER/$OUTPUT_APK_LIVESERVER
-        fi
-        if [ ! -f $OUTPUT_FOLDER/$OUTPUT_APK_TESTSERVER ]; then
-            touch $OUTPUT_FOLDER/$OUTPUT_APK_TESTSERVER
-        fi
-    fi
-else
-    gradleBuildKey="assemble"
-    flutterBuildKey="apk"
-    FILE_EXTENSION="apk"
-    STOREPASS=$(cat $jsonConfig | $JQ '.android.keyStorePassword' | tr -d '"')
-    KEYSTORE_FILE=$(cat $jsonConfig | $JQ '.android.keyStoreFile' | tr -d '"')
-    KEYSTORE_ALIAS=$(cat $jsonConfig | $JQ '.android.keyStoreAlias' | tr -d '"')
-    KEYSTORE_FILE="${WORKSPACE}/${KEYSTORE_FILE}"
-    if [ ! -f $KEYSTORE_FILE ]; then
-        FOUND_FILE=$(find ${WORKSPACE} -name '*.keystore' -not -name '*debug*' | sed 's/^\.\///g')
-        if [ -f "$FOUND_FILE" ]; then
-            KEYSTORE_FILE="${FOUND_FILE}"
-        fi
-    fi
-
-    if [ $IS_RELEASE -eq 1 ]; then
-    ###################
-    if [ $USING_GOOGLESTORE -eq 1 ]; then
-        # Step 2.1: Build target for GoogleStore
-        if [ $USING_BUNDLE_GOOGLESTORE -eq 1 ]; then
-            gradleBuildKey="bundle"
-            flutterBuildKey="appbundle"
-            FILE_EXTENSION="aab"
-        else
-            gradleBuildKey="assemble"
-            flutterBuildKey="apk"
-            FILE_EXTENSION="apk"
-        fi
-        if [ $isFlutterEnabled -eq 1 ]; then
-            $FlutterBin clean
-            $FlutterBin pub get
-
-            if test -z "$FLUTTER_FLAG"; then
-                $FlutterBin build ${flutterBuildKey} --flavor ${GRADLE_TASK_GOOGLESTORE} &>/dev/null
-            elif [[ ${FLUTTER_FLAG} == *"--flavor"* ]]; then
-                $FlutterBin build ${flutterBuildKey} ${FLUTTER_FLAG} &>/dev/null
-            else
-                $FlutterBin build ${flutterBuildKey} --flavor ${GRADLE_TASK_GOOGLESTORE} ${FLUTTER_FLAG} &>/dev/null
-            fi
-        elif [ $isReactNativeEnabled -eq 1 ]; then
-            if [ -d ${WORKSPACE}/android ]; then
-                cd ${WORKSPACE}/android
-            fi
-            GRADLE_TASK="${gradleBuildKey}Release"
-            if [[ $(./gradlew tasks 2>&1 | grep -v '^Warning' | grep "${gradleBuildKey}${GRADLE_TASK_GOOGLESTORE}" | awk '{print $1}' | tr -d ' ') == "${gradleBuildKey}${GRADLE_TASK_GOOGLESTORE}" ]]; then
-                GRADLE_TASK="${gradleBuildKey}${GRADLE_TASK_GOOGLESTORE}Release"
-            fi
-            ./gradlew "${GRADLE_TASK}"
-            if [ -d ${WORKSPACE}/android ]; then
-                cd ${WORKSPACE}
-            fi
-        else
-            ./gradlew "${gradleBuildKey}${GRADLE_TASK_GOOGLESTORE}"
+        if test ! -z $NODE_OPTION_FLAG; then
+            export NODE_OPTIONS=${NODE_OPTION_FLAG}
         fi
 
-        if test -z "$BUILD_APK_GOOGLESTORE"; then
-            LOWER_MODE_NAME="$(echo ${RELEASE_TYPE_GOOGLESTORE} | tr 'A-Z' 'a-z')"
-            LOWERCASE_TASK_NAME="$(echo ${GRADLE_TASK_GOOGLESTORE} | tr 'A-Z' 'a-z')"
-            makePathForAndroidOutput
-            BUILD_APK_GOOGLESTORE="$BUILD_APK_OUTPUT"
-        fi
-        if [ -f "$BUILD_OUTPUT_FOLDER/$BUILD_APK_GOOGLESTORE" ]; then
-            mv "$BUILD_OUTPUT_FOLDER/$BUILD_APK_GOOGLESTORE" "$OUTPUT_FOLDER/$APK_GOOGLESTORE"
-            SIZE_GOOGLE_APP_FILE=$(du -sh ${OUTPUT_FOLDER}/${APK_GOOGLESTORE} | awk '{print $1}')
-            SLACK_TEXT="${SLACK_TEXT}${HOSTNAME} > ${GRADLE_TASK_GOOGLESTORE} 배포용 다운로드(${SIZE_GOOGLE_APP_FILE}B): ${HTTPS_PREFIX}${APK_GOOGLESTORE}\n"
-            MAIL_TEXT="${MAIL_TEXT}${GRADLE_TASK_GOOGLESTORE} 배포용 다운로드(${SIZE_GOOGLE_APP_FILE}B): <a href=${HTTPS_PREFIX}${APK_GOOGLESTORE}>${HTTPS_PREFIX}${APK_GOOGLESTORE}</a><br />"
-
-            # Make APK from AAB bundle for integrity
-            if [[ $USING_BUNDLE_GOOGLESTORE -eq 1 && -f "$BUNDLE_TOOL" ]]; then
-                BUNDLE_APK_FILE="$OUTPUT_FOLDER/${APK_GOOGLESTORE%.aab}.apks"
-                if [ -f "$BUNDLE_APK_FILE" ]; then
-                    rm -f "$BUNDLE_APK_FILE"
-                fi
-                if [ -f "$KEYSTORE_FILE" ]; then
-                    $BUNDLE_TOOL build-apks --bundle="$OUTPUT_FOLDER/$APK_GOOGLESTORE" --output="$BUNDLE_APK_FILE" --mode=universal --ks="$KEYSTORE_FILE" --ks-pass="pass:$STOREPASS" --ks-key-alias="$KEYSTORE_ALIAS"
-                else
-                    $BUNDLE_TOOL build-apks --bundle="$OUTPUT_FOLDER/$APK_GOOGLESTORE" --output="$BUNDLE_APK_FILE" --mode=universal
-                fi
-                BUNDLE_APK2ZIP="${BUNDLE_APK_FILE%.apks}.zip"
-                mv -f "${BUNDLE_APK_FILE}" "${BUNDLE_APK2ZIP}"
-                unzip -o "${BUNDLE_APK2ZIP}"
-                BUNDLE_APK_FILE="$OUTPUT_FOLDER/${APK_GOOGLESTORE%.aab}.apk"
-                if [ -f universal.apk ]; then
-                    touch universal.apk
-
-                    # Move APK(extract from AAB) to DocRoot
-                    mv -f universal.apk "$BUNDLE_APK_FILE"
-                    find . -name 'toc.*' -exec rm {} \;
-                    if [ -f "$BUNDLE_APK2ZIP" ]; then
-                        rm $BUNDLE_APK2ZIP
-                    fi
-                fi
-                SIZE_GOOGLE_APP_FILE=$(du -sh ${BUNDLE_APK_FILE} | awk '{print $1}')
-
-                # for debug build APK
-                if [ $USING_ADHOC_DEBUG -eq 1 ]; then
-                    if [[ "$DEBUG_APK_OUTPUT" == *".aab" && -f "$BUNDLE_TOOL" ]]; then
-                        BUNDLE_DEBUG_FILE="$DEBUG_OUTPUT_FOLDER/${DEBUG_APK_OUTPUT%.aab}.apks"
-                        if [ -f "$BUNDLE_DEBUG_FILE" ]; then
-                            rm -f "$BUNDLE_DEBUG_FILE"
-                        fi
-                        $BUNDLE_TOOL build-apks --bundle="$DEBUG_OUTPUT_FOLDER/$DEBUG_APK_OUTPUT" --output="$BUNDLE_DEBUG_FILE" --mode=universal
-                        BUNDLE_APK2ZIP="${BUNDLE_DEBUG_FILE%.apks}.zip"
-                        mv -f "${BUNDLE_DEBUG_FILE}" "${BUNDLE_APK2ZIP}"
-                        unzip -o "${BUNDLE_APK2ZIP}"
-                        APK_DEBUG="${APK_FILE_TITLE}${outputGoogleStoreSuffix%release.*}debug.apk"
-                        BUNDLE_DEBUG_FILE="$OUTPUT_FOLDER/$APK_DEBUG"
-                        if [ -f universal.apk ]; then
-                            touch universal.apk
-
-                            # Move APK(extract from AAB) to DocRoot
-                            mv -f universal.apk "$BUNDLE_DEBUG_FILE"
-                            find . -name 'toc.*' -exec rm {} \;
-                            if [ -f "$BUNDLE_APK2ZIP" ]; then
-                                rm $BUNDLE_APK2ZIP
-                            fi
-                        fi
-                        SIZE_DEBUG_APP_FILE=$(du -sh ${BUNDLE_DEBUG_FILE} | awk '{print $1}')
-                    fi
-                fi
-            elif [ $USING_ADHOC_DEBUG -eq 1 -a -f "$DEBUG_OUTPUT_FOLDER/$DEBUG_APK_OUTPUT" ]; then
-                # for debug build APK
-                APK_DEBUG="${APK_FILE_TITLE}${outputGoogleStoreSuffix%release.*}debug.apk"
-                mv "$DEBUG_OUTPUT_FOLDER/$DEBUG_APK_OUTPUT" "$OUTPUT_FOLDER/$APK_DEBUG"
-                SIZE_DEBUG_APP_FILE=$(du -sh "$OUTPUT_FOLDER/$APK_DEBUG" | awk '{print $1}')
-            fi
-        fi
+        $ReactNativeBin run build:android
     fi
     ###################
-    if [ $USING_ONESTORE -eq 1 ]; then
-        # Step 2.2: Build target for OneStore
-        if [ $USING_BUNDLE_ONESTORE -eq 1 ]; then
-            gradleBuildKey="bundle"
-            flutterBuildKey="appbundle"
-            FILE_EXTENSION="aab"
-        else 
-            gradleBuildKey="assemble"
-            flutterBuildKey="apk"
-            FILE_EXTENSION="apk"
-        fi
-        if [ $isFlutterEnabled -eq 1 ]; then
-            $FlutterBin clean
-            $FlutterBin pub get
+    # Step 1.1: Check 'allatori' 난독화 실행 여부
+    if [ $IS_RELEASE -eq 1 -a $USING_ALLATORI -eq 1 ]; then
+        ALLATORI_EXEC_PATH="${BUILD_GRADLE_CONFIG}"
+        ALLATORI_EXEC_TEMP="${WORKSPACE}/${ANDROID_APP_PATH}/build.gradle.new"
+        ALLATORI_EXEC=$(grep 'runAllatori(variant)' ${ALLATORI_EXEC_PATH} | grep -v 'def runAllatori(variant)' | awk 'BEGIN{FS=" "; OFS=""} {print $1$2}')
+        if [[ "$ALLATORI_EXEC" = "//"* ]]; then
+            sed 's/^\/\/.*runAllatori(variant)/            runAllatori(variant)/' $ALLATORI_EXEC_PATH >$ALLATORI_EXEC_TEMP
 
-            if test -z "$FLUTTER_FLAG"; then
-                $FlutterBin build ${flutterBuildKey} --flavor ${GRADLE_TASK_ONESTORE}
-            elif [[ ${FLUTTER_FLAG} == *"--flavor"* ]]; then
-                $FlutterBin build ${flutterBuildKey} ${FLUTTER_FLAG} &>/dev/null
-            else
-                $FlutterBin build ${flutterBuildKey} --flavor ${GRADLE_TASK_ONESTORE} ${FLUTTER_FLAG}
-            fi
-        elif [ $isReactNativeEnabled -eq 1 ]; then
-            if [ -d ${WORKSPACE}/android ]; then
-                cd ${WORKSPACE}/android
-            fi
-            GRADLE_TASK="${gradleBuildKey}Release"
-            if [[ $(./gradlew tasks 2>&1 | grep -v '^Warning' | grep "${gradleBuildKey}${GRADLE_TASK_ONESTORE}" | awk '{print $1}' | tr -d ' ') == "${gradleBuildKey}${GRADLE_TASK_ONESTORE}" ]]; then
-                GRADLE_TASK="${gradleBuildKey}${GRADLE_TASK_ONESTORE}Release"
-            fi
-            ./gradlew "${GRADLE_TASK}"
-            if [ -d ${WORKSPACE}/android ]; then
-                cd ${WORKSPACE}
-            fi
-        else
-            ./gradlew "${gradleBuildKey}${GRADLE_TASK_ONESTORE}"
-        fi
+            ALLATORI_EXEC=$(grep 'runAllatori(variant)' ${ALLATORI_EXEC_TEMP} | grep -v 'def runAllatori(variant)' | awk 'BEGIN{FS=" "; OFS=""} {print $1$2}')
+            if [[ "$ALLATORI_EXEC" = "//"* ]]; then
+                sed 's/^.*\/\/runAllatori(variant)/            runAllatori(variant)/' $ALLATORI_EXEC_PATH >$ALLATORI_EXEC_TEMP
 
-        if test -z "$BUILD_APK_ONESTORE"; then
-            LOWER_MODE_NAME="$(echo ${RELEASE_TYPE_ONESTORE} | tr 'A-Z' 'a-z')"
-            LOWERCASE_TASK_NAME="$(echo ${GRADLE_TASK_ONESTORE} | tr 'A-Z' 'a-z')"
-            makePathForAndroidOutput
-            BUILD_APK_ONESTORE="$BUILD_APK_OUTPUT"
-        fi
-        if [ -f "$BUILD_OUTPUT_FOLDER/$BUILD_APK_ONESTORE" ]; then
-            mv "$BUILD_OUTPUT_FOLDER/$BUILD_APK_ONESTORE" "$OUTPUT_FOLDER/$APK_ONESTORE"
-            SIZE_ONE_APP_FILE=$(du -sh ${OUTPUT_FOLDER}/${APK_ONESTORE} | awk '{print $1}')
-            SLACK_TEXT="${SLACK_TEXT}${HOSTNAME} > ${GRADLE_TASK_ONESTORE} 배포용 다운로드(${SIZE_ONE_APP_FILE}B): ${HTTPS_PREFIX}${APK_ONESTORE}\n"
-            MAIL_TEXT="${MAIL_TEXT}${GRADLE_TASK_ONESTORE} 배포용 다운로드(${SIZE_ONE_APP_FILE}B): <a href=${HTTPS_PREFIX}${APK_ONESTORE}>${HTTPS_PREFIX}${APK_ONESTORE}</a><br />"
-
-            if [ $USING_ADHOC_DEBUG -eq 1 -a -f "$DEBUG_OUTPUT_FOLDER/$DEBUG_APK_OUTPUT" -a ! -f "$OUTPUT_FOLDER/$APK_DEBUG" ]; then
-                APK_DEBUG="${APK_FILE_TITLE}${outputOneStoreSuffix%release.*}debug.apk"
-                mv "$DEBUG_OUTPUT_FOLDER/$DEBUG_APK_OUTPUT" "$OUTPUT_FOLDER/$APK_DEBUG"
-                SIZE_DEBUG_APP_FILE=$(du -sh "$OUTPUT_FOLDER/$APK_DEBUG" | awk '{print $1}')
-            fi
-        fi
-    fi
-    else
-    ##########
-    if [ $USING_LIVESERVER -eq 1 ]; then
-        # Step 1.1: Build target for LiveServer
-        if [ $USING_BUNDLE_LIVESERVER -eq 1 ]; then
-            gradleBuildKey="bundle"
-            flutterBuildKey="appbundle"
-            FILE_EXTENSION="aab"
-        fi
-        if [ $isFlutterEnabled -eq 1 ]; then
-            $FlutterBin clean
-            $FlutterBin pub get
-
-            if test -z "$FLUTTER_FLAG"; then
-                $FlutterBin build ${flutterBuildKey} --flavor ${GRADLE_TASK_LIVESERVER}
-            elif [[ ${FLUTTER_FLAG} == *"--flavor"* ]]; then
-                $FlutterBin build ${flutterBuildKey} ${FLUTTER_FLAG} &>/dev/null
-            else
-                $FlutterBin build ${flutterBuildKey} --flavor ${GRADLE_TASK_LIVESERVER} ${FLUTTER_FLAG}
-            fi
-        elif [ $isReactNativeEnabled -eq 1 ]; then
-            if [ -d ${WORKSPACE}/android ]; then
-                cd ${WORKSPACE}/android
-            fi
-            GRADLE_TASK="${gradleBuildKey}Release"
-            if [[ $(./gradlew tasks 2>&1 | grep -v '^Warning' | grep "${gradleBuildKey}${GRADLE_TASK_LIVESERVER}" | awk '{print $1}' | tr -d ' ') == "${gradleBuildKey}${GRADLE_TASK_LIVESERVER}" ]]; then
-                GRADLE_TASK="${gradleBuildKey}${GRADLE_TASK_LIVESERVER}Release"
-            fi
-            ./gradlew "${GRADLE_TASK}"
-            if [ -d ${WORKSPACE}/android ]; then
-                cd ${WORKSPACE}
-            fi
-        else
-            ./gradlew "${gradleBuildKey}${GRADLE_TASK_LIVESERVER}"
-        fi
-
-        if test -z "$APK_LIVESERVER"; then
-            LOWER_MODE_NAME="$(echo ${RELEASE_TYPE_LIVESERVER} | tr 'A-Z' 'a-z')"
-            LOWERCASE_TASK_NAME="$(echo ${GRADLE_TASK_LIVESERVER} | tr 'A-Z' 'a-z')"
-            makePathForAndroidOutput
-            APK_LIVESERVER="$BUILD_APK_OUTPUT"
-        fi
-        if [ -f "$BUILD_OUTPUT_FOLDER/$APK_LIVESERVER" ]; then
-            mv "$BUILD_OUTPUT_FOLDER/$APK_LIVESERVER" "$OUTPUT_FOLDER/$OUTPUT_APK_LIVESERVER"
-            SIZE_LIVE_APP_FILE=$(du -sh ${OUTPUT_FOLDER}/${OUTPUT_APK_LIVESERVER} | awk '{print $1}')
-            SLACK_TEXT="${SLACK_TEXT}${HOSTNAME} > ${GRADLE_TASK_LIVESERVER}(debug)(${SIZE_LIVE_APP_FILE}B): ${HTTPS_PREFIX}${OUTPUT_APK_LIVESERVER}\n"
-            MAIL_TEXT="${MAIL_TEXT}${GRADLE_TASK_LIVESERVER}(debug)(${SIZE_LIVE_APP_FILE}B): <a href=${HTTPS_PREFIX}${OUTPUT_APK_LIVESERVER}>${HTTPS_PREFIX}${OUTPUT_APK_LIVESERVER}</a><br />"
-        fi
-    fi
-    ##########
-    if [ $USING_TESTSERVER -eq 1 ]; then
-        USING_GMMSTB_MODE=$(test $(cat $jsonConfig | $JQ '.android.TestServer.usingGMMSTB') = true && echo 1 || echo 0)
-        if [ $USING_GMMSTB_MODE -eq 1 ]; then
-            # Step 1.2: GMMS TB모드 켜기
-            MAIN_ACTIVITY=$(find . -name 'MainActivity.java')
-            if [ -f "$MAIN_ACTIVITY" ]; then
-                grep 'Config.IS_TB_GMMS_SERVER =' $MAIN_ACTIVITY
-                if [ -n $? ]; then
-                sed '/Config.IS_TB_GMMS_SERVER = .*/ a\
-                            Config.IS_TB_GMMS_SERVER = true;' $MAIN_ACTIVITY >$MAIN_ACTIVITY.new
-                mv -f $MAIN_ACTIVITY.new $MAIN_ACTIVITY
+                ALLATORI_EXEC=$(grep 'runAllatori(variant)' ${ALLATORI_EXEC_TEMP} | grep -v 'def runAllatori(variant)' | awk 'BEGIN{FS=" "; OFS=""} {print $1$2}')
+                if [[ "$ALLATORI_EXEC" != "//"* ]]; then
+                    mv -f $ALLATORI_EXEC_TEMP $ALLATORI_EXEC_PATH
                 fi
-            fi
-        fi
-        if [ $USING_BUNDLE_TESTSERVER -eq 1 ]; then
-            gradleBuildKey="bundle"
-            flutterBuildKey="appbundle"
-            FILE_EXTENSION="aab"
-        fi
-        if [ $isFlutterEnabled -eq 1 ]; then
-            $FlutterBin clean
-            $FlutterBin pub get
-
-            if test -z "$FLUTTER_FLAG"; then
-                $FlutterBin build ${flutterBuildKey} --flavor ${GRADLE_TASK_TESTSERVER}
-            elif [[ ${FLUTTER_FLAG} == *"--flavor"* ]]; then
-                $FlutterBin build ${flutterBuildKey} ${FLUTTER_FLAG} &>/dev/null
             else
-                $FlutterBin build ${flutterBuildKey} --flavor ${GRADLE_TASK_TESTSERVER} ${FLUTTER_FLAG}
+                mv -f $ALLATORI_EXEC_TEMP $ALLATORI_EXEC_PATH
             fi
-        elif [ $isReactNativeEnabled -eq 1 ]; then
-            if [ -d ${WORKSPACE}/android ]; then
-                cd ${WORKSPACE}/android
+        fi
+    fi
+    if [ $DEBUGGING -eq 1 ]; then
+        if [ $IS_RELEASE -eq 1 ]; then
+            if [ ! -f $OUTPUT_FOLDER/$APK_GOOGLESTORE ]; then
+                touch $OUTPUT_FOLDER/$APK_GOOGLESTORE
             fi
-            GRADLE_TASK="${gradleBuildKey}Debug"
-            if [[ $(./gradlew tasks 2>&1 | grep -v '^Warning' | grep "${gradleBuildKey}${GRADLE_TASK_TESTSERVER}" | awk '{print $1}' | tr -d ' ') == "${gradleBuildKey}${GRADLE_TASK_TESTSERVER}" ]]; then
-                GRADLE_TASK="${gradleBuildKey}${GRADLE_TASK_TESTSERVER}Debug"
-            fi
-            ./gradlew "${GRADLE_TASK}"
-            if [ -d ${WORKSPACE}/android ]; then
-                cd ${WORKSPACE}
+            if [ ! -f $OUTPUT_FOLDER/$APK_ONESTORE ]; then
+                touch $OUTPUT_FOLDER/$APK_ONESTORE
             fi
         else
-            ./gradlew "${gradleBuildKey}${GRADLE_TASK_TESTSERVER}"
+            if [ ! -f $OUTPUT_FOLDER/$OUTPUT_APK_LIVESERVER ]; then
+                touch $OUTPUT_FOLDER/$OUTPUT_APK_LIVESERVER
+            fi
+            if [ ! -f $OUTPUT_FOLDER/$OUTPUT_APK_TESTSERVER ]; then
+                touch $OUTPUT_FOLDER/$OUTPUT_APK_TESTSERVER
+            fi
+        fi
+    else
+        gradleBuildKey="assemble"
+        flutterBuildKey="apk"
+        FILE_EXTENSION="apk"
+        STOREPASS=$(cat $jsonConfig | $JQ '.android.keyStorePassword' | tr -d '"')
+        KEYSTORE_FILE=$(cat $jsonConfig | $JQ '.android.keyStoreFile' | tr -d '"')
+        KEYSTORE_ALIAS=$(cat $jsonConfig | $JQ '.android.keyStoreAlias' | tr -d '"')
+        KEYSTORE_FILE="${WORKSPACE}/${KEYSTORE_FILE}"
+        if [ ! -f $KEYSTORE_FILE ]; then
+            FOUND_FILE=$(find ${WORKSPACE} -name '*.keystore' -not -name '*debug*' | sed 's/^\.\///g')
+            if [ -f "$FOUND_FILE" ]; then
+                KEYSTORE_FILE="${FOUND_FILE}"
+            fi
         fi
 
-        if test -z "$APK_TESTSERVER"; then
-            LOWER_MODE_NAME="$(echo ${RELEASE_TYPE_TESTSERVER} | tr 'A-Z' 'a-z')"
-            LOWERCASE_TASK_NAME="$(echo ${GRADLE_TASK_TESTSERVER} | tr 'A-Z' 'a-z')"
-            makePathForAndroidOutput
-            APK_TESTSERVER="$BUILD_APK_OUTPUT"
-        fi
-        if [ -f "$BUILD_OUTPUT_FOLDER/$APK_TESTSERVER" ]; then
-            mv "$BUILD_OUTPUT_FOLDER/$APK_TESTSERVER" "$OUTPUT_FOLDER/$OUTPUT_APK_TESTSERVER"
-            SIZE_TEST_APP_FILE=$(du -sh ${OUTPUT_FOLDER}/${OUTPUT_APK_TESTSERVER} | awk '{print $1}')
-            SLACK_TEXT="${SLACK_TEXT}${HOSTNAME} > ${GRADLE_TASK_TESTSERVER}(${RELEASE_TYPE_TESTSERVER})(${SIZE_TEST_APP_FILE}B): ${HTTPS_PREFIX}${OUTPUT_APK_TESTSERVER}\n"
-            MAIL_TEXT="${MAIL_TEXT}${GRADLE_TASK_TESTSERVER}(${RELEASE_TYPE_TESTSERVER})(${SIZE_TEST_APP_FILE}B): <a href=${HTTPS_PREFIX}${OUTPUT_APK_TESTSERVER}>${HTTPS_PREFIX}${OUTPUT_APK_TESTSERVER}</a><br />"
-        fi
-    fi
-    fi
-fi
-###################
-# Step 2.9: Exit if output not using for distribution, maybe it's for SonarQube
-if [ $PRODUCE_OUTPUT_USE -eq 0 ]; then
-    if [ $OUTPUT_AND_EXIT_USE -ne 1 ]; then
-        # Exit here with remove all binary outputs
-        if [ -f "$OUTPUT_FOLDER/$APK_GOOGLESTORE" ]; then
-            rm -f $OUTPUT_FOLDER/$APK_GOOGLESTORE
+        if [ $IS_RELEASE -eq 1 ]; then
+        ###################
+        if [ $USING_GOOGLESTORE -eq 1 ]; then
+            # Step 2.1: Build target for GoogleStore
             if [ $USING_BUNDLE_GOOGLESTORE -eq 1 ]; then
-                BUNDLE_APK_FILE="$OUTPUT_FOLDER/${APK_GOOGLESTORE%.aab}.apk"
-                if [ -f "$BUNDLE_APK_FILE" ]; then
-                    rm -f $OUTPUT_FOLDER/$BUNDLE_APK_FILE
-                fi
+                gradleBuildKey="bundle"
+                flutterBuildKey="appbundle"
+                FILE_EXTENSION="aab"
+            else
+                gradleBuildKey="assemble"
+                flutterBuildKey="apk"
+                FILE_EXTENSION="apk"
             fi
-        fi
-        if [ -f "$OUTPUT_FOLDER/$APK_ONESTORE" ]; then
-            rm -f $OUTPUT_FOLDER/$APK_ONESTORE
-        fi
-        if [ -f "$OUTPUT_FOLDER/$OUTPUT_APK_LIVESERVER" ]; then
-            rm -f $OUTPUT_FOLDER/$OUTPUT_APK_LIVESERVER
-        fi
-        if [ -f "$OUTPUT_FOLDER/$APK_TESTSERVER" ]; then
-            rm -f $OUTPUT_FOLDER/$OUTPUT_APK_TESTSERVER
-        fi
-    fi
-    exit
-elif [ $DEBUGGING -eq 0 ]; then
-    if [ $USING_SCP -eq 1 ]; then
-    ###################
-    # Step 2.99: Send file to NAS (app.company.com)
-    if [ -f "${OUTPUT_FOLDER}/${APK_GOOGLESTORE}" ]; then
-        if [ $(sendFile ${OUTPUT_FOLDER}/${APK_GOOGLESTORE} ${NEO2UA_OUTPUT_FOLDER}) -eq 0 ]; then
-            #   echo "Failed to send file"
-            echo "TODO: **NEED** to resend this file => ${OUTPUT_FOLDER}/${APK_GOOGLESTORE} to ${NEO2UA_OUTPUT_FOLDER}"
-        fi
-        if [ $USING_BUNDLE_GOOGLESTORE -eq 1 ]; then
-            SCP_BUNDLE_APK_FILE="$OUTPUT_FOLDER/${APK_GOOGLESTORE%.aab}.apk"
-            if [ -f "${SCP_BUNDLE_APK_FILE}" ]; then
-                if [ $(sendFile ${SCP_BUNDLE_APK_FILE} ${NEO2UA_OUTPUT_FOLDER}) -eq 0 ]; then
-                    #   echo "Failed to send file"
-                    echo "TODO: **NEED** to resend this file => ${SCP_BUNDLE_APK_FILE} to ${NEO2UA_OUTPUT_FOLDER}"
-                fi
-            fi
-        fi
-    fi
-    if [ -f "${OUTPUT_FOLDER}/${APK_ONESTORE}" ]; then
-        if [ $(sendFile ${OUTPUT_FOLDER}/${APK_ONESTORE} ${NEO2UA_OUTPUT_FOLDER}) -eq 0 ]; then
-            #   echo "Failed to send file"
-            echo "TODO: **NEED** to resend this file => ${OUTPUT_FOLDER}/${APK_ONESTORE} to ${NEO2UA_OUTPUT_FOLDER}"
-        fi
-    fi
-    if [ -f "${OUTPUT_FOLDER}/${OUTPUT_APK_LIVESERVER}" ]; then
-        if [ $(sendFile ${OUTPUT_FOLDER}/${OUTPUT_APK_LIVESERVER} ${NEO2UA_OUTPUT_FOLDER}) -eq 0 ]; then
-            #   echo "Failed to send file"
-            echo "TODO: **NEED** to resend this file => ${OUTPUT_FOLDER}/${OUTPUT_APK_LIVESERVER} to ${NEO2UA_OUTPUT_FOLDER}"
-        fi
-    fi
-    if [ -f "${OUTPUT_FOLDER}/${OUTPUT_APK_TESTSERVER}" ]; then
-        if [ $(sendFile ${OUTPUT_FOLDER}/${OUTPUT_APK_TESTSERVER} ${NEO2UA_OUTPUT_FOLDER}) -eq 0 ]; then
-            #   echo "Failed to send file"
-            echo "TODO: **NEED** to resend this file => ${OUTPUT_FOLDER}/${OUTPUT_APK_TESTSERVER} to ${NEO2UA_OUTPUT_FOLDER}"
-        fi
-    fi
-    fi
-fi
-###################
-# Step 3: 난독화 증적 자료 생성
-if [ $DEBUGGING -eq 0 ]; then
-    USING_OBFUSCATION=$(test $(cat $jsonConfig | $JQ '.android.usingObfuscation') = true && echo 1 || echo 0)
-    if [ $USING_OBFUSCATION -eq 1 ]; then
-        if [ -f "${OUTPUT_FOLDER}/${APK_GOOGLESTORE}" ]; then
-            CHECK_SHELL="$WORKSPACE/${ANDROID_APP_PATH}/check.sh"
-            if test ! -f "$CHECK_SHELL"; then
-                CHECK_SHELL=$(find $WORKSPACE -name 'check.sh' | head -1)
-            fi
-            if [ -f "$CHECK_SHELL" -a $IS_RELEASE -eq 1 ]; then
-                chmod +x $CHECK_SHELL
-                if command -v $A2PS >/dev/null && command -v $GS >/dev/null; then
-                    cd $WORKSPACE/${ANDROID_APP_PATH} && echo "$GIT_USER $(hostname -s) ${WORKSPACE} (${GIT_BRANCH})" >merong.txt
-                    cd $WORKSPACE/${ANDROID_APP_PATH} && echo "$ $CHECK_SHELL -a src" >>merong.txt
-                    cd $WORKSPACE/${ANDROID_APP_PATH} && $CHECK_SHELL -a src >>merong.txt
+            if [ $isFlutterEnabled -eq 1 ]; then
+                $FlutterBin clean
+                $FlutterBin pub get
 
-                    if [ -f merong.txt ]; then
-                        REQUIRED_COMMANDS="a2ps gs convert"
-                        MISSING_COMMANDS=""
-                        for cmd in $REQUIRED_COMMANDS; do
-                            if ! command -v $cmd >/dev/null 2>&1; then
-                                MISSING_COMMANDS="$MISSING_COMMANDS $cmd"
-                            fi
-                        done
-                        
-                        if [ ! -z "$MISSING_COMMANDS" ]; then
-                            echo "Warning: Required commands not found:$MISSING_COMMANDS"
-                            echo "Please install missing commands using: brew install a2ps ghostscript imagemagick"
-                        else
-                            A2PS=$(command -v a2ps)
-                            GS=$(command -v gs)
-                            CONVERT=$(command -v convert)
-                            
-                            cd $WORKSPACE && $A2PS --columns=1 -B -q --medium=A4 --borders=no -o out1.ps merong.txt && \
-                            $GS -sDEVICE=png256 -dNOPAUSE -dBATCH -dSAFER -dTextAlphaBits=4 -q -r300x300 -sOutputFile=out2.png out1.ps && \
-                            $CONVERT -trim -rotate 90 -bordercolor white -border 5 out2.png $OUTPUT_FOLDER/$Obfuscation_SCREENSHOT
+                if test -z "$FLUTTER_FLAG"; then
+                    $FlutterBin build ${flutterBuildKey} --flavor ${GRADLE_TASK_GOOGLESTORE} &>/dev/null
+                elif [[ ${FLUTTER_FLAG} == *"--flavor"* ]]; then
+                    $FlutterBin build ${flutterBuildKey} ${FLUTTER_FLAG} &>/dev/null
+                else
+                    $FlutterBin build ${flutterBuildKey} --flavor ${GRADLE_TASK_GOOGLESTORE} ${FLUTTER_FLAG} &>/dev/null
+                fi
+            elif [ $isReactNativeEnabled -eq 1 ]; then
+                if [ -d ${WORKSPACE}/android ]; then
+                    cd ${WORKSPACE}/android
+                fi
+                GRADLE_TASK="${gradleBuildKey}Release"
+                if [[ $(./gradlew tasks 2>&1 | grep -v '^Warning' | grep "${gradleBuildKey}${GRADLE_TASK_GOOGLESTORE}" | awk '{print $1}' | tr -d ' ') == "${gradleBuildKey}${GRADLE_TASK_GOOGLESTORE}" ]]; then
+                    GRADLE_TASK="${gradleBuildKey}${GRADLE_TASK_GOOGLESTORE}Release"
+                fi
+                ./gradlew "${GRADLE_TASK}"
+                if [ -d ${WORKSPACE}/android ]; then
+                    cd ${WORKSPACE}
+                fi
+            else
+                ./gradlew "${gradleBuildKey}${GRADLE_TASK_GOOGLESTORE}"
+            fi
 
-                            # Cleanup
-                            cd $WORKSPACE && rm -f out[12].png out[12].ps merong.txt
+            if test -z "$BUILD_APK_GOOGLESTORE"; then
+                LOWER_MODE_NAME="$(echo ${RELEASE_TYPE_GOOGLESTORE} | tr 'A-Z' 'a-z')"
+                LOWERCASE_TASK_NAME="$(echo ${GRADLE_TASK_GOOGLESTORE} | tr 'A-Z' 'a-z')"
+                makePathForAndroidOutput
+                BUILD_APK_GOOGLESTORE="$BUILD_APK_OUTPUT"
+            fi
+            if [ -f "$BUILD_OUTPUT_FOLDER/$BUILD_APK_GOOGLESTORE" ]; then
+                mv "$BUILD_OUTPUT_FOLDER/$BUILD_APK_GOOGLESTORE" "$OUTPUT_FOLDER/$APK_GOOGLESTORE"
+                SIZE_GOOGLE_APP_FILE=$(du -sh ${OUTPUT_FOLDER}/${APK_GOOGLESTORE} | awk '{print $1}')
+                SLACK_TEXT="${SLACK_TEXT}${HOSTNAME} > ${GRADLE_TASK_GOOGLESTORE} 배포용 다운로드(${SIZE_GOOGLE_APP_FILE}B): ${HTTPS_PREFIX}${APK_GOOGLESTORE}\n"
+                MAIL_TEXT="${MAIL_TEXT}${GRADLE_TASK_GOOGLESTORE} 배포용 다운로드(${SIZE_GOOGLE_APP_FILE}B): <a href=${HTTPS_PREFIX}${APK_GOOGLESTORE}>${HTTPS_PREFIX}${APK_GOOGLESTORE}</a><br />"
+
+                # Make APK from AAB bundle for integrity
+                if [[ $USING_BUNDLE_GOOGLESTORE -eq 1 && -f "$BUNDLE_TOOL" ]]; then
+                    BUNDLE_APK_FILE="$OUTPUT_FOLDER/${APK_GOOGLESTORE%.aab}.apks"
+                    if [ -f "$BUNDLE_APK_FILE" ]; then
+                        rm -f "$BUNDLE_APK_FILE"
+                    fi
+                    if [ -f "$KEYSTORE_FILE" ]; then
+                        $BUNDLE_TOOL build-apks --bundle="$OUTPUT_FOLDER/$APK_GOOGLESTORE" --output="$BUNDLE_APK_FILE" --mode=universal --ks="$KEYSTORE_FILE" --ks-pass="pass:$STOREPASS" --ks-key-alias="$KEYSTORE_ALIAS"
+                    else
+                        $BUNDLE_TOOL build-apks --bundle="$OUTPUT_FOLDER/$APK_GOOGLESTORE" --output="$BUNDLE_APK_FILE" --mode=universal
+                    fi
+                    BUNDLE_APK2ZIP="${BUNDLE_APK_FILE%.apks}.zip"
+                    mv -f "${BUNDLE_APK_FILE}" "${BUNDLE_APK2ZIP}"
+                    unzip -o "${BUNDLE_APK2ZIP}"
+                    BUNDLE_APK_FILE="$OUTPUT_FOLDER/${APK_GOOGLESTORE%.aab}.apk"
+                    if [ -f universal.apk ]; then
+                        touch universal.apk
+
+                        # Move APK(extract from AAB) to DocRoot
+                        mv -f universal.apk "$BUNDLE_APK_FILE"
+                        find . -name 'toc.*' -exec rm {} \;
+                        if [ -f "$BUNDLE_APK2ZIP" ]; then
+                            rm $BUNDLE_APK2ZIP
                         fi
+                    fi
+                    SIZE_GOOGLE_APP_FILE=$(du -sh ${BUNDLE_APK_FILE} | awk '{print $1}')
+
+                    # for debug build APK
+                    if [ $USING_ADHOC_DEBUG -eq 1 ]; then
+                        if [[ "$DEBUG_APK_OUTPUT" == *".aab" && -f "$BUNDLE_TOOL" ]]; then
+                            BUNDLE_DEBUG_FILE="$DEBUG_OUTPUT_FOLDER/${DEBUG_APK_OUTPUT%.aab}.apks"
+                            if [ -f "$BUNDLE_DEBUG_FILE" ]; then
+                                rm -f "$BUNDLE_DEBUG_FILE"
+                            fi
+                            $BUNDLE_TOOL build-apks --bundle="$DEBUG_OUTPUT_FOLDER/$DEBUG_APK_OUTPUT" --output="$BUNDLE_DEBUG_FILE" --mode=universal
+                            BUNDLE_APK2ZIP="${BUNDLE_DEBUG_FILE%.apks}.zip"
+                            mv -f "${BUNDLE_DEBUG_FILE}" "${BUNDLE_APK2ZIP}"
+                            unzip -o "${BUNDLE_APK2ZIP}"
+                            APK_DEBUG="${APK_FILE_TITLE}${outputGoogleStoreSuffix%release.*}debug.apk"
+                            BUNDLE_DEBUG_FILE="$OUTPUT_FOLDER/$APK_DEBUG"
+                            if [ -f universal.apk ]; then
+                                touch universal.apk
+
+                                # Move APK(extract from AAB) to DocRoot
+                                mv -f universal.apk "$BUNDLE_DEBUG_FILE"
+                                find . -name 'toc.*' -exec rm {} \;
+                                if [ -f "$BUNDLE_APK2ZIP" ]; then
+                                    rm $BUNDLE_APK2ZIP
+                                fi
+                            fi
+                            SIZE_DEBUG_APP_FILE=$(du -sh ${BUNDLE_DEBUG_FILE} | awk '{print $1}')
+                        fi
+                    fi
+                elif [ $USING_ADHOC_DEBUG -eq 1 -a -f "$DEBUG_OUTPUT_FOLDER/$DEBUG_APK_OUTPUT" ]; then
+                    # for debug build APK
+                    APK_DEBUG="${APK_FILE_TITLE}${outputGoogleStoreSuffix%release.*}debug.apk"
+                    mv "$DEBUG_OUTPUT_FOLDER/$DEBUG_APK_OUTPUT" "$OUTPUT_FOLDER/$APK_DEBUG"
+                    SIZE_DEBUG_APP_FILE=$(du -sh "$OUTPUT_FOLDER/$APK_DEBUG" | awk '{print $1}')
+                fi
+            fi
+        fi
+        ###################
+        if [ $USING_ONESTORE -eq 1 ]; then
+            # Step 2.2: Build target for OneStore
+            if [ $USING_BUNDLE_ONESTORE -eq 1 ]; then
+                gradleBuildKey="bundle"
+                flutterBuildKey="appbundle"
+                FILE_EXTENSION="aab"
+            else 
+                gradleBuildKey="assemble"
+                flutterBuildKey="apk"
+                FILE_EXTENSION="apk"
+            fi
+            if [ $isFlutterEnabled -eq 1 ]; then
+                $FlutterBin clean
+                $FlutterBin pub get
+
+                if test -z "$FLUTTER_FLAG"; then
+                    $FlutterBin build ${flutterBuildKey} --flavor ${GRADLE_TASK_ONESTORE}
+                elif [[ ${FLUTTER_FLAG} == *"--flavor"* ]]; then
+                    $FlutterBin build ${flutterBuildKey} ${FLUTTER_FLAG} &>/dev/null
+                else
+                    $FlutterBin build ${flutterBuildKey} --flavor ${GRADLE_TASK_ONESTORE} ${FLUTTER_FLAG}
+                fi
+            elif [ $isReactNativeEnabled -eq 1 ]; then
+                if [ -d ${WORKSPACE}/android ]; then
+                    cd ${WORKSPACE}/android
+                fi
+                GRADLE_TASK="${gradleBuildKey}Release"
+                if [[ $(./gradlew tasks 2>&1 | grep -v '^Warning' | grep "${gradleBuildKey}${GRADLE_TASK_ONESTORE}" | awk '{print $1}' | tr -d ' ') == "${gradleBuildKey}${GRADLE_TASK_ONESTORE}" ]]; then
+                    GRADLE_TASK="${gradleBuildKey}${GRADLE_TASK_ONESTORE}Release"
+                fi
+                ./gradlew "${GRADLE_TASK}"
+                if [ -d ${WORKSPACE}/android ]; then
+                    cd ${WORKSPACE}
+                fi
+            else
+                ./gradlew "${gradleBuildKey}${GRADLE_TASK_ONESTORE}"
+            fi
+
+            if test -z "$BUILD_APK_ONESTORE"; then
+                LOWER_MODE_NAME="$(echo ${RELEASE_TYPE_ONESTORE} | tr 'A-Z' 'a-z')"
+                LOWERCASE_TASK_NAME="$(echo ${GRADLE_TASK_ONESTORE} | tr 'A-Z' 'a-z')"
+                makePathForAndroidOutput
+                BUILD_APK_ONESTORE="$BUILD_APK_OUTPUT"
+            fi
+            if [ -f "$BUILD_OUTPUT_FOLDER/$BUILD_APK_ONESTORE" ]; then
+                mv "$BUILD_OUTPUT_FOLDER/$BUILD_APK_ONESTORE" "$OUTPUT_FOLDER/$APK_ONESTORE"
+                SIZE_ONE_APP_FILE=$(du -sh ${OUTPUT_FOLDER}/${APK_ONESTORE} | awk '{print $1}')
+                SLACK_TEXT="${SLACK_TEXT}${HOSTNAME} > ${GRADLE_TASK_ONESTORE} 배포용 다운로드(${SIZE_ONE_APP_FILE}B): ${HTTPS_PREFIX}${APK_ONESTORE}\n"
+                MAIL_TEXT="${MAIL_TEXT}${GRADLE_TASK_ONESTORE} 배포용 다운로드(${SIZE_ONE_APP_FILE}B): <a href=${HTTPS_PREFIX}${APK_ONESTORE}>${HTTPS_PREFIX}${APK_ONESTORE}</a><br />"
+
+                if [ $USING_ADHOC_DEBUG -eq 1 -a -f "$DEBUG_OUTPUT_FOLDER/$DEBUG_APK_OUTPUT" -a ! -f "$OUTPUT_FOLDER/$APK_DEBUG" ]; then
+                    APK_DEBUG="${APK_FILE_TITLE}${outputOneStoreSuffix%release.*}debug.apk"
+                    mv "$DEBUG_OUTPUT_FOLDER/$DEBUG_APK_OUTPUT" "$OUTPUT_FOLDER/$APK_DEBUG"
+                    SIZE_DEBUG_APP_FILE=$(du -sh "$OUTPUT_FOLDER/$APK_DEBUG" | awk '{print $1}')
+                fi
+            fi
+        fi
+        else
+        ##########
+        if [ $USING_LIVESERVER -eq 1 ]; then
+            # Step 1.1: Build target for LiveServer
+            if [ $USING_BUNDLE_LIVESERVER -eq 1 ]; then
+                gradleBuildKey="bundle"
+                flutterBuildKey="appbundle"
+                FILE_EXTENSION="aab"
+            fi
+            if [ $isFlutterEnabled -eq 1 ]; then
+                $FlutterBin clean
+                $FlutterBin pub get
+
+                if test -z "$FLUTTER_FLAG"; then
+                    $FlutterBin build ${flutterBuildKey} --flavor ${GRADLE_TASK_LIVESERVER}
+                elif [[ ${FLUTTER_FLAG} == *"--flavor"* ]]; then
+                    $FlutterBin build ${flutterBuildKey} ${FLUTTER_FLAG} &>/dev/null
+                else
+                    $FlutterBin build ${flutterBuildKey} --flavor ${GRADLE_TASK_LIVESERVER} ${FLUTTER_FLAG}
+                fi
+            elif [ $isReactNativeEnabled -eq 1 ]; then
+                if [ -d ${WORKSPACE}/android ]; then
+                    cd ${WORKSPACE}/android
+                fi
+                GRADLE_TASK="${gradleBuildKey}Release"
+                if [[ $(./gradlew tasks 2>&1 | grep -v '^Warning' | grep "${gradleBuildKey}${GRADLE_TASK_LIVESERVER}" | awk '{print $1}' | tr -d ' ') == "${gradleBuildKey}${GRADLE_TASK_LIVESERVER}" ]]; then
+                    GRADLE_TASK="${gradleBuildKey}${GRADLE_TASK_LIVESERVER}Release"
+                fi
+                ./gradlew "${GRADLE_TASK}"
+                if [ -d ${WORKSPACE}/android ]; then
+                    cd ${WORKSPACE}
+                fi
+            else
+                ./gradlew "${gradleBuildKey}${GRADLE_TASK_LIVESERVER}"
+            fi
+
+            if test -z "$APK_LIVESERVER"; then
+                LOWER_MODE_NAME="$(echo ${RELEASE_TYPE_LIVESERVER} | tr 'A-Z' 'a-z')"
+                LOWERCASE_TASK_NAME="$(echo ${GRADLE_TASK_LIVESERVER} | tr 'A-Z' 'a-z')"
+                makePathForAndroidOutput
+                APK_LIVESERVER="$BUILD_APK_OUTPUT"
+            fi
+            if [ -f "$BUILD_OUTPUT_FOLDER/$APK_LIVESERVER" ]; then
+                mv "$BUILD_OUTPUT_FOLDER/$APK_LIVESERVER" "$OUTPUT_FOLDER/$OUTPUT_APK_LIVESERVER"
+                SIZE_LIVE_APP_FILE=$(du -sh ${OUTPUT_FOLDER}/${OUTPUT_APK_LIVESERVER} | awk '{print $1}')
+                SLACK_TEXT="${SLACK_TEXT}${HOSTNAME} > ${GRADLE_TASK_LIVESERVER}(debug)(${SIZE_LIVE_APP_FILE}B): ${HTTPS_PREFIX}${OUTPUT_APK_LIVESERVER}\n"
+                MAIL_TEXT="${MAIL_TEXT}${GRADLE_TASK_LIVESERVER}(debug)(${SIZE_LIVE_APP_FILE}B): <a href=${HTTPS_PREFIX}${OUTPUT_APK_LIVESERVER}>${HTTPS_PREFIX}${OUTPUT_APK_LIVESERVER}</a><br />"
+            fi
+        fi
+        ##########
+        if [ $USING_TESTSERVER -eq 1 ]; then
+            USING_GMMSTB_MODE=$(test $(cat $jsonConfig | $JQ '.android.TestServer.usingGMMSTB') = true && echo 1 || echo 0)
+            if [ $USING_GMMSTB_MODE -eq 1 ]; then
+                # Step 1.2: GMMS TB모드 켜기
+                MAIN_ACTIVITY=$(find . -name 'MainActivity.java')
+                if [ -f "$MAIN_ACTIVITY" ]; then
+                    grep 'Config.IS_TB_GMMS_SERVER =' $MAIN_ACTIVITY
+                    if [ -n $? ]; then
+                    sed '/Config.IS_TB_GMMS_SERVER = .*/ a\
+                                Config.IS_TB_GMMS_SERVER = true;' $MAIN_ACTIVITY >$MAIN_ACTIVITY.new
+                    mv -f $MAIN_ACTIVITY.new $MAIN_ACTIVITY
                     fi
                 fi
             fi
-
-            if [ -f "$WORKSPACE/$Obfuscation_INPUT_FILE" ]; then
-                cp -f $WORKSPACE/$Obfuscation_INPUT_FILE $OUTPUT_FOLDER/$Obfuscation_OUTPUT_FILE
-            elif [ -f "${APP_ROOT_PREFIX}/${TOP_PATH}/$Obfuscation_INPUT_FILE" ]; then
-                cp -f ${APP_ROOT_PREFIX}/${TOP_PATH}/$Obfuscation_INPUT_FILE $OUTPUT_FOLDER/$Obfuscation_OUTPUT_FILE
+            if [ $USING_BUNDLE_TESTSERVER -eq 1 ]; then
+                gradleBuildKey="bundle"
+                flutterBuildKey="appbundle"
+                FILE_EXTENSION="aab"
             fi
+            if [ $isFlutterEnabled -eq 1 ]; then
+                $FlutterBin clean
+                $FlutterBin pub get
 
-            if [ $USING_SCP -eq 1 ]; then
-                if [ $(sendFile ${OUTPUT_FOLDER}/${Obfuscation_OUTPUT_FILE} ${NEO2UA_OUTPUT_FOLDER}) -eq 0 ]; then
-                    #   echo "Failed to send file"
-                    echo "TODO: **NEED** to resend this file => ${OUTPUT_FOLDER}/${Obfuscation_OUTPUT_FILE} to ${NEO2UA_OUTPUT_FOLDER}"
+                if test -z "$FLUTTER_FLAG"; then
+                    $FlutterBin build ${flutterBuildKey} --flavor ${GRADLE_TASK_TESTSERVER}
+                elif [[ ${FLUTTER_FLAG} == *"--flavor"* ]]; then
+                    $FlutterBin build ${flutterBuildKey} ${FLUTTER_FLAG} &>/dev/null
+                else
+                    $FlutterBin build ${flutterBuildKey} --flavor ${GRADLE_TASK_TESTSERVER} ${FLUTTER_FLAG}
                 fi
+            elif [ $isReactNativeEnabled -eq 1 ]; then
+                if [ -d ${WORKSPACE}/android ]; then
+                    cd ${WORKSPACE}/android
+                fi
+                GRADLE_TASK="${gradleBuildKey}Debug"
+                if [[ $(./gradlew tasks 2>&1 | grep -v '^Warning' | grep "${gradleBuildKey}${GRADLE_TASK_TESTSERVER}" | awk '{print $1}' | tr -d ' ') == "${gradleBuildKey}${GRADLE_TASK_TESTSERVER}" ]]; then
+                    GRADLE_TASK="${gradleBuildKey}${GRADLE_TASK_TESTSERVER}Debug"
+                fi
+                ./gradlew "${GRADLE_TASK}"
+                if [ -d ${WORKSPACE}/android ]; then
+                    cd ${WORKSPACE}
+                fi
+            else
+                ./gradlew "${gradleBuildKey}${GRADLE_TASK_TESTSERVER}"
             fi
 
+            if test -z "$APK_TESTSERVER"; then
+                LOWER_MODE_NAME="$(echo ${RELEASE_TYPE_TESTSERVER} | tr 'A-Z' 'a-z')"
+                LOWERCASE_TASK_NAME="$(echo ${GRADLE_TASK_TESTSERVER} | tr 'A-Z' 'a-z')"
+                makePathForAndroidOutput
+                APK_TESTSERVER="$BUILD_APK_OUTPUT"
+            fi
+            if [ -f "$BUILD_OUTPUT_FOLDER/$APK_TESTSERVER" ]; then
+                mv "$BUILD_OUTPUT_FOLDER/$APK_TESTSERVER" "$OUTPUT_FOLDER/$OUTPUT_APK_TESTSERVER"
+                SIZE_TEST_APP_FILE=$(du -sh ${OUTPUT_FOLDER}/${OUTPUT_APK_TESTSERVER} | awk '{print $1}')
+                SLACK_TEXT="${SLACK_TEXT}${HOSTNAME} > ${GRADLE_TASK_TESTSERVER}(${RELEASE_TYPE_TESTSERVER})(${SIZE_TEST_APP_FILE}B): ${HTTPS_PREFIX}${OUTPUT_APK_TESTSERVER}\n"
+                MAIL_TEXT="${MAIL_TEXT}${GRADLE_TASK_TESTSERVER}(${RELEASE_TYPE_TESTSERVER})(${SIZE_TEST_APP_FILE}B): <a href=${HTTPS_PREFIX}${OUTPUT_APK_TESTSERVER}>${HTTPS_PREFIX}${OUTPUT_APK_TESTSERVER}</a><br />"
+            fi
+        fi
         fi
     fi
-fi
+    ###################
+    # Step 2.9: Exit if output not using for distribution, maybe it's for SonarQube
+    if [ $PRODUCE_OUTPUT_USE -eq 0 ]; then
+        if [ $OUTPUT_AND_EXIT_USE -ne 1 ]; then
+            # Exit here with remove all binary outputs
+            if [ -f "$OUTPUT_FOLDER/$APK_GOOGLESTORE" ]; then
+                rm -f $OUTPUT_FOLDER/$APK_GOOGLESTORE
+                if [ $USING_BUNDLE_GOOGLESTORE -eq 1 ]; then
+                    BUNDLE_APK_FILE="$OUTPUT_FOLDER/${APK_GOOGLESTORE%.aab}.apk"
+                    if [ -f "$BUNDLE_APK_FILE" ]; then
+                        rm -f $OUTPUT_FOLDER/$BUNDLE_APK_FILE
+                    fi
+                fi
+            fi
+            if [ -f "$OUTPUT_FOLDER/$APK_ONESTORE" ]; then
+                rm -f $OUTPUT_FOLDER/$APK_ONESTORE
+            fi
+            if [ -f "$OUTPUT_FOLDER/$OUTPUT_APK_LIVESERVER" ]; then
+                rm -f $OUTPUT_FOLDER/$OUTPUT_APK_LIVESERVER
+            fi
+            if [ -f "$OUTPUT_FOLDER/$APK_TESTSERVER" ]; then
+                rm -f $OUTPUT_FOLDER/$OUTPUT_APK_TESTSERVER
+            fi
+        fi
+        exit
+    elif [ $DEBUGGING -eq 0 ]; then
+        if [ $USING_SCP -eq 1 ]; then
+        ###################
+        # Step 2.99: Send file to NAS (app.company.com)
+        if [ -f "${OUTPUT_FOLDER}/${APK_GOOGLESTORE}" ]; then
+            if [ $(sendFile ${OUTPUT_FOLDER}/${APK_GOOGLESTORE} ${NEO2UA_OUTPUT_FOLDER}) -eq 0 ]; then
+                #   echo "Failed to send file"
+                echo "TODO: **NEED** to resend this file => ${OUTPUT_FOLDER}/${APK_GOOGLESTORE} to ${NEO2UA_OUTPUT_FOLDER}"
+            fi
+            if [ $USING_BUNDLE_GOOGLESTORE -eq 1 ]; then
+                SCP_BUNDLE_APK_FILE="$OUTPUT_FOLDER/${APK_GOOGLESTORE%.aab}.apk"
+                if [ -f "${SCP_BUNDLE_APK_FILE}" ]; then
+                    if [ $(sendFile ${SCP_BUNDLE_APK_FILE} ${NEO2UA_OUTPUT_FOLDER}) -eq 0 ]; then
+                        #   echo "Failed to send file"
+                        echo "TODO: **NEED** to resend this file => ${SCP_BUNDLE_APK_FILE} to ${NEO2UA_OUTPUT_FOLDER}"
+                    fi
+                fi
+            fi
+        fi
+        if [ -f "${OUTPUT_FOLDER}/${APK_ONESTORE}" ]; then
+            if [ $(sendFile ${OUTPUT_FOLDER}/${APK_ONESTORE} ${NEO2UA_OUTPUT_FOLDER}) -eq 0 ]; then
+                #   echo "Failed to send file"
+                echo "TODO: **NEED** to resend this file => ${OUTPUT_FOLDER}/${APK_ONESTORE} to ${NEO2UA_OUTPUT_FOLDER}"
+            fi
+        fi
+        if [ -f "${OUTPUT_FOLDER}/${OUTPUT_APK_LIVESERVER}" ]; then
+            if [ $(sendFile ${OUTPUT_FOLDER}/${OUTPUT_APK_LIVESERVER} ${NEO2UA_OUTPUT_FOLDER}) -eq 0 ]; then
+                #   echo "Failed to send file"
+                echo "TODO: **NEED** to resend this file => ${OUTPUT_FOLDER}/${OUTPUT_APK_LIVESERVER} to ${NEO2UA_OUTPUT_FOLDER}"
+            fi
+        fi
+        if [ -f "${OUTPUT_FOLDER}/${OUTPUT_APK_TESTSERVER}" ]; then
+            if [ $(sendFile ${OUTPUT_FOLDER}/${OUTPUT_APK_TESTSERVER} ${NEO2UA_OUTPUT_FOLDER}) -eq 0 ]; then
+                #   echo "Failed to send file"
+                echo "TODO: **NEED** to resend this file => ${OUTPUT_FOLDER}/${OUTPUT_APK_TESTSERVER} to ${NEO2UA_OUTPUT_FOLDER}"
+            fi
+        fi
+        fi
+    fi
+    ###################
+    # Step 3: 난독화 증적 자료 생성
+    makeObfuscationScreenshot
+}
