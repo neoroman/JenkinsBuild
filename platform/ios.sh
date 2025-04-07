@@ -47,7 +47,7 @@ function makeObfuscationScreenshot() {
                     # Execute commands with proper path tracking
                     MERONG_FILE="$WORKSPACE/merong.txt"
 
-                    cd $WORKSPACE && echo "${systemName}:ios appDevTeam$ $CHECK_SHELL -i ./${PROJECT_NAME}" >merong.txt
+                    cd $WORKSPACE && echo "${systemName}:ios AppDevTeam$ $CHECK_SHELL -i ./${PROJECT_NAME}" >merong.txt
                     cd $WORKSPACE && $CHECK_SHELL -i ./${PROJECT_NAME} >>merong.txt
 
                     if [ -f "$MERONG_FILE" ]; then
