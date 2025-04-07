@@ -36,8 +36,9 @@ function makeObfuscationScreenshot() {
                         
                         # Create the file in a location we know exists
                         echo "$GIT_USER $(hostname -s) ${WORKSPACE} (${GIT_BRANCH})" > "$MERONG_FILE"
-                        echo "$ $CHECK_SHELL -a src" >> "$MERONG_FILE"
-                        $CHECK_SHELL -a src >> "$MERONG_FILE"
+                        SRC_PATH="$WORKSPACE/${ANDROID_APP_PATH}/src"
+                        echo "$ $CHECK_SHELL -a $SRC_PATH" >> "$MERONG_FILE"
+                        $CHECK_SHELL -a $SRC_PATH >> "$MERONG_FILE"
                         
                         if [ -f "$MERONG_FILE" ]; then
                             echo "Created check output file"
