@@ -218,6 +218,13 @@ if [ $USING_SCP -eq 1 ]; then
 fi
 ####################
 ##
+if [ $IS_RELEASE -eq 1 ]; then
+    VERSION_STRING="${APP_VERSION}(${BUILD_VERSION})"
+elif [ "$APP_VERSION" != "" ]; then
+    VERSION_STRING="${APP_VERSION}.${BUILD_VERSION}"
+else
+    VERSION_STRING=""
+fi
 OUTPUT_FILENAME_APPSTORE_SUFFIX=$(cat $jsonConfig | $JQ '.ios.AppStore.fileSuffix' | tr -d '"')
 OUTPUT_FILENAME_APPSTORE="${OUTPUT_PREFIX}${VERSION_STRING}_${FILE_TODAY}${OUTPUT_FILENAME_APPSTORE_SUFFIX}"
 OUTPUT_FILENAME_APPSTORE_IPA="${OUTPUT_FILENAME_APPSTORE}.ipa"
@@ -318,11 +325,6 @@ function doExecuteIOS() {
     # Step 1.1: Build target for AppStore (We don't need AppStore version for preRelease)
     if [ $DEBUGGING -eq 0 ]; then
         if [ $IS_RELEASE -eq 1 -a $USING_APPSTORE -eq 1 ]; then
-            if [ $APP_VERSION != "" ]; then
-                VERSION_STRING="${APP_VERSION}(${BUILD_VERSION})"
-            else
-                VERSION_STRING=""
-            fi
             ARCHIVE_FILE="${OUTPUT_PREFIX}${VERSION_STRING}_${FILE_TODAY}.xcarchive"
             ARCHIVE_PATH="${OUTPUT_FOLDER}/${ARCHIVE_FILE}"
             if [ $CUSTOM_EXPORT_OPTIONS -eq 1 -a -f "$CUSTOM_EXPORT_OPTIONS_PATH" ]; then
@@ -409,13 +411,6 @@ function doExecuteIOS() {
     fi
     ###################
     # Step 2.0: Prepare
-    if [ $IS_RELEASE -eq 1 ]; then
-        VERSION_STRING="${APP_VERSION}(${BUILD_VERSION})"
-    elif [ "$APP_VERSION" != "" ]; then
-        VERSION_STRING="${APP_VERSION}.${BUILD_VERSION}"
-    else
-        VERSION_STRING=""
-    fi
     if [ $USING_APPSTORE -eq 1 -a $IS_RELEASE -eq 1 ]; then
         ###################
         # Step 2.1: Copy ``App Store'' target from Applications to OUTPUT_FOLDER
@@ -645,11 +640,6 @@ function doExecuteIOS() {
         if [[ -z "$RELEASE_KEYWORD" ]]; then
             RELEASE_KEYWORD="검증용"
         fi
-        VERSION_STRING="v${APP_VERSION}(${BUILD_VERSION})(${RELEASE_KEYWORD})"
-    elif [ "$APP_VERSION" != "" ]; then
-        VERSION_STRING="v${APP_VERSION}.${BUILD_VERSION}"
-    else
-        VERSION_STRING=""
     fi
 
     if [ $USING_ADHOC -eq 1 ]; then
