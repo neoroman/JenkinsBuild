@@ -113,7 +113,10 @@ if [[ -z "$OBFUSCATION_TEST" ]]; then
 fi
 ###################
 ZIP="/usr/bin/zip"
-POD="/usr/local/bin/pod"
+POD=$(which pod)
+if test -z "$POD"; then
+    POD="/usr/local/bin/pod"
+fi
 ###################
 APP_PATH="${TOP_PATH}/ios"
 APP_ROOT_SUFFIX="ios_distributions"
@@ -285,13 +288,13 @@ function doExecuteIOS() {
         #     export GEM_PATH="/System/Library/Frameworks/Ruby.framework/Versions/2.6/usr/lib/ruby/gems/2.6.0"
         # fi
         if [ ! -f $POD_LOCK_FILE ]; then
-            if [ $(uname -p) == "arm" ]; then
+            if [ $(uname -p) == "arm" -a $isReactNativeEnabled -ne 1 ]; then
                 arch -x86_64 $POD install
             else
                 $POD install
             fi
         else
-            if [ $(uname -p) == "arm" ]; then
+            if [ $(uname -p) == "arm" -a $isReactNativeEnabled -ne 1 ]; then
                 arch -x86_64 $POD update
             else
                 $POD update
