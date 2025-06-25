@@ -466,7 +466,15 @@ if [ $IS_RELEASE -eq 1 ]; then
     # else
     #   $GIT archive --format zip --output "${realSrcFile}" HEAD -0
     # fi
+    #####
+    # Create temporary .gitattributes to exclude files from archive
+    echo ".env export-ignore" > .git/info/attributes
+    echo "env.tar* export-ignore" >> .git/info/attributes
+
     $GIT archive --format zip --output "${realSrcFile}" HEAD -0
+
+    # Remove temporary attributes
+    rm .git/info/attributes
     cd -
   fi
 fi
