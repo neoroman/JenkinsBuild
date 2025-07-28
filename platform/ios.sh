@@ -91,6 +91,124 @@ function makeObfuscationScreenshot() {
     fi
 }
 
+function initializeIOSBuildConfig() {
+    APP_VERSION="MARKETING_VERSION"
+    if test -f "${WORKSPACE}/${INFO_PLIST}"; then
+        if test ! -z $(grep 'CFBundleShortVersionString' "${WORKSPACE}/${INFO_PLIST}"); then
+            if [ -f "${WORKSPACE}/${INFO_PLIST}" ]; then
+                APP_VERSION=$(/usr/libexec/PlistBuddy -c "Print CFBundleShortVersionString" "${WORKSPACE}/${INFO_PLIST}")
+                BUILD_VERSION=$(/usr/libexec/PlistBuddy -c "Print CFBundleVersion" "${WORKSPACE}/${INFO_PLIST}")
+            fi
+        fi
+    fi
+    if [[ "$APP_VERSION" == *"MARKETING_VERSION"* ]]; then
+        XCODE_PBXFILE="${WORKSPACE}/${PROJECT_NAME}.xcodeproj/project.pbxproj"
+        APP_VERSION=$(grep 'MARKETING_VERSION' $XCODE_PBXFILE | head -1 | sed -e 's/MARKETING_VERSION = \(.*\);/\1/g' | tr -d ' \t')
+        BUILD_VERSION=$(grep 'CURRENT_PROJECT_VERSION = ' $XCODE_PBXFILE | head -1 | sed -e 's/CURRENT_PROJECT_VERSION = \(.*\);/\1/g' | tr -d ' \t')
+        if [[ "$APP_VERSION" == *"FLUTTER_BUILD_NAME"* ]]; then
+            APP_VERSION=$(grep 'FLUTTER_BUILD_NAME=' ios/Flutter/Generated.xcconfig | head -1 | sed -e 's/FLUTTER_BUILD_NAME=\(.*\)/\1/g' | tr -d ' ')
+        fi
+        if [[ "$BUILD_VERSION" == *"FLUTTER_BUILD_NUMBER"* ]]; then
+            BUILD_VERSION=$(grep 'FLUTTER_BUILD_NUMBER=' ios/Flutter/Generated.xcconfig | head -1 | sed -e 's/FLUTTER_BUILD_NUMBER=\(.*\)/\1/g' | tr -d ' ')
+        fi
+    fi
+    if test -z $BUILD_VERSION; then
+        BUILD_VERSION="1"
+    fi
+    APP_ROOT="${APP_ROOT_PREFIX}/${TOP_PATH}/${APP_ROOT_SUFFIX}"
+    APP_HTML="${APP_ROOT_PREFIX}/${APP_PATH}"
+    if test -z ${GIT_BRANCH}; then
+        GIT_BRANCH=$($GIT rev-parse --abbrev-ref HEAD)
+    fi
+    LOCAL_BRANCH=$(echo ${GIT_BRANCH} | sed -e 's/.*\/\(.*\)$/\1/')
+    DST_ROOT="/tmp/${PROJECT_NAME}/${LOCAL_BRANCH}"
+    OUTPUT_FOLDER="${APP_ROOT}/${APP_VERSION}"
+    HTTPS_PREFIX="${FRONTEND_POINT}/${TOP_PATH}/${APP_ROOT_SUFFIX}/${APP_VERSION}/"
+    OUTBOUND_HTTPS_PREFIX="${OUTBOUND_POINT}/${TOP_PATH}/${APP_ROOT_SUFFIX}/${APP_VERSION}/"
+    ###################
+    USING_APPSTORE=$(test $(cat $jsonConfig | $JQ '.ios.AppStore.enabled') = true && echo 1 || echo 0)
+    if [ $USING_APPSTORE -eq 1 ]; then
+        SCHEME_APPSTORE=$(cat $jsonConfig | $JQ '.ios.AppStore.schemeName' | tr -d '"')
+        TARGET_APPSTORE=$(cat $jsonConfig | $JQ '.ios.AppStore.targetName' | tr -d '"')
+        BUNDLE_ID_APPSTORE=$(cat $jsonConfig | $JQ '.ios.AppStore.bundleId' | tr -d '"')
+        BUNDLE_NAME_APPSTORE=$(cat $jsonConfig | $JQ '.ios.AppStore.bundleName' | tr -d '"')
+    fi
+    USING_ADHOC=$(test $(cat $jsonConfig | $JQ '.ios.Adhoc.enabled') = true && echo 1 || echo 0)
+    if [ $USING_ADHOC -eq 1 ]; then
+        SCHEME_ADHOC=$(cat $jsonConfig | $JQ '.ios.Adhoc.schemeName' | tr -d '"')
+        TARGET_ADHOC=$(cat $jsonConfig | $JQ '.ios.Adhoc.targetName' | tr -d '"')
+        BUNDLE_ID_ADHOC=$(cat $jsonConfig | $JQ '.ios.Adhoc.bundleId' | tr -d '"')
+        BUNDLE_NAME_ADHOC=$(cat $jsonConfig | $JQ '.ios.Adhoc.bundleName' | tr -d '"')
+        USING_ADHOC_DEBUG=$(test $(cat $jsonConfig | $JQ '.ios.Adhoc.buildDebugVersion') = true && echo 1 || echo 0)
+    fi
+    USING_ENTERPRISE=$(test $(cat $jsonConfig | $JQ '.ios.Enterprise.enabled') = true && echo 1 || echo 0)
+    if [ $USING_ENTERPRISE -eq 1 ]; then
+        SCHEME_ENTER=$(cat $jsonConfig | $JQ '.ios.Enterprise.schemeName' | tr -d '"')
+        TARGET_ENTER=$(cat $jsonConfig | $JQ '.ios.Enterprise.targetName' | tr -d '"')
+        BUNDLE_ID_ENTER=$(cat $jsonConfig | $JQ '.ios.Enterprise.bundleId' | tr -d '"')
+        BUNDLE_NAME_ENTER=$(cat $jsonConfig | $JQ '.ios.Enterprise.bundleName' | tr -d '"')
+    fi
+    USING_ENTER4WEB=$(test $(cat $jsonConfig | $JQ '.ios.Enterprise4WebDebug.enabled') = true && echo 1 || echo 0)
+    if [ $USING_ENTER4WEB -eq 1 ]; then
+        SCHEME_ENTER4WEB=$(cat $jsonConfig | $JQ '.ios.Enterprise4WebDebug.schemeName' | tr -d '"')
+        TARGET_ENTER4WEB=$(cat $jsonConfig | $JQ '.ios.Enterprise4WebDebug.targetName' | tr -d '"')
+        BUNDLE_ID_ENTER4WEB=$(cat $jsonConfig | $JQ '.ios.Enterprise4WebDebug.bundleId' | tr -d '"')
+        BUNDLE_NAME_ENTER4WEB=$(cat $jsonConfig | $JQ '.ios.Enterprise4WebDebug.bundleName' | tr -d '"')
+    fi
+    ###################
+    if [ ! -d $DST_ROOT ]; then
+        mkdir -p $DST_ROOT
+        chmod 777 $DST_ROOT
+    fi
+    if [ -d $DST_ROOT/Applications ]; then
+        rm -rf ${DST_ROOT}/Applications
+    fi
+    if [ ! -d $APP_ROOT ]; then
+        mkdir -p $APP_ROOT
+        chmod 777 $APP_ROOT
+    fi
+    if [ ! -d $OUTPUT_FOLDER ]; then
+        mkdir -p $OUTPUT_FOLDER
+        chmod 777 $OUTPUT_FOLDER
+    fi
+    if [ $USING_SCP -eq 1 ]; then
+        if [ $DEBUGGING -eq 0 ]; then
+            NEO2UA_OUTPUT_FOLDER="${TOP_PATH}/${APP_ROOT_SUFFIX}/${APP_VERSION}"
+            if [ $(checkDirExist ${NEO2UA_OUTPUT_FOLDER}) -eq 0 ]; then
+                # echo "Dir **NOT** exist: ${TOP_PATH}/${APP_ROOT_SUFFIX}/${APP_VERSION}"
+                makeDir ${NEO2UA_OUTPUT_FOLDER}
+            fi
+        fi
+    fi
+    ####################
+    ##
+    if [ $IS_RELEASE -eq 1 ]; then
+        VERSION_STRING="${APP_VERSION}(${BUILD_VERSION})"
+    elif [ "$APP_VERSION" != "" ]; then
+        VERSION_STRING="${APP_VERSION}.${BUILD_VERSION}"
+    else
+        VERSION_STRING=""
+    fi
+    OUTPUT_FILENAME_APPSTORE_SUFFIX=$(cat $jsonConfig | $JQ '.ios.AppStore.fileSuffix' | tr -d '"')
+    OUTPUT_FILENAME_APPSTORE="${OUTPUT_PREFIX}${VERSION_STRING}_${FILE_TODAY}${OUTPUT_FILENAME_APPSTORE_SUFFIX}"
+    OUTPUT_FILENAME_APPSTORE_IPA="${OUTPUT_FILENAME_APPSTORE}.ipa"
+    OUTPUT_FILENAME_APPSTORE_IX_SHIELD_CHECK="${OUTPUT_PREFIX}${VERSION_STRING}_${FILE_TODAY}_IxShieldCheck.png"
+    OUTPUT_FILENAME_APPSTORE_DSYM="${OUTPUT_FILENAME_APPSTORE}_dSYM.zip"
+    TEMP_APPSTORE_APP_FOLDER="${OUTPUT_FILENAME_APPSTORE}.app"
+    OUTPUT_FILE="${OUTPUT_FOLDER}/${TARGET_APPSTORE}"
+    ##
+    OUTPUT_FILENAME_ADHOC_SUFFIX=$(cat $jsonConfig | $JQ '.ios.Adhoc.fileSuffix' | tr -d '"')
+    OUTPUT_FILENAME_ADHOC="${OUTPUT_PREFIX}${VERSION_STRING}_${FILE_TODAY}${OUTPUT_FILENAME_ADHOC_SUFFIX}"
+    OUTPUT_FILENAME_ADHOC_IPA="${OUTPUT_FILENAME_ADHOC}.ipa"
+    OUTPUT_FILENAME_ADHOC_PLIST="${OUTPUT_FILENAME_ADHOC}.plist"
+    ##
+    OUTPUT_FILENAME_ENTER_SUFFIX=$(cat $jsonConfig | $JQ '.ios.Enterprise.fileSuffix' | tr -d '"')
+    OUTPUT_FILENAME_ENTER="${OUTPUT_PREFIX}${VERSION_STRING}_${FILE_TODAY}${OUTPUT_FILENAME_ENTER_SUFFIX}"
+    OUTPUT_FILENAME_ENTER_IPA="${OUTPUT_FILENAME_ENTER}.ipa"
+    OUTPUT_FILENAME_ENTER_PLIST="${OUTPUT_FILENAME_ENTER}.plist"
+    ##
+}
+
 # iOS Shell Script
 XCODE=$(command -v xcodebuild)
 if [ ! -f $XCODE ]; then
@@ -131,121 +249,6 @@ if test -z $PROJECT_NAME; then
     exit
 fi
 ###################
-APP_VERSION="MARKETING_VERSION"
-if test -f "${WORKSPACE}/${INFO_PLIST}"; then
-    if test ! -z $(grep 'CFBundleShortVersionString' "${WORKSPACE}/${INFO_PLIST}"); then
-        if [ -f "${WORKSPACE}/${INFO_PLIST}" ]; then
-            APP_VERSION=$(/usr/libexec/PlistBuddy -c "Print CFBundleShortVersionString" "${WORKSPACE}/${INFO_PLIST}")
-            BUILD_VERSION=$(/usr/libexec/PlistBuddy -c "Print CFBundleVersion" "${WORKSPACE}/${INFO_PLIST}")
-        fi
-    fi
-fi
-if [[ "$APP_VERSION" == *"MARKETING_VERSION"* ]]; then
-    XCODE_PBXFILE="${WORKSPACE}/${PROJECT_NAME}.xcodeproj/project.pbxproj"
-    APP_VERSION=$(grep 'MARKETING_VERSION' $XCODE_PBXFILE | head -1 | sed -e 's/MARKETING_VERSION = \(.*\);/\1/g' | tr -d ' \t')
-    BUILD_VERSION=$(grep 'CURRENT_PROJECT_VERSION = ' $XCODE_PBXFILE | head -1 | sed -e 's/CURRENT_PROJECT_VERSION = \(.*\);/\1/g' | tr -d ' \t')
-    if [[ "$APP_VERSION" == *"FLUTTER_BUILD_NAME"* ]]; then
-        APP_VERSION=$(grep 'FLUTTER_BUILD_NAME=' ios/Flutter/Generated.xcconfig | head -1 | sed -e 's/FLUTTER_BUILD_NAME=\(.*\)/\1/g' | tr -d ' ')
-    fi
-    if [[ "$BUILD_VERSION" == *"FLUTTER_BUILD_NUMBER"* ]]; then
-        BUILD_VERSION=$(grep 'FLUTTER_BUILD_NUMBER=' ios/Flutter/Generated.xcconfig | head -1 | sed -e 's/FLUTTER_BUILD_NUMBER=\(.*\)/\1/g' | tr -d ' ')
-    fi
-fi
-if test -z $BUILD_VERSION; then
-    BUILD_VERSION="1"
-fi
-APP_ROOT="${APP_ROOT_PREFIX}/${TOP_PATH}/${APP_ROOT_SUFFIX}"
-APP_HTML="${APP_ROOT_PREFIX}/${APP_PATH}"
-if test -z ${GIT_BRANCH}; then
-    GIT_BRANCH=$($GIT rev-parse --abbrev-ref HEAD)
-fi
-LOCAL_BRANCH=$(echo ${GIT_BRANCH} | sed -e 's/.*\/\(.*\)$/\1/')
-DST_ROOT="/tmp/${PROJECT_NAME}/${LOCAL_BRANCH}"
-OUTPUT_FOLDER="${APP_ROOT}/${APP_VERSION}"
-HTTPS_PREFIX="${FRONTEND_POINT}/${TOP_PATH}/${APP_ROOT_SUFFIX}/${APP_VERSION}/"
-OUTBOUND_HTTPS_PREFIX="${OUTBOUND_POINT}/${TOP_PATH}/${APP_ROOT_SUFFIX}/${APP_VERSION}/"
-###################
-USING_APPSTORE=$(test $(cat $jsonConfig | $JQ '.ios.AppStore.enabled') = true && echo 1 || echo 0)
-if [ $USING_APPSTORE -eq 1 ]; then
-    SCHEME_APPSTORE=$(cat $jsonConfig | $JQ '.ios.AppStore.schemeName' | tr -d '"')
-    TARGET_APPSTORE=$(cat $jsonConfig | $JQ '.ios.AppStore.targetName' | tr -d '"')
-    BUNDLE_ID_APPSTORE=$(cat $jsonConfig | $JQ '.ios.AppStore.bundleId' | tr -d '"')
-    BUNDLE_NAME_APPSTORE=$(cat $jsonConfig | $JQ '.ios.AppStore.bundleName' | tr -d '"')
-fi
-USING_ADHOC=$(test $(cat $jsonConfig | $JQ '.ios.Adhoc.enabled') = true && echo 1 || echo 0)
-if [ $USING_ADHOC -eq 1 ]; then
-    SCHEME_ADHOC=$(cat $jsonConfig | $JQ '.ios.Adhoc.schemeName' | tr -d '"')
-    TARGET_ADHOC=$(cat $jsonConfig | $JQ '.ios.Adhoc.targetName' | tr -d '"')
-    BUNDLE_ID_ADHOC=$(cat $jsonConfig | $JQ '.ios.Adhoc.bundleId' | tr -d '"')
-    BUNDLE_NAME_ADHOC=$(cat $jsonConfig | $JQ '.ios.Adhoc.bundleName' | tr -d '"')
-    USING_ADHOC_DEBUG=$(test $(cat $jsonConfig | $JQ '.ios.Adhoc.buildDebugVersion') = true && echo 1 || echo 0)
-fi
-USING_ENTERPRISE=$(test $(cat $jsonConfig | $JQ '.ios.Enterprise.enabled') = true && echo 1 || echo 0)
-if [ $USING_ENTERPRISE -eq 1 ]; then
-    SCHEME_ENTER=$(cat $jsonConfig | $JQ '.ios.Enterprise.schemeName' | tr -d '"')
-    TARGET_ENTER=$(cat $jsonConfig | $JQ '.ios.Enterprise.targetName' | tr -d '"')
-    BUNDLE_ID_ENTER=$(cat $jsonConfig | $JQ '.ios.Enterprise.bundleId' | tr -d '"')
-    BUNDLE_NAME_ENTER=$(cat $jsonConfig | $JQ '.ios.Enterprise.bundleName' | tr -d '"')
-fi
-USING_ENTER4WEB=$(test $(cat $jsonConfig | $JQ '.ios.Enterprise4WebDebug.enabled') = true && echo 1 || echo 0)
-if [ $USING_ENTER4WEB -eq 1 ]; then
-    SCHEME_ENTER4WEB=$(cat $jsonConfig | $JQ '.ios.Enterprise4WebDebug.schemeName' | tr -d '"')
-    TARGET_ENTER4WEB=$(cat $jsonConfig | $JQ '.ios.Enterprise4WebDebug.targetName' | tr -d '"')
-    BUNDLE_ID_ENTER4WEB=$(cat $jsonConfig | $JQ '.ios.Enterprise4WebDebug.bundleId' | tr -d '"')
-    BUNDLE_NAME_ENTER4WEB=$(cat $jsonConfig | $JQ '.ios.Enterprise4WebDebug.bundleName' | tr -d '"')
-fi
-###################
-if [ ! -d $DST_ROOT ]; then
-    mkdir -p $DST_ROOT
-    chmod 777 $DST_ROOT
-fi
-if [ -d $DST_ROOT/Applications ]; then
-    rm -rf ${DST_ROOT}/Applications
-fi
-if [ ! -d $APP_ROOT ]; then
-    mkdir -p $APP_ROOT
-    chmod 777 $APP_ROOT
-fi
-if [ ! -d $OUTPUT_FOLDER ]; then
-    mkdir -p $OUTPUT_FOLDER
-    chmod 777 $OUTPUT_FOLDER
-fi
-if [ $USING_SCP -eq 1 ]; then
-    if [ $DEBUGGING -eq 0 ]; then
-        NEO2UA_OUTPUT_FOLDER="${TOP_PATH}/${APP_ROOT_SUFFIX}/${APP_VERSION}"
-        if [ $(checkDirExist ${NEO2UA_OUTPUT_FOLDER}) -eq 0 ]; then
-            # echo "Dir **NOT** exist: ${TOP_PATH}/${APP_ROOT_SUFFIX}/${APP_VERSION}"
-            makeDir ${NEO2UA_OUTPUT_FOLDER}
-        fi
-    fi
-fi
-####################
-##
-if [ $IS_RELEASE -eq 1 ]; then
-    VERSION_STRING="${APP_VERSION}(${BUILD_VERSION})"
-elif [ "$APP_VERSION" != "" ]; then
-    VERSION_STRING="${APP_VERSION}.${BUILD_VERSION}"
-else
-    VERSION_STRING=""
-fi
-OUTPUT_FILENAME_APPSTORE_SUFFIX=$(cat $jsonConfig | $JQ '.ios.AppStore.fileSuffix' | tr -d '"')
-OUTPUT_FILENAME_APPSTORE="${OUTPUT_PREFIX}${VERSION_STRING}_${FILE_TODAY}${OUTPUT_FILENAME_APPSTORE_SUFFIX}"
-OUTPUT_FILENAME_APPSTORE_IPA="${OUTPUT_FILENAME_APPSTORE}.ipa"
-OUTPUT_FILENAME_APPSTORE_IX_SHIELD_CHECK="${OUTPUT_PREFIX}${VERSION_STRING}_${FILE_TODAY}_IxShieldCheck.png"
-OUTPUT_FILENAME_APPSTORE_DSYM="${OUTPUT_FILENAME_APPSTORE}_dSYM.zip"
-TEMP_APPSTORE_APP_FOLDER="${OUTPUT_FILENAME_APPSTORE}.app"
-OUTPUT_FILE="${OUTPUT_FOLDER}/${TARGET_APPSTORE}"
-##
-OUTPUT_FILENAME_ADHOC_SUFFIX=$(cat $jsonConfig | $JQ '.ios.Adhoc.fileSuffix' | tr -d '"')
-OUTPUT_FILENAME_ADHOC="${OUTPUT_PREFIX}${VERSION_STRING}_${FILE_TODAY}${OUTPUT_FILENAME_ADHOC_SUFFIX}"
-OUTPUT_FILENAME_ADHOC_IPA="${OUTPUT_FILENAME_ADHOC}.ipa"
-OUTPUT_FILENAME_ADHOC_PLIST="${OUTPUT_FILENAME_ADHOC}.plist"
-##
-OUTPUT_FILENAME_ENTER_SUFFIX=$(cat $jsonConfig | $JQ '.ios.Enterprise.fileSuffix' | tr -d '"')
-OUTPUT_FILENAME_ENTER="${OUTPUT_PREFIX}${VERSION_STRING}_${FILE_TODAY}${OUTPUT_FILENAME_ENTER_SUFFIX}"
-OUTPUT_FILENAME_ENTER_IPA="${OUTPUT_FILENAME_ENTER}.ipa"
-OUTPUT_FILENAME_ENTER_PLIST="${OUTPUT_FILENAME_ENTER}.plist"
-##
 ###################
 function doExecuteIOS() {
     if [ $isFlutterEnabled -eq 1 ]; then
@@ -264,6 +267,15 @@ function doExecuteIOS() {
         else
             $FlutterBin build ios ${FLUTTER_FLAG}
         fi
+        # Flutter 빌드 후 생성된 *null 파일들 확인 및 삭제
+        # APP_ROOT_PREFIX 내에서 *null 파일들 검색
+        NULL_FILES=$(find ${APP_ROOT_PREFIX} -name "*null" -type f 2>/dev/null)
+        if [ ! -z "$NULL_FILES" ]; then
+            find ${APP_ROOT_PREFIX} -name "*null" -type f -delete 2>/dev/null
+            echo "Removed all *null files from ${APP_ROOT_PREFIX}"
+        else
+            echo "No *null files found in ${APP_ROOT_PREFIX}"
+        fi
     elif [ $isReactNativeEnabled -eq 1 ]; then
         cd ${WORKSPACE}
         $ReactNativeBin install --legacy-peer-deps
@@ -278,8 +290,10 @@ function doExecuteIOS() {
 
         $ReactNativeBin run build:ios
     fi
-    ##
-    ###################
+    ############################################################################
+    ## Make path and version info 호출
+    initializeIOSBuildConfig
+    ############################################################################
     if [ $isFlutterEnabled -ne 1 -a -f ${WORKSPACE}/${POD_FILE} ]; then
         POD_LOCK_FILE="${WORKSPACE}/${POD_FILE}.lock"
         cd $(dirname ${WORKSPACE}/${POD_FILE})
