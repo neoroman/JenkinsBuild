@@ -148,15 +148,17 @@ function printNoDistConfigWarning() {
   echo "        cp $SCRIPT_PATH/dist.config.default dist.config"
 }
 function matchPlatformOrNot() {
-  # thanks to https://stackoverflow.com/a/50808490
-  trap "$(shopt -p nocasematch)" RETURN
-  # thanks to https://stackoverflow.com/a/1728814
-  shopt -s nocasematch
+  trap "$(shopt -p nocasematch 2>/dev/null)" RETURN 2>/dev/null || true
+  shopt -s nocasematch 2>/dev/null || true
   case "${INPUT_OS}" in
     "android" ) INPUT_OS="android";;
     "ios" ) INPUT_OS="ios";;
     "both" ) INPUT_OS="both";;
-    * ) 
+    "unknown" )
+      echo "  [$SCRIPT_NAME] 경고: 플랫폼이 지정되지 않았습니다. (-p 옵션 없음)"
+      INPUT_OS="both"
+      ;;
+    * )
       $SCRIPT_PATH/$SCRIPT_NAME -h
       echo "Error: unknown platform was specified => ${INPUT_OS}."
       echo ""
@@ -243,25 +245,212 @@ function show_spinner() {
 }
 function hide_spinner() {
   if test ! -z "$spinner_pid"; then
-    kill $spinner_pid # kill the spinner
-    # thanks to https://stackoverflow.com/a/5722874
-    wait $spinner_pid > /dev/null 2>&1
+    kill $spinner_pid 2>/dev/null || true
+    wait $spinner_pid 2>/dev/null || true
+    unset spinner_pid
     tput cnorm #show cursor
-    # thanks to https://unix.stackexchange.com/a/26592
     echo -e "\033[1K" # remove echoed one line
   fi
 }
+function confirm() {
+  local message="$1"
+  if [ "${NON_INTERACTIVE:-0}" -eq 1 ]; then
+    echo "  [$SCRIPT_NAME] $message (y/n): y [auto-confirmed]"
+    return 0
+  fi
+  while true; do
+    read -rp "  [$SCRIPT_NAME] $message (y/n): " answer
+    case "$answer" in
+      [Yy]*) return 0;;
+      [Nn]*) return 1;;
+      *) echo "  [$SCRIPT_NAME] Please answer yes (y) or no (n).";;
+    esac
+  done
+}
+function checkVersionUpdate() {
+  local parsedTagVersion="$1"
+  local currentVersion="$2"
+  local platform="$3"
+  if [ "${UPDATE_VERSION_FORCE:-0}" -eq 1 ]; then
+    return 0
+  fi
+  local versionComparison
+  versionComparison=$(vercomp "$parsedTagVersion" "$currentVersion")
+  if [ "$versionComparison" -ge 2 ]; then
+    echo "  [$SCRIPT_NAME] $platform: 새 버전($parsedTagVersion)이 현재 버전($currentVersion)보다 낮습니다."
+    return 1
+  fi
+  return 0
+}
+function shouldUpdateVersion() {
+  local HAS_IOS_FILE HAS_AOS_FILE SHOULD_UPDATE=0
+  local parsedTagVersion versionPart
+  versionPart=$(echo "${GIT_TAG_FULL}" | tr -d '[A-Za-z]-')
+  parsedTagVersion=$(echo "$versionPart" | awk -F. '{print $1"."$2"."$3}')
+  HAS_IOS_FILE=$(find . -name 'project.pbxproj' -not -path "*/Pods/*" -not -path "*/node_modules/*" -print -quit 2>/dev/null)
+  HAS_AOS_FILE=$(find . -name 'build.gradle' -exec grep -l 'com.android.application' {} + 2>/dev/null | grep -v 'node_modules' | head -n 1)
+  if [ -z "$HAS_IOS_FILE" ] && [ -z "$HAS_AOS_FILE" ]; then
+    return 1
+  fi
+  if [ -n "$HAS_IOS_FILE" ]; then
+    oldMarketingVersion=$(grep 'MARKETING_VERSION =' "$HAS_IOS_FILE" | awk '{print $3}' | tr -d ';' | head -n 1)
+    if [ -n "$oldMarketingVersion" ]; then
+      checkVersionUpdate "$parsedTagVersion" "$oldMarketingVersion" "iOS" && SHOULD_UPDATE=1
+    fi
+  fi
+  if [ -n "$HAS_AOS_FILE" ]; then
+    oldVersionName=$(grep 'versionName' "$HAS_AOS_FILE" | awk -F'"' '{print $2}' | head -n 1)
+    if [ -n "$oldVersionName" ]; then
+      checkVersionUpdate "$parsedTagVersion" "$oldVersionName" "Android" && SHOULD_UPDATE=1
+    fi
+  fi
+  [ "$SHOULD_UPDATE" -eq 1 ]
+  return $?
+}
+function loadJenkinsConfig() {
+  local cfg="${1:-$CONFIG_FILE}"
+  if [ -f "$cfg" ]; then
+    JENKINS_URL=$(git config -f "$cfg" --get "jenkins.url" 2>/dev/null || true)
+    JENKINS_JOB_NAME=$(git config -f "$cfg" --get "jenkins.job" 2>/dev/null || true)
+    JENKINS_USER=$(git config -f "$cfg" --get "jenkins.user" 2>/dev/null || true)
+    JENKINS_TOKEN=$(git config -f "$cfg" --get "jenkins.token" 2>/dev/null || true)
+  fi
+  if [ -f "dist.config" ] && [ -z "$JENKINS_URL" ]; then
+    JENKINS_URL=$(git config -f "dist.config" --get "jenkins.url" 2>/dev/null || true)
+    JENKINS_JOB_NAME=$(git config -f "dist.config" --get "jenkins.job" 2>/dev/null || true)
+    JENKINS_USER=$(git config -f "dist.config" --get "jenkins.user" 2>/dev/null || true)
+    JENKINS_TOKEN=$(git config -f "dist.config" --get "jenkins.token" 2>/dev/null || true)
+  fi
+}
+function downloadJenkinsCLI() {
+  local url="$1" jarFile="$2"
+  local maxAge=86400 tempFile
+  tempFile="/tmp/jenkins-cli-${RANDOM}-$$.jar.tmp"
+  if [ -f "$jarFile" ]; then
+    fileAge=$(($(date +%s) - $(date -r "$jarFile" +%s 2>/dev/null || echo 0)))
+    if [ "$fileAge" -lt "$maxAge" ]; then
+      echo "  [$SCRIPT_NAME] Using existing Jenkins CLI jar (age: $((fileAge/3600)) hours)"
+      return 0
+    fi
+  fi
+  if [ "$DRY_RUN" -eq 1 ]; then
+    echo "  [$SCRIPT_NAME] DRY-RUN: Would download $url/jnlpJars/jenkins-cli.jar"
+    return 0
+  fi
+  show_spinner
+  if curl -sSfL --connect-timeout 10 --max-time 60 -o "$tempFile" "$url/jnlpJars/jenkins-cli.jar" 2>/dev/null; then
+    hide_spinner
+    if file "$tempFile" 2>/dev/null | grep -q "Java archive data"; then
+      mv "$tempFile" "$jarFile"
+      echo "  [$SCRIPT_NAME] Downloaded Jenkins CLI successfully."
+      return 0
+    fi
+    rm -f "$tempFile"
+  else
+    hide_spinner
+    rm -f "$tempFile"
+  fi
+  echo "  [$SCRIPT_NAME] ERROR: Failed to download Jenkins CLI jar."
+  return 1
+}
+function triggerJenkinsBuild() {
+  local url="$1" jobName="$2" jarFile="$3"
+  echo "  [$SCRIPT_NAME] Triggering Jenkins build for job '$jobName'..."
+  if [ -z "$JENKINS_USER" ] || [ -z "$JENKINS_TOKEN" ]; then
+    if [ "${NON_INTERACTIVE:-0}" -eq 1 ]; then
+      echo "  [$SCRIPT_NAME] ERROR: Jenkins credentials required in config for non-interactive mode (-y)."
+      exit 1
+    fi
+    read -rp "  [$SCRIPT_NAME] Jenkins 사용자 ID를 입력하세요: " JENKINS_USER
+    read -rsp "  [$SCRIPT_NAME] Jenkins 토큰을 입력하세요: " JENKINS_TOKEN
+    echo
+  fi
+  if [ "$DRY_RUN" -eq 1 ]; then
+    echo "  [$SCRIPT_NAME] DRY-RUN: Would trigger Jenkins build $jobName"
+    return 0
+  fi
+  show_spinner
+  if java -jar "$jarFile" -s "$url/" -auth "$JENKINS_USER:$JENKINS_TOKEN" build "$jobName"; then
+    hide_spinner
+    echo "  [$SCRIPT_NAME] Jenkins build triggered successfully."
+  else
+    hide_spinner
+    echo "  [$SCRIPT_NAME] ERROR: Failed to trigger Jenkins build."
+    exit 1
+  fi
+}
+function makeConfig() {
+  local configFile="dist.config"
+  echo "  [$SCRIPT_NAME] 설정 파일 생성을 시작합니다..."
+  if [ -f "$configFile" ]; then
+    if ! confirm "설정 파일이 이미 존재합니다. 덮어쓰시겠습니까?"; then
+      echo "  [$SCRIPT_NAME] 설정 파일 생성이 취소되었습니다."
+      exit 0
+    fi
+  fi
+  cp "$SCRIPT_PATH/dist.config.default" "$configFile" 2>/dev/null || true
+  if [ ! -f "$configFile" ]; then
+    cat > "$configFile" << 'DEF'
+[ios "tagPrefix"]
+	develop = D-
+	release = RI-
+[android "tagPrefix"]
+	release = RA-
+	develop = D-
+[version]
+	autoUpdate = true
+[jenkins]
+	url =
+	job =
+	user =
+	token =
+DEF
+  else
+    if ! grep -q '\[jenkins\]' "$configFile" 2>/dev/null; then
+      cat >> "$configFile" << 'DEF'
+
+[jenkins]
+	url =
+	job =
+	user =
+	token =
+DEF
+    fi
+  fi
+  read -rp "  [$SCRIPT_NAME] Jenkins URL을 입력하세요 (선택사항, Enter 스킵): " jenkinsUrl || true
+  read -rp "  [$SCRIPT_NAME] Jenkins Job 이름을 입력하세요 (선택사항): " jenkinsJob || true
+  read -rp "  [$SCRIPT_NAME] Jenkins 사용자 ID를 입력하세요 (선택사항): " jenkinsUser || true
+  read -rsp "  [$SCRIPT_NAME] Jenkins API 토큰을 입력하세요 (선택사항): " jenkinsToken || true
+  echo
+  if [ -n "$jenkinsUrl" ]; then
+    git config -f "$configFile" jenkins.url "$jenkinsUrl"
+  fi
+  if [ -n "$jenkinsJob" ]; then
+    git config -f "$configFile" jenkins.job "$jenkinsJob"
+  fi
+  if [ -n "$jenkinsUser" ]; then
+    git config -f "$configFile" jenkins.user "$jenkinsUser"
+  fi
+  if [ -n "$jenkinsToken" ]; then
+    git config -f "$configFile" jenkins.token "$jenkinsToken"
+  fi
+  echo "  [$SCRIPT_NAME] 설정 파일이 생성되었습니다: $configFile"
+  exit 0
+}
 function help() {
     echo ""
-    echo "Usage: $SCRIPT_NAME [ -t | --tag <tag name>] [ -p | --platform {ios|android|both}] "
+    echo "Usage: $SCRIPT_NAME --make-config"
+    echo "       $SCRIPT_NAME [ -t | --tag <tag name>] [ -p | --platform {ios|android|both}] "
     echo "          [ -c | --config <config_file>] [ -r | --release-type {release|develop}] "
-    echo "          [ -a | --auto-update] [ --dry-run]"
+    echo "          [ -a | --auto-update] [ -uf | --force-update] [ -y | --yes] [ --dry-run]"
+    echo "          [ --jenkins-url <url>] [ --jenkins-job <job>] [ --jenkins-user <user>] [ --jenkins-token <token>]"
     echo ""
     echo "Examples:"
     echo "       $SCRIPT_NAME -t '1.0.0.123'"
-    echo "       $SCRIPT_NAME -t '1.0.0.123' -p ios -a -r release"
+    echo "       $SCRIPT_NAME -t '1.0.0.123' -p ios -a -r release -y"
     echo "       $SCRIPT_NAME -t '1.0.0.123' -c dist.config -a"
     echo "       $SCRIPT_NAME -t '1.0.0.123' -c dist.config -a --dry-run"
+    echo "       $SCRIPT_NAME -t 'D-1.0.0.123' -a --jenkins-url http://jenkins.local --jenkins-job my-job -y"
     echo ""
     echo "Mandatory arguments:"
     echo "   -t, --tag          git tag to be added with <tag name: Major.Minor.Point.Build> such like followings:"
@@ -270,7 +459,8 @@ function help() {
     echo "                        eg. tag prefix 'RI-7.2.9.450' means release build for iOS platform"
     echo ""
     echo "Optional arguments:"
-    echo "   -h, --help         show this help message and exit:"
+    echo "   -h, --help         show this help message and exit"
+    echo "   --make-config     create dist.config interactively"
     echo "   -c, --config       <config_file>"
     echo "                      can copy file from $SCRIPT_PATH/dist.config.default"
     echo "   -p, --platform     {ios|android|both}, default is both"
@@ -280,7 +470,13 @@ function help() {
     echo "                      warning: this option will be ignored if dist.config given!"
     echo "   -a, --auto-update  update project version string(code) in project. and commit & push automatically"
     echo "                      warning: this option will be ignored if dist.config given!"
+    echo "   -uf, --force-update  skip version check and force update (use with -a)"
+    echo "   -y, --yes          non-interactive: auto-confirm all prompts"
     echo "   --dry-run          dry run only instead of real processing with git command"
+    echo "   --jenkins-url      Jenkins server URL (or set in dist.config [jenkins] url)"
+    echo "   --jenkins-job      Jenkins job name"
+    echo "   --jenkins-user     Jenkins user ID"
+    echo "   --jenkins-token    Jenkins API token"
     echo ""
     echo "Example of config file: (git config style)"
     # thanks to ascii from https://en.wikipedia.org/wiki/Box-drawing_character

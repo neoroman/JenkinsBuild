@@ -6,3 +6,8 @@
 	develop = D-
 [version]
 	autoUpdate = true
+[jenkins]
+	url =
+	job =
+	user =
+	token =
