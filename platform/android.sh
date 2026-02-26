@@ -131,6 +131,9 @@ if [ -f "${WORKSPACE}/${ANDROID_APP_PATH}/version.properties" ]; then
     DEBUG_LOCAL=$(grep '^debug_local' ${WORKSPACE}/${ANDROID_APP_PATH}/version.properties | sed -e 's/.*=\([0-9]\)/\1/')
 fi
 BUILD_GRADLE_CONFIG="${WORKSPACE}/${ANDROID_APP_PATH}/build.gradle"
+if [ ! -f "${BUILD_GRADLE_CONFIG}" ]; then
+    BUILD_GRADLE_CONFIG="${WORKSPACE}/${ANDROID_APP_PATH}/build.gradle.kts"
+fi
 if [ $IS_RELEASE -eq 1 ]; then
     APP_VERSION="${MAJOR}.${MINOR}.${POINT}"
     BUILD_VERSION=$(grep ${APP_BUNDLE_IDENTIFIER_ANDROID} -5 ${BUILD_GRADLE_CONFIG} | grep 'versionCode' | grep -v '^\/\/' | awk 'BEGIN{FS=" "} {print $2}')
