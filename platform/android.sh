@@ -136,7 +136,7 @@ if [ ! -f "${BUILD_GRADLE_CONFIG}" ]; then
 fi
 if [ $IS_RELEASE -eq 1 ]; then
     APP_VERSION="${MAJOR}.${MINOR}.${POINT}"
-    BUILD_VERSION=$(grep ${APP_BUNDLE_IDENTIFIER_ANDROID} -5 ${BUILD_GRADLE_CONFIG} | grep 'versionCode' | grep -v '^\/\/' | awk 'BEGIN{FS=" "} {print $2}')
+    BUILD_VERSION=$(grep ${APP_BUNDLE_IDENTIFIER_ANDROID} -5 ${BUILD_GRADLE_CONFIG} | grep 'versionCode' | grep -v '^\/\/' | sed -n 's/.*versionCode[^0-9]*\([0-9][0-9]*\).*/\1/p')
 else
     APP_VERSION="${DEBUG_MAJOR}.${DEBUG_MINOR}.${DEBUG_POINT}"
     BUILD_VERSION="${DEBUG_LOCAL}"
@@ -156,20 +156,22 @@ if [[ "${APP_VERSION}" == ".." ]]; then
             BUILD_VERSION=$(grep 'flutterVersionCode' ${BUILD_GRADLE_CONFIG} | grep "flutterVersionCode = '"| sed -e "s/flutterVersionCode = '\(.*\)'/\1/" | tr -d "' ")
         fi
     else
-        APP_VERSION=$(grep 'versionName[[:space:]]"' ${BUILD_GRADLE_CONFIG} | grep -v '^\/\/' | sed -e 's/versionName "\(.*\)"/\1/' | tr -d ' \r')
-        if [[ $APP_VERSION == "versionName"* ]]; then
-            APP_VERSION=$(grep 'versionName' ${BUILD_GRADLE_CONFIG} | grep -v '^\/\/' | sed -e "s/versionName '\(.*\)'/\1/" | tr -d ' \r')
+        # Groovy: versionName "1.0.0" / Kotlin: versionName = "1.0.0"
+        APP_VERSION=$(grep 'versionName' ${BUILD_GRADLE_CONFIG} | grep -v '^\/\/' | sed -n 's/.*versionName[^"]*"\([^"]*\)".*/\1/p' | tr -d ' \r' | head -1)
+        if [[ -z "${APP_VERSION}" ]]; then
+            APP_VERSION=$(grep 'versionName' ${BUILD_GRADLE_CONFIG} | grep -v '^\/\/' | sed -n "s/.*versionName[^']*'\([^']*\)'.*/\1/p" | tr -d ' \r' | head -1)
         fi
+        # Groovy: versionCode 401 / Kotlin: versionCode = 401
         if [ $isReactNativeEnabled -eq 1 ]; then
-            BUILD_VERSION=$(grep 'versionCode' ${BUILD_GRADLE_CONFIG} | grep -v '^\/\/' | head -1 | sed -e 's/versionCode \(.*\)$/\1/' | tr -d ' \r')
+            BUILD_VERSION=$(grep 'versionCode' ${BUILD_GRADLE_CONFIG} | grep -v '^\/\/' | head -1 | sed -n 's/.*versionCode[^0-9]*\([0-9][0-9]*\).*/\1/p' | tr -d ' \r')
         else
-            BUILD_VERSION=$(grep 'versionCode' ${BUILD_GRADLE_CONFIG} | grep -v '^\/\/' | sed -e 's/versionCode \(.*\)$/\1/' | tr -d ' \r')
+            BUILD_VERSION=$(grep 'versionCode' ${BUILD_GRADLE_CONFIG} | grep -v '^\/\/' | sed -n 's/.*versionCode[^0-9]*\([0-9][0-9]*\).*/\1/p' | tr -d ' \r' | head -1)
         fi
     fi
-    if [[ "${APP_VERSION}" == ".." ]]; then
+    if [[ -z "${APP_VERSION}" || "${APP_VERSION}" == ".." ]]; then
         APP_VERSION="1.0.0"
     fi
-    if [[ "${BUILD_VERSION}" == "" ]]; then
+    if [[ -z "${BUILD_VERSION}" ]]; then
         BUILD_VERSION="1"
     fi
 fi
