@@ -190,13 +190,14 @@ if [ "$UPDATE_VERSION" -eq 1 ]; then
   set +e  # hide_spinner and some commands can return non-zero
   if [[ "$INPUT_OS" == "ios" || "$INPUT_OS" == "both" ]]; then
     show_spinner
-    IOS_FILE=$(find . -name 'project.pbxproj' | grep -v 'Pods' | grep -v 'node_modules' | head -n1)
+    IOS_FILE=$(find . -name 'project.pbxproj' -not -path "*/Pods/*" -not -path "*/node_modules/*" | head -n1)
     hide_spinner
     if [ -f "$IOS_FILE" ]; then
       oldMarketingVersion=$(grep 'MARKETING_VERSION =' "$IOS_FILE" | sort | uniq | xargs)
       oldCurrentProjectVersion=$(grep 'CURRENT_PROJECT_VERSION =' "$IOS_FILE" | sort | uniq | xargs)
       parsedTagVersion=$(getParsedVersion "${VERSIONS}")
-      if ! checkVersionUpdate "$parsedTagVersion" "$(echo "$oldMarketingVersion" | awk -F= '{print $2}' | tr -d ' ;')" "iOS"; then
+      iosCurrentVersion=$(iosHighestMarketingVersion "$IOS_FILE")
+      if ! checkVersionUpdate "$parsedTagVersion" "$iosCurrentVersion" "iOS" "$IOS_FILE"; then
         UPDATE_VERSION=0
       else
         if [ "$DRY_RUN" -eq 1 ]; then
@@ -223,7 +224,7 @@ if [ "$UPDATE_VERSION" -eq 1 ]; then
       oldVersionName=$(grep 'versionName' "$AOS_FILE" | sort | uniq | xargs | tr -d '[A-Za-z]-_() ')
       oldVersionCode=$(grep 'versionCode ' "$AOS_FILE" | sort | uniq | xargs | tr -d '[A-Za-z]-_() ')
       parsedTagVersion=$(getParsedVersion "${VERSIONS}")
-      if ! checkVersionUpdate "$parsedTagVersion" "$oldVersionName" "Android"; then
+      if ! checkVersionUpdate "$parsedTagVersion" "$oldVersionName" "Android" "$AOS_FILE"; then
         printGradleVersionNameError
         exit 1
       fi

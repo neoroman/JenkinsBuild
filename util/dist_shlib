@@ -267,10 +267,29 @@ function confirm() {
     esac
   done
 }
+# project.pbxproj 내 모든 MARKETING_VERSION 중 semver 비교로 가장 큰 값 (태그가 아닌 실제 앱 버전 기준).
+function iosHighestMarketingVersion() {
+  local pbx="$1"
+  local best="" ver cmp
+  while IFS= read -r line; do
+    ver=$(echo "$line" | awk '{print $3}' | tr -d ';')
+    [ -z "$ver" ] && continue
+    if [ -z "$best" ]; then
+      best="$ver"
+    else
+      cmp=$(vercomp "$ver" "$best")
+      if [ "$cmp" -eq 1 ]; then
+        best="$ver"
+      fi
+    fi
+  done < <(grep 'MARKETING_VERSION =' "$pbx" 2>/dev/null || true)
+  echo "$best"
+}
 function checkVersionUpdate() {
   local parsedTagVersion="$1"
   local currentVersion="$2"
   local platform="$3"
+  local versionSource="${4:-}"
   if [ "${UPDATE_VERSION_FORCE:-0}" -eq 1 ]; then
     return 0
   fi
@@ -278,6 +297,11 @@ function checkVersionUpdate() {
   versionComparison=$(vercomp "$parsedTagVersion" "$currentVersion")
   if [ "$versionComparison" -ge 2 ]; then
     echo "  [$SCRIPT_NAME] $platform: 새 버전($parsedTagVersion)이 현재 버전($currentVersion)보다 낮습니다."
+    if [ -n "$versionSource" ]; then
+      echo "  [$SCRIPT_NAME] 참고: 위 현재 버전은 마지막 Git 태그가 아니라 프로젝트 파일에서 읽은 값입니다."
+      echo "  [$SCRIPT_NAME]       $versionSource"
+    fi
+    echo "  [$SCRIPT_NAME] 의도적 다운그레이드면 -uf (--force-update) 로 버전 검사를 건너뛸 수 있습니다."
     return 1
   fi
   return 0
@@ -293,15 +317,15 @@ function shouldUpdateVersion() {
     return 1
   fi
   if [ -n "$HAS_IOS_FILE" ]; then
-    oldMarketingVersion=$(grep 'MARKETING_VERSION =' "$HAS_IOS_FILE" | awk '{print $3}' | tr -d ';' | head -n 1)
+    oldMarketingVersion=$(iosHighestMarketingVersion "$HAS_IOS_FILE")
     if [ -n "$oldMarketingVersion" ]; then
-      checkVersionUpdate "$parsedTagVersion" "$oldMarketingVersion" "iOS" && SHOULD_UPDATE=1
+      checkVersionUpdate "$parsedTagVersion" "$oldMarketingVersion" "iOS" "$HAS_IOS_FILE" && SHOULD_UPDATE=1
     fi
   fi
   if [ -n "$HAS_AOS_FILE" ]; then
     oldVersionName=$(grep 'versionName' "$HAS_AOS_FILE" | awk -F'"' '{print $2}' | head -n 1)
     if [ -n "$oldVersionName" ]; then
-      checkVersionUpdate "$parsedTagVersion" "$oldVersionName" "Android" && SHOULD_UPDATE=1
+      checkVersionUpdate "$parsedTagVersion" "$oldVersionName" "Android" "$HAS_AOS_FILE" && SHOULD_UPDATE=1
     fi
   fi
   [ "$SHOULD_UPDATE" -eq 1 ]
