@@ -18,7 +18,7 @@
 - **`android` / `ios`** — 패키지/스킴, 스토어 타입, **키스토어·난독화 플래그**, Jenkins 워크스페이스 등.
 - **`users`** — 역할별(`app`, `qc`, `git` …) **로컬 웹 로그인용** 계정 블록(비밀번호 평문).
 - **`mail`** — PHPMailer 스타일 SMTP 블록 + `domesticEnabled` 등(Jenkins의 `USING_MAIL`은 여기 `mail`만 본다).
-- **`mail-gmail`** — 동일 모양의 **보조 SMTP 프로필**(실예시에만 있음; JenkinsBuild 쉘은 참조하지 않을 수 있음 → PHP/사이트 전용 가능성).
+- **`mail-gmail`** — 일부 배포 `config.json`에 **백업용으로만** 남아 있는 SMTP 모양 블록이 있을 수 있다. **런타임·JenkinsBuild 파이프라인에서는 사용하지 않는다**고 가정하고, **본 문서의 개선 방향(§4)·체크리스트(§5)·스키마 과제에서는 제외**한다.
 - **`slack` / `teams` / `discord`** — 채널·`webhook` 등(웹훅 URL 전체가 비밀에 가깝다).
 - **`ssh`** — 배포용 SCP 엔드포인트.
 - **`jira`** — 프로젝트 키·베이스 URL.
@@ -28,23 +28,23 @@
 
 ### 1.2 `test/config.json`과의 차이
 
-양쪽 모두 `mail`, `slack`, `teams`, `discord`, `users` 등 **대부분의 최상위 키는 동일**하다. 실배포 예시에서 눈에 띄는 점은 다음뿐이다.
+양쪽 모두 `mail`, `slack`, `teams`, `discord`, `users` 등 **대부분의 최상위 키는 동일**하다. 실배포 예시에는 `test`에 없는 **사이트·백업 전용 키**가 더 붙을 수 있다(예: 아래 `mail-gmail`).
 
-- **`mail-gmail`**: `test/config.json`에는 없고, AngelNet-DistSite 실예시에만 있는 **두 번째 SMTP 블록**(구조는 `mail`과 동형). JenkinsBuild `jsonconfig`는 `.mail`만 읽으므로, 이 키는 **PHP/사이트 쪽 전용**일 가능성이 크다 — 그럼에도 **같은 파일에 평문 자격 증명이 두 벌** 있는 상태라 분리·Credential 이전 대상으로 본다.
+- **`mail-gmail`**: 파일에만 두는 **백업용 블록**(현재 **미사용**). JenkinsBuild `jsonconfig`는 `.mail`만 다룬다. **프로젝트 개선·리팩터링 문서에서는 이 키를 과제로 다루지 않는다.**
 
 | 구분 | `test/config.json` | AngelNet-DistSite 실예시 |
 |------|---------------------|---------------------------|
 | 용도 | 레포 내부 스모크·교육용 값 | 실서비스·Jenkins·PHP가 **동일 파일** 공유 |
-| SMTP | `mail` 단일 | `mail` + **`mail-gmail`** |
+| 활성 SMTP | `mail` | `mail`(동일). `mail-gmail`은 **백업 보관만** — 개선 범위 제외 |
 
-→ 통합 테스트용 JSON을 실서버에서 그대로 쓰거나 반대로 복사할 때 **`mail-gmail` 유무**로 동작이 달라지지 않는지(메일 발송 경로) 확인한다. 장기적으로는 Phase 7의 **스키마·허용 키 검증**에 `mail-gmail` 포함 여부를 명시하는 것이 좋다.
+→ 통합 테스트·실서버 JSON을 오갈 때 **활성 메일 경로는 `mail`만** 보면 된다.
 
 ## 2. 민감도가 높은 키(실제 값은 문서에 적지 말 것)
 
 | 영역 | 키(대표) | 위험 |
 |------|-----------|------|
 | 배포 사이트 로그인 | `users.*.password`, `.email` | 크리덴셜 노출, 로그에 남을 수 있음 |
-| 메일 | `mail.*`, **`mail-gmail.*`**(실예시) | SMTP 자격 증명 이중 보관 → 회전·폐기 시 한쪽만 바꾸는 실수 |
+| 메일 | `mail.*` | 활성 SMTP 자격 증명. (`mail-gmail` 등 **백업용·미사용** 블록은 팀 보관 정책으로만 관리하고, 본 문서 §4 개선 과제에서는 제외) |
 | Slack/Teams/Discord | `slack|teams|discord.*webhook` | 웹훅 스팸·데이터 유출 |
 | iOS 업로드 | `ios.AppStore.uploadApp.agentAppSpecificPassword` 등 | Apple ID 보조 앱 비밀 |
 | iOS 빌드 서버 | `ios.sudoPassword`, `ios.jenkinsUser` | 서버 권한 상승 |
@@ -104,7 +104,7 @@
 `working-copy/AngelNet-DistSite/config/config.json` 기준으로 다음을 순서대로 보면 좋다.
 
 - **`DEBUGGING`과 블록 선택**: Jenkins는 `jsonconfig`에서 `.development` vs `.production`만 고른다. PHP·프론트는 동일 파일의 다른 키를 읽을 수 있으므로 **환경 불일치**가 없는지 본다.
-- **이중 SMTP**: `mail`과 `mail-gmail`이 모두 있으면, 코드 경로별로 어느 쪽을 쓰는지(국내/해외, 발신 정책) 문서화하지 않으면 **잘못된 박스로 메일이 나가거나** 비밀 로테이션 시 한쪽만 갱신하는 사고가 나기 쉽다.
+- **백업용 `mail-gmail`**: 파일에만 있을 수 있으며 **미사용**이면 개선 문서·스키마 검증 **범위에서 제외**. 활성 SMTP는 `mail`만 점검한다.
 - **Jenkins가 건드리는 필드**: `topPath`, `android.jenkinsWorkspace`, `ios.jenkinsWorkspace` 등은 빌드 중 **in-place `jq` 갱신** 대상이다. Git으로 관리되는 동일 파일이면 **의도치 않은 diff**가 생긴다.
 - **`users`**: `app` / `qc` / `git` 등 하위 블록이 웹 Basic 인증·로컬 로그인 등에 쓰이면, 이 JSON이 **DocumentRoot 아래에 그대로 있을 때** 서빙/백업 유출 경로를 점검한다.
 - **`discord` / `slack` / `teams`**: JenkinsBuild `jsonconfig`는 현재 **Slack·Teams만** 읽는다. `discord`는 **배포 PHP·다른 스크립트 전용**일 수 있으므로, “쉘이 안 읽는다 = 없다”로 착각하지 않는다.

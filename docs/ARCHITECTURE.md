@@ -68,11 +68,11 @@
 - `development` / `production` 블록으로 프론트·아웃바운드 URL, `topPath`, `outputPrefix` 등이 갈린다.
 - 더 자세한 *비밀·분리* 논의는 `docs/CONFIG_AND_SECRETS.md` 참고.
 
-**실배포 스키마 참고**: 워크스페이스에 `working-copy/AngelNet-DistSite`(Forgejo `AngelNet/AngelNet-DistSite`)를 두면, 그 안의 `config/config.json`이 **`mail-gmail`·`discord` 등까지 포함한 현실적인 키 집합** 예시가 된다. 값은 문서나 커밋에 넣지 말고, 키 이름·계층만 `CONFIG_AND_SECRETS.md`와 교차 검증한다.
+**실배포 스키마 참고**: 워크스페이스에 `working-copy/AngelNet-DistSite`(Forgejo `AngelNet/AngelNet-DistSite`)를 두면, 그 안의 `config/config.json`이 **`discord`·`custom` 등 현실적인 키 집합** 예시가 된다. (`mail-gmail`은 **백업용·미사용**으로 둘 수 있어 **개선 문서 범위에서는 제외** — `CONFIG_AND_SECRETS.md` 참고.) 값은 문서나 커밋에 넣지 말고, 키 이름·계층만 교차 검증한다.
 
 ## 6. 테스트·샘플
 
-- `test/config.json`: 스키마 샘플·더미 비밀(교육용) — **실운영 값과 혼동 금지**. 실예시와의 차이(`mail-gmail` 등)는 `docs/CONFIG_AND_SECRETS.md` §1.2.
+- `test/config.json`: 스키마 샘플·더미 비밀(교육용) — **실운영 값과 혼동 금지**. 실예시에만 있는 **백업용·미사용** 키와의 차이는 `docs/CONFIG_AND_SECRETS.md` §1.2.
 - `test/obfuscation_*.sh`, `test/android/`, `test/ios/`: 난독화 경로 스모크용.
 
 ## 7. 관련 문서
