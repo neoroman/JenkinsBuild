@@ -73,7 +73,7 @@ Language: BASH Shell Script
 ## Documentation
 
 - **Architecture & modules**: [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md) — execution flow, platform split, plugin boundaries (Allatori / IxShield / site-specific notify).
-- **Secrets & `config.json`**: [docs/CONFIG_AND_SECRETS.md](docs/CONFIG_AND_SECRETS.md) — external config, leakage points, split/merge recommendations (cf. `test/config.json`, site repos like `AngelNet-DistSite/config/config.json`).
+- **Secrets & `config.json`**: [docs/CONFIG_AND_SECRETS.md](docs/CONFIG_AND_SECRETS.md) — external config, leakage points, split/merge recommendations. Cross-check keys with `test/config.json` and, if cloned, `working-copy/AngelNet-DistSite/config/config.json` (Forgejo `AngelNet/AngelNet-DistSite`; **no secrets in git**).
 - **Ralph refactor PRD**: [docs/RALPH_REFACTOR_TODO.md](docs/RALPH_REFACTOR_TODO.md) — checkbox backlog for `scripts/ralph.sh` (`PRD_PATH` → this file).
 - **dist.sh comparison**: [docs/dist_comparison.md](docs/dist_comparison.md)
 
