@@ -84,27 +84,52 @@ if [ -f $jsonConfig ]; then
   fi
 
   tempTopPath=$(echo $config | $JQ '.topPath' | tr -d '"')
+  if [[ "$tempTopPath" == "null" ]]; then
+    tempTopPath=""
+  fi
   if [[ "$tempTopPath" != "$TOP_PATH" ]]; then
+    _jsonTmp=$(mktemp "${TMPDIR:-/tmp}/jsonconfig.XXXXXX")
     if [ $DEBUGGING -eq 1 ]; then
-      TEMP_JSON=$($JQ '.development.topPath = "'$TOP_PATH'"' $jsonConfig)
+      if $JQ --arg tp "$TOP_PATH" '.development |= ((. // {}) | .topPath = $tp)' "$jsonConfig" > "$_jsonTmp"; then
+        mv "$_jsonTmp" "$jsonConfig"
+      else
+        rm -f "$_jsonTmp"
+      fi
     else
-      TEMP_JSON=$($JQ '.production.topPath = "'$TOP_PATH'"' $jsonConfig)
+      if $JQ --arg tp "$TOP_PATH" '.production |= ((. // {}) | .topPath = $tp)' "$jsonConfig" > "$_jsonTmp"; then
+        mv "$_jsonTmp" "$jsonConfig"
+      else
+        rm -f "$_jsonTmp"
+      fi
     fi
-    echo "${TEMP_JSON}" > $jsonConfig
   fi
 
   if test -n "$WORKSPACE"; then
     if [[ "$INPUT_OS" == "android" ]]; then
       TEMP_WORKSPACE_AOS=$(cat $jsonConfig | $JQ '.android.jenkinsWorkspace' | tr -d '"')
+      if [[ "$TEMP_WORKSPACE_AOS" == "null" ]]; then
+        TEMP_WORKSPACE_AOS=""
+      fi
       if [[ "$WORKSPACE" != "$TEMP_WORKSPACE_AOS" ]]; then
-        TEMP_JSON=$($JQ '.android.jenkinsWorkspace = "'$WORKSPACE'"' $jsonConfig)
-        echo "${TEMP_JSON}" > $jsonConfig
+        _jsonTmp=$(mktemp "${TMPDIR:-/tmp}/jsonconfig.XXXXXX")
+        if $JQ --arg ws "$WORKSPACE" '.android |= ((. // {}) | .jenkinsWorkspace = $ws)' "$jsonConfig" > "$_jsonTmp"; then
+          mv "$_jsonTmp" "$jsonConfig"
+        else
+          rm -f "$_jsonTmp"
+        fi
       fi
     elif [[ "$INPUT_OS" == "ios" ]]; then
       TEMP_WORKSPACE_IOS=$(cat $jsonConfig | $JQ '.ios.jenkinsWorkspace' | tr -d '"')
+      if [[ "$TEMP_WORKSPACE_IOS" == "null" ]]; then
+        TEMP_WORKSPACE_IOS=""
+      fi
       if [[ "$WORKSPACE" != "$TEMP_WORKSPACE_IOS" ]]; then
-        TEMP_JSON=$($JQ '.ios.jenkinsWorkspace = "'$WORKSPACE'"' $jsonConfig)
-        echo "${TEMP_JSON}" > $jsonConfig
+        _jsonTmp=$(mktemp "${TMPDIR:-/tmp}/jsonconfig.XXXXXX")
+        if $JQ --arg ws "$WORKSPACE" '.ios |= ((. // {}) | .jenkinsWorkspace = $ws)' "$jsonConfig" > "$_jsonTmp"; then
+          mv "$_jsonTmp" "$jsonConfig"
+        else
+          rm -f "$_jsonTmp"
+        fi
       fi
     fi
   fi

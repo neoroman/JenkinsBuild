@@ -35,7 +35,7 @@ fi
 . ${TOP_DIR}/config/sshfunctions  ### Import SSH Funtions ####################
 ################################################################################
 ################################################################################
-. ${TOP_DIR}/config/utilconfig  ### Import SSH Funtions ######################
+. ${TOP_DIR}/config/utilconfig  ### Import Util Funtions ######################
 ################################################################################
 ##
 # Update distribution site source ##############################################
@@ -50,6 +50,8 @@ if [ -z "$OBFUSCATION_TEST" -a -f ${APP_ROOT_PREFIX}/${TOP_PATH}/.htaccess ]; th
       fi
   fi
 fi
+################################################################################
+. ${TOP_DIR}/config/fcmconfig  ### Import FCM Configurations ###################
 ################################################################################
 if [[ "$INPUT_OS" == "android" ]]; then
     ## for Android
