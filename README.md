@@ -70,6 +70,13 @@ Language: BASH Shell Script
 - Add language for display messages of distribution sites with --language argument.
 
 
+## Documentation
+
+- **Architecture & modules**: [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md) — execution flow, platform split, plugin boundaries (Allatori / IxShield / site-specific notify).
+- **Secrets & `config.json`**: [docs/CONFIG_AND_SECRETS.md](docs/CONFIG_AND_SECRETS.md) — external config, leakage points, split/merge recommendations (cf. `test/config.json`, site repos like `AngelNet-DistSite/config/config.json`).
+- **Ralph refactor PRD**: [docs/RALPH_REFACTOR_TODO.md](docs/RALPH_REFACTOR_TODO.md) — checkbox backlog for `scripts/ralph.sh` (`PRD_PATH` → this file).
+- **dist.sh comparison**: [docs/dist_comparison.md](docs/dist_comparison.md)
+
 ## Author
 
 ALTERANT /  neoroman@gmail.com
