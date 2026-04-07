@@ -58,6 +58,8 @@ if [[ "$INPUT_OS" == "android" ]]; then
     ############################################################################
     . ${TOP_DIR}/util/makePath        ### Import Android Path maker ############
     ############################################################################
+    . ${TOP_DIR}/plugins/allatori_android.sh  ## Allatori Gradle hook (vendor) #
+    ############################################################################
     ## Test only obfuscation code with 
     # ./build.sh -tp "Comp/App" --config "./test/config.json" -obfuscation "android" --release
     ############################################################################

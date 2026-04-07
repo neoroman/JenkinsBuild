@@ -115,8 +115,6 @@ fi
 export JAVA_HOME="${ConfigJavaHome}"
 export ANDROID_SDK_ROOT="${ANDROID_HOME}"
 export ANDROID_HOME="${ANDROID_HOME}"
-##### Using Allatori or Not, 0=Not Using, 1=Using Allatori (1차 난독화)
-USING_ALLATORI=$(jb_jq_bool '.android.usingAllatori')
 APP_ROOT_SUFFIX="android_distributions"
 APP_ROOT="${APP_ROOT_PREFIX}/${TOP_PATH}/${APP_ROOT_SUFFIX}"
 ###################
@@ -296,27 +294,8 @@ function doExecuteAndroid() {
         $ReactNativeBin run build:android
     fi
     ###################
-    # Step 1.1: Check 'allatori' 난독화 실행 여부
-    if [ $IS_RELEASE -eq 1 -a $USING_ALLATORI -eq 1 ]; then
-        ALLATORI_EXEC_PATH="${BUILD_GRADLE_CONFIG}"
-        ALLATORI_EXEC_TEMP="${WORKSPACE}/${ANDROID_APP_PATH}/build.gradle.new"
-        ALLATORI_EXEC=$(grep 'runAllatori(variant)' ${ALLATORI_EXEC_PATH} | grep -v 'def runAllatori(variant)' | awk 'BEGIN{FS=" "; OFS=""} {print $1$2}')
-        if [[ "$ALLATORI_EXEC" = "//"* ]]; then
-            sed 's/^\/\/.*runAllatori(variant)/            runAllatori(variant)/' $ALLATORI_EXEC_PATH >$ALLATORI_EXEC_TEMP
-
-            ALLATORI_EXEC=$(grep 'runAllatori(variant)' ${ALLATORI_EXEC_TEMP} | grep -v 'def runAllatori(variant)' | awk 'BEGIN{FS=" "; OFS=""} {print $1$2}')
-            if [[ "$ALLATORI_EXEC" = "//"* ]]; then
-                sed 's/^.*\/\/runAllatori(variant)/            runAllatori(variant)/' $ALLATORI_EXEC_PATH >$ALLATORI_EXEC_TEMP
-
-                ALLATORI_EXEC=$(grep 'runAllatori(variant)' ${ALLATORI_EXEC_TEMP} | grep -v 'def runAllatori(variant)' | awk 'BEGIN{FS=" "; OFS=""} {print $1$2}')
-                if [[ "$ALLATORI_EXEC" != "//"* ]]; then
-                    mv -f $ALLATORI_EXEC_TEMP $ALLATORI_EXEC_PATH
-                fi
-            else
-                mv -f $ALLATORI_EXEC_TEMP $ALLATORI_EXEC_PATH
-            fi
-        fi
-    fi
+    # Step 1.1: Allatori — build.gradle의 runAllatori(variant) (plugins/allatori_android.sh)
+    jb_allatori_prepare_release_gradle
     if [ $DEBUGGING -eq 1 ]; then
         if [ $IS_RELEASE -eq 1 ]; then
             if [ ! -f $OUTPUT_FOLDER/$APK_GOOGLESTORE ]; then
