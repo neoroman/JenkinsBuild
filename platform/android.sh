@@ -2,9 +2,11 @@
 ##
 # Android Shell Script
 #
+. "${TOP_DIR}/platform/jb_json_helpers.sh"
+
 function makeObfuscationScreenshot() {
     if [ $DEBUGGING -eq 0 ]; then
-        USING_OBFUSCATION=$(test $(cat $jsonConfig | $JQ '.android.usingObfuscation') = true && echo 1 || echo 0)
+        USING_OBFUSCATION=$(jb_jq_bool '.android.usingObfuscation')
         if [ $USING_OBFUSCATION -eq 1 ]; then
             if [ -f "${OUTPUT_FOLDER}/${APK_GOOGLESTORE}" ]; then
                 CHECK_SHELL="$WORKSPACE/${ANDROID_APP_PATH}/check.sh"
@@ -114,7 +116,7 @@ export JAVA_HOME="${ConfigJavaHome}"
 export ANDROID_SDK_ROOT="${ANDROID_HOME}"
 export ANDROID_HOME="${ANDROID_HOME}"
 ##### Using Allatori or Not, 0=Not Using, 1=Using Allatori (1차 난독화)
-USING_ALLATORI=$(test $(cat $jsonConfig | $JQ '.android.usingAllatori') = true && echo 1 || echo 0)
+USING_ALLATORI=$(jb_jq_bool '.android.usingAllatori')
 APP_ROOT_SUFFIX="android_distributions"
 APP_ROOT="${APP_ROOT_PREFIX}/${TOP_PATH}/${APP_ROOT_SUFFIX}"
 ###################
@@ -178,28 +180,28 @@ fi
 OUTPUT_FOLDER="${APP_ROOT}/${APP_VERSION}"
 HTTPS_PREFIX="${FRONTEND_POINT}/${TOP_PATH}/${APP_ROOT_SUFFIX}/${APP_VERSION}/"
 ###################
-USING_GOOGLESTORE=$(test $(cat $jsonConfig | $JQ '.android.GoogleStore.enabled') = true && echo 1 || echo 0)
+USING_GOOGLESTORE=$(jb_jq_bool '.android.GoogleStore.enabled')
 if [ $USING_GOOGLESTORE -eq 1 ]; then
-    USING_ADHOC_DEBUG=$(test $(cat $jsonConfig | $JQ '.android.GoogleStore.buildDebugVersion') = true && echo 1 || echo 0)
+    USING_ADHOC_DEBUG=$(jb_jq_bool '.android.GoogleStore.buildDebugVersion')
 fi
-GRADLE_TASK_GOOGLESTORE=$(cat $jsonConfig | $JQ '.android.GoogleStore.taskName' | tr -d '"')
-USING_BUNDLE_GOOGLESTORE=$(test $(cat $jsonConfig | $JQ '.android.GoogleStore.usingBundleAAB') = true && echo 1 || echo 0)
-RELEASE_TYPE_GOOGLESTORE=$(cat $jsonConfig | $JQ '.android.GoogleStore.releaseType' | tr -d '"')
+GRADLE_TASK_GOOGLESTORE=$(jb_jq_str '.android.GoogleStore.taskName')
+USING_BUNDLE_GOOGLESTORE=$(jb_jq_bool '.android.GoogleStore.usingBundleAAB')
+RELEASE_TYPE_GOOGLESTORE=$(jb_jq_str '.android.GoogleStore.releaseType')
 ###
-USING_ONESTORE=$(test $(cat $jsonConfig | $JQ '.android.OneStore.enabled') = true && echo 1 || echo 0)
-GRADLE_TASK_ONESTORE=$(cat $jsonConfig | $JQ '.android.OneStore.taskName' | tr -d '"')
-USING_BUNDLE_ONESTORE=$(test $(cat $jsonConfig | $JQ '.android.OneStore.usingBundleAAB') = true && echo 1 || echo 0)
-RELEASE_TYPE_ONESTORE=$(cat $jsonConfig | $JQ '.android.OneStore.releaseType' | tr -d '"')
+USING_ONESTORE=$(jb_jq_bool '.android.OneStore.enabled')
+GRADLE_TASK_ONESTORE=$(jb_jq_str '.android.OneStore.taskName')
+USING_BUNDLE_ONESTORE=$(jb_jq_bool '.android.OneStore.usingBundleAAB')
+RELEASE_TYPE_ONESTORE=$(jb_jq_str '.android.OneStore.releaseType')
 ###
-USING_LIVESERVER=$(test $(cat $jsonConfig | $JQ '.android.LiveServer.enabled') = true && echo 1 || echo 0)
-GRADLE_TASK_LIVESERVER=$(cat $jsonConfig | $JQ '.android.LiveServer.taskName' | tr -d '"')
-USING_BUNDLE_LIVESERVER=$(test $(cat $jsonConfig | $JQ '.android.LiveServer.usingBundleAAB') = true && echo 1 || echo 0)
-RELEASE_TYPE_LIVESERVER=$(cat $jsonConfig | $JQ '.android.LiveServer.releaseType' | tr -d '"')
+USING_LIVESERVER=$(jb_jq_bool '.android.LiveServer.enabled')
+GRADLE_TASK_LIVESERVER=$(jb_jq_str '.android.LiveServer.taskName')
+USING_BUNDLE_LIVESERVER=$(jb_jq_bool '.android.LiveServer.usingBundleAAB')
+RELEASE_TYPE_LIVESERVER=$(jb_jq_str '.android.LiveServer.releaseType')
 ###
-USING_TESTSERVER=$(test $(cat $jsonConfig | $JQ '.android.TestServer.enabled') = true && echo 1 || echo 0)
-GRADLE_TASK_TESTSERVER=$(cat $jsonConfig | $JQ '.android.TestServer.taskName' | tr -d '"')
-USING_BUNDLE_TESTSERVER=$(test $(cat $jsonConfig | $JQ '.android.TestServer.usingBundleAAB') = true && echo 1 || echo 0)
-RELEASE_TYPE_TESTSERVER=$(cat $jsonConfig | $JQ '.android.TestServer.releaseType' | tr -d '"')
+USING_TESTSERVER=$(jb_jq_bool '.android.TestServer.enabled')
+GRADLE_TASK_TESTSERVER=$(jb_jq_str '.android.TestServer.taskName')
+USING_BUNDLE_TESTSERVER=$(jb_jq_bool '.android.TestServer.usingBundleAAB')
+RELEASE_TYPE_TESTSERVER=$(jb_jq_str '.android.TestServer.releaseType')
 ###################
 if [ $isFlutterEnabled -eq 1 ]; then
     APK_OUTPUT_PATH="build/app/outputs"

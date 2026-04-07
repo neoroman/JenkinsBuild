@@ -1,10 +1,12 @@
 #!/bin/sh
 ##
+. "${TOP_DIR}/platform/jb_json_helpers.sh"
+
 function makeObfuscationScreenshot() {
     echo "===================="
     if [ $DEBUGGING -eq 0 ]; then
         echo "Debugging mode: $DEBUGGING"
-        USING_OBFUSCATION=$(test $(cat $jsonConfig | $JQ '.ios.usingObfuscation') = true && echo 1 || echo 0)
+        USING_OBFUSCATION=$(jb_jq_bool '.ios.usingObfuscation')
         echo "Using obfuscation: $USING_OBFUSCATION"
         if [ $USING_OBFUSCATION -eq 1 ]; then
             # Step 2.1.1: Run IxShiedCheck script and take screenshot, nees 'convert' and 'gs' here...!!!
@@ -126,34 +128,34 @@ function initializeIOSBuildConfig() {
     HTTPS_PREFIX="${FRONTEND_POINT}/${TOP_PATH}/${APP_ROOT_SUFFIX}/${APP_VERSION}/"
     OUTBOUND_HTTPS_PREFIX="${OUTBOUND_POINT}/${TOP_PATH}/${APP_ROOT_SUFFIX}/${APP_VERSION}/"
     ###################
-    USING_APPSTORE=$(test $(cat $jsonConfig | $JQ '.ios.AppStore.enabled') = true && echo 1 || echo 0)
+    USING_APPSTORE=$(jb_jq_bool '.ios.AppStore.enabled')
     if [ $USING_APPSTORE -eq 1 ]; then
-        SCHEME_APPSTORE=$(cat $jsonConfig | $JQ '.ios.AppStore.schemeName' | tr -d '"')
-        TARGET_APPSTORE=$(cat $jsonConfig | $JQ '.ios.AppStore.targetName' | tr -d '"')
-        BUNDLE_ID_APPSTORE=$(cat $jsonConfig | $JQ '.ios.AppStore.bundleId' | tr -d '"')
-        BUNDLE_NAME_APPSTORE=$(cat $jsonConfig | $JQ '.ios.AppStore.bundleName' | tr -d '"')
+        SCHEME_APPSTORE=$(jb_jq_str '.ios.AppStore.schemeName')
+        TARGET_APPSTORE=$(jb_jq_str '.ios.AppStore.targetName')
+        BUNDLE_ID_APPSTORE=$(jb_jq_str '.ios.AppStore.bundleId')
+        BUNDLE_NAME_APPSTORE=$(jb_jq_str '.ios.AppStore.bundleName')
     fi
-    USING_ADHOC=$(test $(cat $jsonConfig | $JQ '.ios.Adhoc.enabled') = true && echo 1 || echo 0)
+    USING_ADHOC=$(jb_jq_bool '.ios.Adhoc.enabled')
     if [ $USING_ADHOC -eq 1 ]; then
-        SCHEME_ADHOC=$(cat $jsonConfig | $JQ '.ios.Adhoc.schemeName' | tr -d '"')
-        TARGET_ADHOC=$(cat $jsonConfig | $JQ '.ios.Adhoc.targetName' | tr -d '"')
-        BUNDLE_ID_ADHOC=$(cat $jsonConfig | $JQ '.ios.Adhoc.bundleId' | tr -d '"')
-        BUNDLE_NAME_ADHOC=$(cat $jsonConfig | $JQ '.ios.Adhoc.bundleName' | tr -d '"')
-        USING_ADHOC_DEBUG=$(test $(cat $jsonConfig | $JQ '.ios.Adhoc.buildDebugVersion') = true && echo 1 || echo 0)
+        SCHEME_ADHOC=$(jb_jq_str '.ios.Adhoc.schemeName')
+        TARGET_ADHOC=$(jb_jq_str '.ios.Adhoc.targetName')
+        BUNDLE_ID_ADHOC=$(jb_jq_str '.ios.Adhoc.bundleId')
+        BUNDLE_NAME_ADHOC=$(jb_jq_str '.ios.Adhoc.bundleName')
+        USING_ADHOC_DEBUG=$(jb_jq_bool '.ios.Adhoc.buildDebugVersion')
     fi
-    USING_ENTERPRISE=$(test $(cat $jsonConfig | $JQ '.ios.Enterprise.enabled') = true && echo 1 || echo 0)
+    USING_ENTERPRISE=$(jb_jq_bool '.ios.Enterprise.enabled')
     if [ $USING_ENTERPRISE -eq 1 ]; then
-        SCHEME_ENTER=$(cat $jsonConfig | $JQ '.ios.Enterprise.schemeName' | tr -d '"')
-        TARGET_ENTER=$(cat $jsonConfig | $JQ '.ios.Enterprise.targetName' | tr -d '"')
-        BUNDLE_ID_ENTER=$(cat $jsonConfig | $JQ '.ios.Enterprise.bundleId' | tr -d '"')
-        BUNDLE_NAME_ENTER=$(cat $jsonConfig | $JQ '.ios.Enterprise.bundleName' | tr -d '"')
+        SCHEME_ENTER=$(jb_jq_str '.ios.Enterprise.schemeName')
+        TARGET_ENTER=$(jb_jq_str '.ios.Enterprise.targetName')
+        BUNDLE_ID_ENTER=$(jb_jq_str '.ios.Enterprise.bundleId')
+        BUNDLE_NAME_ENTER=$(jb_jq_str '.ios.Enterprise.bundleName')
     fi
-    USING_ENTER4WEB=$(test $(cat $jsonConfig | $JQ '.ios.Enterprise4WebDebug.enabled') = true && echo 1 || echo 0)
+    USING_ENTER4WEB=$(jb_jq_bool '.ios.Enterprise4WebDebug.enabled')
     if [ $USING_ENTER4WEB -eq 1 ]; then
-        SCHEME_ENTER4WEB=$(cat $jsonConfig | $JQ '.ios.Enterprise4WebDebug.schemeName' | tr -d '"')
-        TARGET_ENTER4WEB=$(cat $jsonConfig | $JQ '.ios.Enterprise4WebDebug.targetName' | tr -d '"')
-        BUNDLE_ID_ENTER4WEB=$(cat $jsonConfig | $JQ '.ios.Enterprise4WebDebug.bundleId' | tr -d '"')
-        BUNDLE_NAME_ENTER4WEB=$(cat $jsonConfig | $JQ '.ios.Enterprise4WebDebug.bundleName' | tr -d '"')
+        SCHEME_ENTER4WEB=$(jb_jq_str '.ios.Enterprise4WebDebug.schemeName')
+        TARGET_ENTER4WEB=$(jb_jq_str '.ios.Enterprise4WebDebug.targetName')
+        BUNDLE_ID_ENTER4WEB=$(jb_jq_str '.ios.Enterprise4WebDebug.bundleId')
+        BUNDLE_NAME_ENTER4WEB=$(jb_jq_str '.ios.Enterprise4WebDebug.bundleName')
     fi
     ###################
     if [ ! -d $DST_ROOT ]; then
