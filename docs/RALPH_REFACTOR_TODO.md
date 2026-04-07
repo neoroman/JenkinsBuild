@@ -34,7 +34,7 @@ export PRD_PATH="$HOME/.openclaw/workspace/working-copy/JenkinsBuild/docs/RALPH_
 ## Phase 3 — 플러그인 분리 1차 (Allatori / IxShield)
 
 - [x] `platform/android.sh`의 Allatori 블록을 `plugins/allatori_android.sh`(또는 `hooks/post-config-android.sh`)로 이동하고 `build.sh`에서만 source.
-- [ ] `platform/ios.sh`의 IxShield 관련(sed, `IxShieldCheck.sh`, PNG)을 `plugins/ixshield_ios.sh`로 이동; 비활성 시 noop.
+- [x] `platform/ios.sh`의 IxShield 관련(sed, `IxShieldCheck.sh`, PNG)을 `plugins/ixshield_ios.sh`로 이동; 비활성 시 noop.
 - [ ] `test/obfuscation_android.sh`, `test/obfuscation_ios.sh`를 새 플러그인 경로에서 호출하도록 정리.
 
 ## Phase 4 — 알림·사이트 특화 분리
