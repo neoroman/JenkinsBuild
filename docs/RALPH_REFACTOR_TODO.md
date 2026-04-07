@@ -44,7 +44,7 @@ export PRD_PATH="$HOME/.openclaw/workspace/working-copy/JenkinsBuild/docs/RALPH_
 
 ## Phase 5 — FCM·SSH
 
-- [ ] `config/fcmconfig`: 드라이런 모드(복사 대상만 echo) 옵션 추가.
+- [x] `config/fcmconfig`: 드라이런 모드(복사 대상만 echo) 옵션 추가.
 - [ ] `config/sshfunctions`: `BatchMode`/타임아웃/known_hosts 정책 문서화; 실패 시 재시도 정책은 별 이슈로 분리.
 
 ## Phase 6 — dist 워크플로
@@ -72,3 +72,4 @@ export PRD_PATH="$HOME/.openclaw/workspace/working-copy/JenkinsBuild/docs/RALPH_
 | 2026-04-07 | Phase 3: `plugins/obfuscation_android.sh` — Android 난독화 스크린샷을 플러그인으로 이전; `test/obfuscation_*.sh`는 `ixshield_ios`/`obfuscation_android`를 직접 source |
 | 2026-04-07 | Phase 4: `notifications.mailEndpoint` → `$MAIL_ENDPOINT`; `util/sendemail`은 하드코딩 경로 제거, `jsonconfig`에서 기본 조립 |
 | 2026-04-07 | Phase 4: Slack vs Teams 페이로드 — `notifications/formatters/` 즉시 분리는 보류; 이유·후속은 `docs/ARCHITECTURE.md` §4.1 |
+| 2026-04-07 | Phase 5: `config/fcmconfig` — `FCM_DRY_RUN=1` 시 복사 대상(src→dst)만 echo, mkdir/cp 생략 |

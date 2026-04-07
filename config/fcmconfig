@@ -4,6 +4,8 @@
 # Android: IS_RELEASE=1 → GoogleStore FCM only; else → LiveServer FCM only.
 # Sourced by build.sh after utilconfig (WORKSPACE, jsonConfig, JQ, IS_RELEASE are set).
 #
+# Dry-run: set FCM_DRY_RUN=1 to print planned copy pairs (src -> dst) only; no mkdir/cp.
+#
 fcm_resolve_path() {
   _p="$1"
   case "$_p" in
@@ -43,6 +45,11 @@ fcm_try_copy_pair() {
 
   if [ ! -f "$_abs_src" ]; then
     echo "       [FCM] skip (${_tag} ${_variant}): source missing: $_abs_src" >&2
+    return 0
+  fi
+
+  if [ "${FCM_DRY_RUN:-0}" -eq 1 ]; then
+    echo "       [FCM] dry-run (${_tag} ${_variant}): $_abs_src -> $_abs_dst"
     return 0
   fi
 
