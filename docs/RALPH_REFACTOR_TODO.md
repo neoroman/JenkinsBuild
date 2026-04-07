@@ -16,7 +16,7 @@ export PRD_PATH="$HOME/.openclaw/workspace/working-copy/JenkinsBuild/docs/RALPH_
 ## Phase 0 — 문서·기준선
 
 - [x] `docs/ARCHITECTURE.md`, `docs/CONFIG_AND_SECRETS.md`와 실제 코드 경로를 교차 검증(파일 이동 시 문서 동기화 규칙을 README에 한 줄 추가).
-- [ ] `test/config.json`을 “샘플만”임을 머리말 주석 또는 `test/README.md`에 명시.
+- [x] `test/config.json`을 “샘플만”임을 머리말 주석 또는 `test/README.md`에 명시.
 - [ ] (선택) 워크스페이스 `working-copy/AngelNet-DistSite/config/config.json`과 `test/config.json`의 **최상위 키 델타**를 분기마다 점검(예: `discord`, `custom`, 사이트 전용 블록). **`mail-gmail`은 백업용·미사용이므로 델타·과제에서 제외.** 문서만 갱신해도 됨; 비밀 값은 금지.
 
 ## Phase 1 — 비밀·설정 안전장치(고통 적음, 효과 큼)
