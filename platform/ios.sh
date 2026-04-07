@@ -499,7 +499,7 @@ function doExecuteIOS() {
             mv "$OUTPUT_FILE" "${OUTPUT_FOLDER}/"
             SIZE_ADHOC_APP_FILE=$(du -sh ${OUTPUT_FOLDER}/${OUTPUT_FILENAME_ADHOC_IPA} | awk '{print $1}')
         else
-            exit -1
+            exit 255
         fi
 
         # Target AdHoc for Debug
@@ -541,7 +541,7 @@ function doExecuteIOS() {
             mv "$OUTPUT_FILE" "${OUTPUT_FOLDER}/"
             SIZE_ENTER_APP_FILE=$(du -sh ${OUTPUT_FOLDER}/${OUTPUT_FILENAME_ENTER_IPA} | awk '{print $1}')
         else
-            exit -1
+            exit 255
         fi
     fi
     ###################
@@ -569,7 +569,7 @@ function doExecuteIOS() {
             mv "$OUTPUT_FILE" "${OUTPUT_FOLDER}/"
             SIZE_ENTER4WEB_APP_FILE=$(du -sh ${OUTPUT_FOLDER}/${OUTPUT_FILENAME_ENTER4WEB_IPA} | awk '{print $1}')
         else
-            exit -1
+            exit 255
         fi
     fi
     ###################

@@ -1,3 +1,4 @@
+# shellcheck shell=sh
 ##
 # Shared jq helpers for platform/android.sh and platform/ios.sh.
 # Requires: jsonConfig, JQ (set by config/jsonconfig before these platform files are sourced).

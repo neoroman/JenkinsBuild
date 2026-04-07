@@ -1,3 +1,4 @@
+# shellcheck shell=bash
 
 vercomp () {
     if [[ $1 == $2 ]]

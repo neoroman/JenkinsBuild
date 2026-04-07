@@ -1,0 +1,4 @@
+# JenkinsBuild ShellCheck defaults.
+# Included/excluded paths are listed in scripts/run-shellcheck.sh (single source of truth).
+external-sources=true
+source-path=SCRIPTDIR

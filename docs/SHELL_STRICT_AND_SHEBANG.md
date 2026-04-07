@@ -57,6 +57,14 @@
 | `build.sh`를 진짜 POSIX sh로 정돈 | 별도 프로젝트 | 대규모 치환 + 테스트 |
 | 문서화(본 파일) | 예 | 동작 변경 없음 |
 
+## 6. ShellCheck 범위(대상·예외·CI)
+
+- **설정**: 루트 `.shellcheckrc` — `external-sources`, `source-path=SCRIPTDIR`(소스된 파일 경고 완화).
+- **대상 파일**: `scripts/run-shellcheck.sh` 안의 `files=(...)` 배열이 단일 기준이다 — 루트 `build.sh`, `dist.sh`, `config/*` 스크립트(예: `jsonconfig`), `util/`의 슬랙·메일·경로 유틸·`versions`·`dist_shlib`, `platform/*.sh`, `test/**/*.sh`.
+- **예외**: `util/exp`는 **Expect**라 ShellCheck 대상에서 제외한다.
+- **심각도**: 기본 **`error`**만 CI에서 막는다(레거시 **warning** 수백 건은 후속 정리). 로컬에서 전부 보려면 `SHELLCHECK_SEVERITY=warning ./scripts/run-shellcheck.sh`.
+- **CI**: `.github/workflows/shellcheck.yml` — `ubuntu-latest` + `apt install shellcheck` 후 위 스크립트 실행.
+
 ---
 
 *관련: `docs/ARCHITECTURE.md`(실행 흐름), `docs/RALPH_REFACTOR_TODO.md`(Phase 2).*

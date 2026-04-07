@@ -29,7 +29,7 @@ export PRD_PATH="$HOME/.openclaw/workspace/working-copy/JenkinsBuild/docs/RALPH_
 
 - [x] `build.sh` vs `dist.sh` shebang/strict mode(`set -u` 등) 정책 통일안 — 무엇을 깨지 않을지 리스트업.
 - [x] `platform/android.sh` / `platform/ios.sh` 공통: 반복되는 `jq cat $jsonConfig` 패턴을 함수(`jb_jq_bool`, `jb_jq_str`)로 추출할지 결정 후 일부만 이동(작은 PR).
-- [ ] `shellcheck` 대상 디렉터리와 예외 파일 목록을 정함(`.shellcheckrc` 또는 CI 한 줄).
+- [x] `shellcheck` 대상 디렉터리와 예외 파일 목록을 정함(`.shellcheckrc` 또는 CI 한 줄).
 
 ## Phase 3 — 플러그인 분리 1차 (Allatori / IxShield)
 
@@ -68,3 +68,4 @@ export PRD_PATH="$HOME/.openclaw/workspace/working-copy/JenkinsBuild/docs/RALPH_
 | 2026-04-07 | Phase 1: `util/sendemail` 폼 필드·로그 유출 경로·마스킹 우선순위를 `docs/CONFIG_AND_SECRETS.md` §3.1에 정리 |
 | 2026-04-07 | Phase 2: `docs/SHELL_STRICT_AND_SHEBANG.md` — `build.sh`/`dist.sh` shebang·`set -e`/`-u`/pipefail 기준선·안전/위험 변경 표 |
 | 2026-04-07 | Phase 2: `platform/jb_json_helpers.sh` — `jb_jq_bool`/`jb_jq_str`; Android·iOS 스토어/타깃 설정 블록·난독화 플래그 일부 치환 |
+| 2026-04-07 | Phase 2: `.shellcheckrc` + `scripts/run-shellcheck.sh` 명시적 대상·`util/exp` 예외 + `shellcheck.yml` CI(기본 심각도 error); SC2148/SC2070/SC2242 등 소규모 정리 |

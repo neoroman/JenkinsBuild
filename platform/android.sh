@@ -575,8 +575,7 @@ function doExecuteAndroid() {
                 # Step 1.2: GMMS TB모드 켜기
                 MAIN_ACTIVITY=$(find . -name 'MainActivity.java')
                 if [ -f "$MAIN_ACTIVITY" ]; then
-                    grep 'Config.IS_TB_GMMS_SERVER =' $MAIN_ACTIVITY
-                    if [ -n $? ]; then
+                    if grep -q 'Config.IS_TB_GMMS_SERVER =' "$MAIN_ACTIVITY"; then
                     sed '/Config.IS_TB_GMMS_SERVER = .*/ a\
                                 Config.IS_TB_GMMS_SERVER = true;' $MAIN_ACTIVITY >$MAIN_ACTIVITY.new
                     mv -f $MAIN_ACTIVITY.new $MAIN_ACTIVITY
