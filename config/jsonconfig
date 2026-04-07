@@ -54,6 +54,12 @@ if [ -f $jsonConfig ]; then
   outBoundPoint=$(echo $config | $JQ '.outBoundPoint' | tr -d '"')
   outBoundProtocol=$(echo $config | $JQ '.outBoundProtocol' | tr -d '"')
   OUTBOUND_POINT="$outBoundProtocol://$outBoundPoint"
+  _mailEp=$(cat "$jsonConfig" | $JQ -r '.notifications.mailEndpoint // empty')
+  if [ -z "$_mailEp" ] || [ "$_mailEp" = "null" ]; then
+    MAIL_ENDPOINT="${FRONTEND_POINT}/${TOP_PATH}/phpmodules/sendmail_domestic.php"
+  else
+    MAIL_ENDPOINT="$_mailEp"
+  fi
   USING_MAIL=$(test $(cat $jsonConfig | $JQ '.mail.domesticEnabled') = true && echo 1 || echo 0)
   PROJECT_NAME=$(cat $jsonConfig | $JQ '.ios.projectName' | tr -d '"')
   POD_FILE=$(cat $jsonConfig | $JQ '.ios.podFile' | tr -d '"')
@@ -133,4 +139,7 @@ if [ -f $jsonConfig ]; then
       fi
     fi
   fi
+fi
+if [ -z "${MAIL_ENDPOINT:-}" ]; then
+  MAIL_ENDPOINT="${FRONTEND_POINT}/${TOP_PATH}/phpmodules/sendmail_domestic.php"
 fi

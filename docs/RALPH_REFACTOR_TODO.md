@@ -39,7 +39,7 @@ export PRD_PATH="$HOME/.openclaw/workspace/working-copy/JenkinsBuild/docs/RALPH_
 
 ## Phase 4 — 알림·사이트 특화 분리
 
-- [ ] `util/sendemail`의 PHP URL 조립을 `jsonconfig` 키(예: `notifications.mailEndpoint`)로 빼기 — 하드코딩 `phpmodules/sendmail_domestic.php` 제거.
+- [x] `util/sendemail`의 PHP URL 조립을 `jsonconfig` 키(예: `notifications.mailEndpoint`)로 빼기 — 하드코딩 `phpmodules/sendmail_domestic.php` 제거.
 - [ ] `util/sendslack`, `util/sendteams`: 페이로드 빌더를 `notifications/formatters/` 같은 하위로 분리할지 검토.
 
 ## Phase 5 — FCM·SSH
@@ -70,3 +70,4 @@ export PRD_PATH="$HOME/.openclaw/workspace/working-copy/JenkinsBuild/docs/RALPH_
 | 2026-04-07 | Phase 2: `platform/jb_json_helpers.sh` — `jb_jq_bool`/`jb_jq_str`; Android·iOS 스토어/타깃 설정 블록·난독화 플래그 일부 치환 |
 | 2026-04-07 | Phase 2: `.shellcheckrc` + `scripts/run-shellcheck.sh` 명시적 대상·`util/exp` 예외 + `shellcheck.yml` CI(기본 심각도 error); SC2148/SC2070/SC2242 등 소규모 정리 |
 | 2026-04-07 | Phase 3: `plugins/obfuscation_android.sh` — Android 난독화 스크린샷을 플러그인으로 이전; `test/obfuscation_*.sh`는 `ixshield_ios`/`obfuscation_android`를 직접 source |
+| 2026-04-07 | Phase 4: `notifications.mailEndpoint` → `$MAIL_ENDPOINT`; `util/sendemail`은 하드코딩 경로 제거, `jsonconfig`에서 기본 조립 |

@@ -45,6 +45,9 @@
         "webhook": "https://company.webhook.office.com/webhookb2/",
         "enabled": false
     },
+    "notifications": {
+        "mailEndpoint": "https://dist.example.invalid/Comp/App/phpmodules/sendmail_domestic.php"
+    },
     "discord": {
         "channel": "#app_dist",
         "webhook": "https://discordapp.com/api/webhooks/106516",

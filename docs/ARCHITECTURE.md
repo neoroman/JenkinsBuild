@@ -22,7 +22,7 @@
 - **iOS 빌드 본체**: `platform/ios.sh` — 스킴/타깃, xcodebuild, Export. **IxShield 난독화 증적(PNG)** 은 `plugins/ixshield_ios.sh` (`platform/ios.sh`에서 `makeObfuscationScreenshot` → `jb_ixshield_make_obfuscation_screenshot`).
 - **경로/산출 접두**: `util/makePath` 등.
 - **JSON/HTML 산출**: `util/makejson`, `util/makehtml` — 배포 사이트용 아티팩트 목록·히스토리·git 로그 가공.
-- **알림**: `util/sendslack`, `util/sendteams`, `util/sendemail` — 후자는 배포 **웹 프론트의 PHP**(예: `phpmodules/sendmail_domestic.php`)로 `curl` POST.
+- **알림**: `util/sendslack`, `util/sendteams`, `util/sendemail` — 후자는 **`config/jsonconfig`가 세팅한 `$MAIL_ENDPOINT`**(`notifications.mailEndpoint`; 미설정 시 `${FRONTEND_POINT}/${TOP_PATH}/phpmodules/sendmail_domestic.php`)로 `curl` POST.
 - **릴리스 자동화**: `dist.sh`, `util/dist_shlib`, `util/versions` — 비교·설명은 `docs/dist_comparison.md`.
 
 ## 3. 플랫폼별 책임
@@ -52,7 +52,7 @@
 |------|------|-----------------|
 | **벤더: Allatori** | Release 빌드 시 `build.gradle`에서 `runAllatori(variant)` 주석 해제·백업 | `plugins/allatori_android.sh` (`build.sh` → `doExecuteAndroid` 직전에 로드) |
 | **벤더: IxShield 계열** | `ix_set_debug` 치환, `IxShieldCheck.sh`/`check.sh` 실행, ImageMagick/gs PNG | **iOS:** `plugins/ixshield_ios.sh`; **Android:** `plugins/obfuscation_android.sh`; 스모크: `test/obfuscation_*.sh`가 각각 위 플러그인을 직접 source |
-| **사이트: PHP 메일 게이트** | `curl`로 `sendmail_domestic.php`에 subject/body/첨부 전달 | `util/sendemail` |
+| **사이트: PHP 메일 게이트** | `curl`로 **`$MAIL_ENDPOINT`**(JSON `notifications.mailEndpoint`)에 subject/body/첨부 전달 | `util/sendemail` + `config/jsonconfig` |
 | **사이트: Slack/Teams 웹훅 형식** | 메시지 페이로드 조합 | `util/sendslack`, `util/sendteams` |
 | **사이트: SSH 배포 경로 규약** | 원격 디렉터리 트리·권한 가정 | `config/sshfunctions`, 플랫폼 스크립트 내 `NEO2UA_OUTPUT_FOLDER` 등 |
 | **사이트: 언어·HTML 테마** | `lang_*.json`, 테마 색, 클라이언트 문구 | `config/buildenvironment`, `util/makehtml` |

@@ -72,7 +72,7 @@
 
 ### 3.1 `util/sendemail` — Jenkins 콘솔에 남을 수 있는 값
 
-구현: `util/sendemail` — `config/utilconfig`의 `$CURL`(기본적으로 `curl` 바이너리 경로만, `-v`/`--trace` 없음)으로 `--data-urlencode` 다수 + POST URL `${FRONTEND_POINT}/${TOP_PATH}/phpmodules/sendmail_domestic.php`.
+구현: `util/sendemail` — `config/utilconfig`의 `$CURL`(기본적으로 `curl` 바이너리 경로만, `-v`/`--trace` 없음)으로 `--data-urlencode` 다수 + POST URL **`$MAIL_ENDPOINT`**. 이 값은 `config/jsonconfig`에서 `config.json`의 **`notifications.mailEndpoint`**(비어 있으면 `${FRONTEND_POINT}/${TOP_PATH}/phpmodules/sendmail_domestic.php`로 조립)로 설정한다.
 
 **로그로 새는 대표 경로**
 
@@ -88,7 +88,7 @@
 
 | 폼 키 | 실리는 내용(변수·표현식) | 로그 관점 민감도 | 마스킹·완화 후보 |
 |--------|---------------------------|------------------|-------------------|
-| *(요청 대상)* | `FRONTEND_POINT`, `TOP_PATH`, 경로 `phpmodules/sendmail_domestic.php` | 중 | 내부 호스트·URL 스킴; Jenkins Mask Passwords / regexp 마스킹 |
+| *(요청 대상)* | `MAIL_ENDPOINT`(및 JSON의 `notifications.mailEndpoint`) | 중 | 내부 호스트·URL 스킴; Jenkins Mask Passwords / regexp 마스킹 |
 | `subject1` | `APP_NAME`, `HOSTNAME`, `BUILD_NUMBER`, `DEBUG_MSG` | 중 | 에이전트 호스트명·앱 식별자 |
 | `subject2` | `GIT_BRANCH`, `CHANGE_TITLE`, `GIT_COMMIT` | 중~높 | `CHANGE_TITLE`(Jira/내부 제목); 전체 커밋 SHA |
 | `message_header` | iOS: 스토어별 다운로드 HTML, `HTTPS_PREFIX`+파일명 등. Android: `MAIL_TEXT`, 난독화 첨부 링크 등 | 중 | 아티팩트 URL·경로 구조; 내부 프리픽스 |
@@ -102,7 +102,7 @@
 
 1. **높음**: `set -x`가 켜진 파이프라인이면 `curl` 호출 구간만 `set +x` … 실행 … `set -x`로 감싸거나, POST body를 **파일**(`--data-binary @file`)로 넘겨 명령 줄 노출을 줄이기.
 2. **높음**: `OTHER_BUILD_ENV`를 키·값 덤프로 키울 계획이 있으면, 사전에 `PASSWORD|SECRET|TOKEN|API_KEY|BEARER` 등 패턴 **삭제/치환** 규칙을 두기.
-3. **중간**: `GIT_LAST_LOG`, `CHANGE_TITLE`, `FRONTEND_POINT`/`HTTPS_PREFIX`/`ITMS_PREFIX` — Jenkins 쪽 마스킹 규칙(내부 도메인, 고정 프리픽스).
+3. **중간**: `GIT_LAST_LOG`, `CHANGE_TITLE`, `MAIL_ENDPOINT`/`FRONTEND_POINT`/`HTTPS_PREFIX`/`ITMS_PREFIX` — Jenkins 쪽 마스킹 규칙(내부 도메인, 고정 프리픽스).
 4. **낮음**: `APP_NAME`, `BUILD_NUMBER`, Xcode/Gradle 버전 문자열 — 팀 정책에 따라 생략 가능.
 
 ## 4. 개선 방향(권장 순서)
@@ -142,7 +142,7 @@
 - **백업용 `mail-gmail`**: 파일에만 있을 수 있으며 **미사용**이면 개선 문서·스키마 검증 **범위에서 제외**. 활성 SMTP는 `mail`만 점검한다.
 - **Jenkins가 건드리는 필드**: `topPath`, `android.jenkinsWorkspace`, `ios.jenkinsWorkspace` 등은 빌드 중 **in-place `jq` 갱신** 대상이다. Git으로 관리되는 동일 파일이면 **의도치 않은 diff**가 생긴다.
 - **`users`**: `app` / `qc` / `git` 등 하위 블록이 웹 Basic 인증·로컬 로그인 등에 쓰이면, 이 JSON이 **DocumentRoot 아래에 그대로 있을 때** 서빙/백업 유출 경로를 점검한다.
-- **`discord` / `slack` / `teams`**: JenkinsBuild `jsonconfig`는 현재 **Slack·Teams만** 읽는다. `discord`는 **배포 PHP·다른 스크립트 전용**일 수 있으므로, “쉘이 안 읽는다 = 없다”로 착각하지 않는다.
+- **`discord` / `slack` / `teams` / `notifications`**: JenkinsBuild `jsonconfig`는 **Slack·Teams**와 **`notifications.mailEndpoint`(→ `$MAIL_ENDPOINT`)** 를 읽는다. `discord`는 **배포 PHP·다른 스크립트 전용**일 수 있으므로, “쉘이 안 읽는다 = 없다”로 착각하지 않는다.
 - **iOS `AppStore.uploadApp.*` + `sudoPassword`**: 빌드 에이전트 서버 권한과 Apple 업로드 자격이 한 파일에 있음 → 분리·Credential Store 이전 우선순위가 높다.
 - **Android `usingAllatori` / `usingObfuscation`**: 난독화 파이프라인 옵션이 설정 파일에 있으므로, 실수로 `true`가 `development` 빌드에 섞이지 않는지 빌드 매트릭스와 대조한다.
 
