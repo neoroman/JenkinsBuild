@@ -31,6 +31,7 @@ files=(
   util/makehtml
   util/makePath
   util/versions
+  scripts/pure/jb_vercomp.sh
   util/dist_shlib
   platform/android.sh
   platform/ios.sh

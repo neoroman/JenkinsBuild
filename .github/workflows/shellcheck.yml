@@ -27,3 +27,6 @@ jobs:
         run: |
           python3 -m pip install --quiet jsonschema
           bash scripts/validate-config.sh test/config.json
+
+      - name: Unit tests (pure vercomp via bash)
+        run: python3 scripts/test_pure_vercomp.py -v
