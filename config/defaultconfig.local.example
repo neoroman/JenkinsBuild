@@ -1,0 +1,16 @@
+#!/bin/sh
+#
+# Copy to config/defaultconfig.local and set values for your Jenkins/macOS builder.
+# defaultconfig.local is gitignored — do not commit real secrets or internal URLs.
+#
+# sudoPassword="…"
+# teamWebHook_debug="https://…"
+# teamWebHook="https://…"
+# frontEndPointUrl="https://…"
+# siteRepositoryUrl="https://…"
+#
+# Optional: adjust paths / identity if the repo defaults do not fit.
+# GIT_USER="…"
+# GIT_EMAIL="…"
+# DEBUG_WORKSPACE_IOS="/path/to/app-ios"
+# DEBUG_WORKSPACE_ANDROID="/path/to/app-android"

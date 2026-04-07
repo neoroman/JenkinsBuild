@@ -4,7 +4,7 @@
 
 ## 1. 실행 흐름(한 줄 요악)
 
-1. `build.sh`가 `config/defaultconfig` → `argsparser` → `jsonconfig` → `sshfunctions` → `utilconfig`를 `source`한다.
+1. `build.sh`가 `config/defaultconfig`(마지막에 선택적으로 `config/defaultconfig.local`을 `source`) → `argsparser` → `jsonconfig` → `sshfunctions` → `utilconfig`를 `source`한다.
 2. (비난독화·조건 충족 시) 배포 사이트 동기화로 `installOrUpdate.sh`를 실행한 뒤 `config/fcmconfig`를 `source`한다.
 3. Android는 `util/makePath`를 불러 온 뒤 `platform/android.sh`의 `doExecuteAndroid`, iOS는 `util/versions`를 불러 온 뒤 `platform/ios.sh`의 `doExecuteIOS`가 빌드·산출물 배치를 담당한다.
 4. 공통으로 `util/makejson` → `util/makehtml` 후, 출력 JSON이 있으면 `config/buildenvironment`를 거쳐 `util/sendslack`·`util/sendteams`·`util/sendemail` 순으로 알린다.

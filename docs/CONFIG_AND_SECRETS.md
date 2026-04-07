@@ -53,7 +53,8 @@
 | Git/Jira URL | `gitBrowseUrl`, `jira.url` | 상대적으로 낮으나 내망 정보 |
 | 사이트 훅 | `custom.executable` | 임의 명령 경로 노출·변조 |
 
-또한 `config/defaultconfig`에는 **placeholder 수준을 넘는 기본값**(예: `sudoPassword`, Teams URL)이 들어 있을 수 있어, **레포에 실비밀이 섞이지 않도록** 운영 절차가 필요하다.
+`config/defaultconfig`는 **저장소에 커밋되는 셸 기본값**이며, 비밀번호·실 Teams 웹훅·내부 배포 URL 등은 넣지 않는다(placeholder 또는 빈 값).  
+**실제 값**은 `config/defaultconfig.local`(**gitignore**)에 두고, `config/defaultconfig.local.example`를 복사해 채운다. `build.sh`는 `TOP_DIR`이 잡힌 뒤 `defaultconfig` 안에서 `defaultconfig.local`이 있으면 추가로 `source`한다.
 
 ## 3. 현재 구현에서 민감 정보가 새는 지점
 
@@ -66,8 +67,8 @@
 3. **`curl`로 PHP에 폼 인코딩** (`util/sendemail`)  
    - Jenkins 콘솔 로그에 URL·일부 필드가 남을 수 있다(마스킹·secrets 플러그인 필요).
 
-4. **기본값 레이어** (`config/defaultconfig`)  
-   - “동작 예시”와 “실제 팀 기본값”이 구분되지 않으면 git 히스토리에 비밀이 박힘.
+4. **기본값 레이어** (`config/defaultconfig` + 선택 `config/defaultconfig.local`)  
+   - 레포의 `defaultconfig`는 비밀 없이 유지하고, 팀·빌더 전용 값은 **gitignore된** `defaultconfig.local`로 분리한다(예시: `defaultconfig.local.example`).
 
 ## 4. 개선 방향(권장 순서)
 

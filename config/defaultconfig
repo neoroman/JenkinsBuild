@@ -1,8 +1,8 @@
 #!/bin/sh
 #
 ##
-# System account
-sudoPassword="qwer1234"
+# System account — set real value in config/defaultconfig.local (see defaultconfig.local.example).
+sudoPassword=""
 if type sw_vers >/dev/null 2>&1; then
     systemName=$(sw_vers | grep 'ProductName:' | awk '{print $2}')
 else
@@ -37,15 +37,15 @@ else
 fi
 #
 ##
-# Teams
-teamWebHook_debug="https://webhook.office.com/webhookb1/"
-teamWebHook="https://webhook.office.com/webhookb2/"
+# Teams — placeholders only; production webhooks belong in defaultconfig.local (gitignored).
+teamWebHook_debug="https://example.invalid/teams-incoming-webhook-debug"
+teamWebHook="https://example.invalid/teams-incoming-webhook"
 #
 ##
-# Web FrontEnd Point
-frontEndPointUrl="https://macmini.company.com"
+# Web FrontEnd Point — use defaultconfig.local for real host / template repo URLs.
+frontEndPointUrl="https://dist.example.invalid"
 appRootPrefix="/Library/WebServer/Documents"
-siteRepositoryUrl="https://github.com/neoroman/JenkinsAppDistTemplate.git"
+siteRepositoryUrl="https://github.com/example/app-dist-template.git"
 #
 ##
 # Variables Initialize
@@ -81,6 +81,12 @@ CUSTOM_EXPORT_OPTIONS=0
 USING_SCREENSHOT=1
 USING_DSYM=0
 USING_ADHOC_DEBUG=0
+#
+##
+# Local overrides (optional): copy config/defaultconfig.local.example → config/defaultconfig.local (gitignored).
+if [ -f "${TOP_DIR}/config/defaultconfig.local" ]; then
+  . "${TOP_DIR}/config/defaultconfig.local"
+fi
 #
 ##
 function getGitDomainFromUrl() {

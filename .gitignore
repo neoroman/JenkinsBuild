@@ -1,6 +1,8 @@
 .DS_Store
 .vscode
 tests
+# Machine-local Jenkins defaults (passwords, real webhooks, internal URLs)
+config/defaultconfig.local
 ##
 # App binaries
 *.apk
