@@ -16,7 +16,7 @@
 - **인자·전역 초기화**: `config/argsparser`, `config/defaultconfig`, `config/utilconfig` — CLI, 기본값, `WORKSPACE`/`DEBUGGING`/도구 경로.
 - **설정 로드·변조**: `config/jsonconfig` — `config.json`에서 production/development 블록 추출, **topPath·jenkinsWorkspace 등을 jq로 파일에 다시 씀**.
 - **FCM/설정 파일 복사**: `config/fcmconfig` — 플랫폼·릴리스 여부에 따라 `google-services.json` 등 복사(상대/절대 경로 해석 포함).
-- **SSH/SCP 업로드**: `config/sshfunctions` — `jsonconfig`의 `.ssh.*` 기반 원격 디렉터리·파일 조작.
+- **SSH/SCP 업로드**: `config/sshfunctions` — `jsonconfig`의 `.ssh.*` 기반 원격 디렉터리·파일 조작. OpenSSH `BatchMode`/타임아웃/known_hosts 는 스크립트에 하드코딩되어 있지 않으며, CI·에이전트 SSH 설정 정책은 `docs/CONFIG_AND_SECRETS.md` §8.
 - **배포 HTML/언어 메타**: `config/buildenvironment` — 언어 JSON, 테마 색, 클라이언트명·계정 표시용 값 로드. (**실행 위치**: `makejson`/`makehtml` 이후, `$OUTPUT_FOLDER/$OUTPUT_FILENAME_JSON`이 있을 때만 `build.sh`가 `source`)
 - **Android 빌드 본체**: `platform/android.sh` — 버전 해석, 스토어(Play/원스토어/라이브/테스트), Gradle 태스크. **난독화 증적 PNG**(`check.sh` 등)는 `plugins/obfuscation_android.sh` (`makeObfuscationScreenshot` → `jb_android_make_obfuscation_screenshot`). **Allatori Gradle 훅**은 `plugins/allatori_android.sh` (`build.sh`에서만 include).
 - **iOS 빌드 본체**: `platform/ios.sh` — 스킴/타깃, xcodebuild, Export. **IxShield 난독화 증적(PNG)** 은 `plugins/ixshield_ios.sh` (`platform/ios.sh`에서 `makeObfuscationScreenshot` → `jb_ixshield_make_obfuscation_screenshot`).

@@ -222,3 +222,26 @@ fi
 1. **관측:** 현재 배포 파이프라인에서 `config.json`의 `topPath`·`jenkinsWorkspace`를 **PHP·cron이 읽는지** 여부를 확인한다. 안 읽는다면 **설계안 B**가 비용 대비 유리할 수 있다.
 2. **병행:** `jsonconfig`에 “병합 소스(`effective`)” 변수를 도입해 읽기만 병합 파일로 전환하고, **쓰기(`mv`)는 플래그로 끈다**(예: `JB_JSONCONFIG_WRITE_DISK=0`).
 3. **수렴:** 기본값을 “디스크 비갱신”으로 바꾸고, 필요 시에만 레거시 in-place를 허용한다.
+
+## 8. `config/sshfunctions` — SSH/SCP: BatchMode·타임아웃·known_hosts
+
+### 8.1 지금 레포 코드가 하는 일
+
+`config/sshfunctions`는 `USING_SCP=1`일 때 `which ssh` / `which scp`로 고정된 바이너리를 쓰고, `config.json`의 **`.ssh.port`**, **`.ssh.endpoint`**, **`.ssh.target`** 만 조합해 원격 `test`·`mkdir`·`rm`·`scp` 를 호출한다.  
+**명령 줄에 `BatchMode`·`ConnectTimeout`·`StrictHostKeyChecking` 등 OpenSSH 옵션은 붙이지 않는다.** (Jenkins 에이전트의 기본 `ssh` 동작·`~/.ssh/config`·환경에 따름.)
+
+### 8.2 비대화(unattended) 빌드에서 자주 쓰는 정책(권장 방향)
+
+CI(Jenkins)에서 **프롬프트 없이** 실패하거나 **한계 시간 안에** 끝나게 하려면, 보통 아래를 **에이전트 쪽 SSH 설정**으로 맞춘다(스크립트 변경 없이 `Host`/`Match` 블록으로 가능).
+
+| 주제 | 권장·고려 | 비고 |
+|------|-----------|------|
+| **BatchMode** | `yes` | 비밀번호·키보드 인터랙티브를 막고, 키·에이전트가 없으면 **즉시 실패**한다. 무인 빌드에서 “멈춤”을 줄인다. |
+| **타임아웃** | `ConnectTimeout`(초) | TCP 연결·협상이 걸릴 때 상한. 필요 시 `ServerAliveInterval` / `ServerAliveCountMax`로 유휴 끊김 완화. |
+| **known_hosts** | 호스트 키 고정 | 첫 접속 시 `Are you sure you want to continue connecting` 프롬프트가 나오면 **무인에서는 교착**이 될 수 있다. 배포 전에 **`ssh-keyscan`**(또는 검증된 공개 키)으로 `known_hosts`를 채우거나, 정책에 따라 **검증된 키만** 허용한다. `StrictHostKeyChecking`/ `UserKnownHostsFile` 은 보안·운영 트레이드오프가 크므로 **팀 인프라 규칙으로 결정**한다. |
+
+레포 내부 스크립트가 위 옵션을 강제하지 않으므로, **동일 빌드가 환경마다 다르게** 보일 수 있다(로컬 대화형 vs CI 무인).
+
+### 8.3 실패 시 재시도
+
+**백오프·재시도 횟수·일시 오류 구분** 등은 이 문서 범위에서 **정하지 않는다.** 별도 이슈/운영 런북으로 다룬다.
