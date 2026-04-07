@@ -57,6 +57,12 @@
 | **사이트: SSH 배포 경로 규약** | 원격 디렉터리 트리·권한 가정 | `config/sshfunctions`, 플랫폼 스크립트 내 `NEO2UA_OUTPUT_FOLDER` 등 |
 | **사이트: 언어·HTML 테마** | `lang_*.json`, 테마 색, 클라이언트 문구 | `config/buildenvironment`, `util/makehtml` |
 
+### 4.1 Slack / Teams 페이로드 — `notifications/formatters/` 분리 검토 (2026-04-07)
+
+- **현재**: `util/sendslack`은 웹훅일 때 Slack Block Kit JSON(블록·버튼)·아닐 때 `slack chat send` 텍스트 등 **경로가 둘**이고, `util/sendteams`는 Office 365 Connector **MessageCard**(`sections`, `facts`, `heroImage`)로 **스키마가 완전히 다름**. iOS/Android·릴리스/개발 분기와 Jenkins 전역 변수에 강하게 묶여 있다.
+- **결정**: 페이로드 문자열 조립을 **`notifications/formatters/`로 당장 쪼개 이전하지 않는다.** 이유: (1) 공통으로 빼기 좋은 “단일 JSON 모델”이 없고, 두 채널은 직렬화 형식이 달라 **파일만 나눠도 중복 분기가 그대로** 따라간다. (2) `source` 순서·ShellCheck 범위·회귀 테스트 부담 대비 이득이 작다. (3) 실질 중복은 “어떤 산출물 링크를 넣을지” **의미** 층이며, 형식이 달라 한 번에 추출하기 어렵다.
+- **후속(선택)**: 중복이 문제가 되면 (a) **정규화된 사실만** 세팅하는 얇은 레이어(예: 공통 변수·함수 한 파일, 또는 `jq`로 채울 JSON 템플릿) 후 채널별로만 감싸기, (b) 또는 **소형 헬퍼(예: Python)** 로 JSON 생성 — 이 단계에서 디렉터리명을 `notifications/` 아래로 두는 편이 자연스럽다.
+
 **권장 방향(개념)**
 
 - 코어는 “버전 확정 → 빌드 명령 실행 → 산출물 경로 확정 → (옵션) 업로드 → 메타 JSON/HTML”만 유지.
