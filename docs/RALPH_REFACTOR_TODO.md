@@ -23,7 +23,7 @@ export PRD_PATH="$HOME/.openclaw/workspace/working-copy/JenkinsBuild/docs/RALPH_
 
 - [x] `config/defaultconfig`에서 실서비스 비밀·URL을 제거하고 placeholder만 남기거나, `defaultconfig.local.example` + gitignore 분리.
 - [x] `config/jsonconfig`: `config.json` in-place 수정이 꼭 필요한지 문서화; 가능하면 환경변수 오버레이 또는 `config.runtime.json`(gitignore)로 대체 설계안 작성.
-- [ ] `util/sendemail`: Jenkins 로그에 남을 수 있는 필드 목록 정리 및 마스킹 후보보고.
+- [x] `util/sendemail`: Jenkins 로그에 남을 수 있는 필드 목록 정리 및 마스킹 후보보고.
 
 ## Phase 2 — 쉘 공통화·품질
 
@@ -65,3 +65,4 @@ export PRD_PATH="$HOME/.openclaw/workspace/working-copy/JenkinsBuild/docs/RALPH_
 |------|------|
 | 2026-04-06 | 초안 작성 — 아키텍처/비밀 문서와 연동 |
 | 2026-04-07 | Phase 0: DistSite vs `test/config.json` 최상위 키 델타 절차·기준선을 `test/README.md`에 기록 (`mail-gmail` 제외 시 동일 집합) |
+| 2026-04-07 | Phase 1: `util/sendemail` 폼 필드·로그 유출 경로·마스킹 우선순위를 `docs/CONFIG_AND_SECRETS.md` §3.1에 정리 |

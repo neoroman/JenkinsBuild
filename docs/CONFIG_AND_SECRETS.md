@@ -65,10 +65,45 @@
    - 배포 웹 서버가 읽는 파일과 Jenkins가 읽는 파일이 같으면, 웹 앱 취약점 시 동시에 털리기 쉽다.
 
 3. **`curl`로 PHP에 폼 인코딩** (`util/sendemail`)  
-   - Jenkins 콘솔 로그에 URL·일부 필드가 남을 수 있다(마스킹·secrets 플러그인 필요).
+   - Jenkins 콘솔에 명령 줄·바디가 남을 수 있다. 폼 키·변수·마스킹 우선순위는 아래 **§3.1** 참고.
 
 4. **기본값 레이어** (`config/defaultconfig` + 선택 `config/defaultconfig.local`)  
    - 레포의 `defaultconfig`는 비밀 없이 유지하고, 팀·빌더 전용 값은 **gitignore된** `defaultconfig.local`로 분리한다(예시: `defaultconfig.local.example`).
+
+### 3.1 `util/sendemail` — Jenkins 콘솔에 남을 수 있는 값
+
+구현: `util/sendemail` — `config/utilconfig`의 `$CURL`(기본적으로 `curl` 바이너리 경로만, `-v`/`--trace` 없음)으로 `--data-urlencode` 다수 + POST URL `${FRONTEND_POINT}/${TOP_PATH}/phpmodules/sendmail_domestic.php`.
+
+**로그로 새는 대표 경로**
+
+| 경로 | 설명 |
+|------|------|
+| `set -x` / `bash -x` | 인용된 `$CURL` 한 줄에 **폼 키·값 전체**가 그대로 출력될 수 있음. |
+| `curl`에 verbose/trace | `-v`, `--trace`, `--trace-ascii` 등이 붙으면 헤더·바디 일부가 stderr로 나와 콘솔에 남을 수 있음(현재 기본 `CURL`에는 미포함). |
+| Pipeline/스텝 echo | `sh` 스텝이 전체 스크립트를 dumps하거나, 디버그 `echo`로 변수를 찍는 경우 동일 데이터가 재노출. |
+
+`util/sendemail`은 `buildenvironment`의 `SITE_ID_PW` 등을 **직접** 넘기지 않지만, 다른 소스된 스크립트가 같은 빌드에서 `echo`하면 동일 로그에 섞일 수 있다.
+
+**POST 폼 필드(코드 기준)와 마스킹 후보**
+
+| 폼 키 | 실리는 내용(변수·표현식) | 로그 관점 민감도 | 마스킹·완화 후보 |
+|--------|---------------------------|------------------|-------------------|
+| *(요청 대상)* | `FRONTEND_POINT`, `TOP_PATH`, 경로 `phpmodules/sendmail_domestic.php` | 중 | 내부 호스트·URL 스킴; Jenkins Mask Passwords / regexp 마스킹 |
+| `subject1` | `APP_NAME`, `HOSTNAME`, `BUILD_NUMBER`, `DEBUG_MSG` | 중 | 에이전트 호스트명·앱 식별자 |
+| `subject2` | `GIT_BRANCH`, `CHANGE_TITLE`, `GIT_COMMIT` | 중~높 | `CHANGE_TITLE`(Jira/내부 제목); 전체 커밋 SHA |
+| `message_header` | iOS: 스토어별 다운로드 HTML, `HTTPS_PREFIX`+파일명 등. Android: `MAIL_TEXT`, 난독화 첨부 링크 등 | 중 | 아티팩트 URL·경로 구조; 내부 프리픽스 |
+| `message_description` | `OTHER_BUILD_ENV`, `xcode -version` 또는 `WORKSPACE`에서 `BUILD_COMMAND --version`, `BUILD_URL` | **가변(확장 시 높음)** | **`OTHER_BUILD_ENV`**: 현재는 RN 분기에서 node/npm 버전 위주이나, 확장 시 빌드 환경 전체가 붙을 수 있음 → 패턴 마스킹·길이 제한·허용 키만. **`BUILD_URL`**: Jenkins 내부 URL |
+| `message_html` | `SHORT_GIT_LOG`(=`HTML_TITLE`), `GIT_LAST_LOG` | 중~높 | `makejson`이 채운 커밋 제목·저자·Jira/Git 링크; 커밋 메시지에 토큰·비밀 넣는 경우 그대로 유출 |
+| `message_attachment` | 첨부 설명 문구(파일명 등) | 저~중 | 파일·스토리지 단서 |
+| `attachment_path` | `$OUTPUT_FOLDER`/`$OUTPUT_FILENAME_*` 또는 난독화 산출 경로 | 중 | 빌드 에이전트 **로컬 절대 경로** |
+| *(Android 비릴리스)* `message_html` | `GIT_LAST_LOG`만(`sed` 가공) | 중~높 | 위와 동일 |
+
+**우선 적용 순서(권장)**
+
+1. **높음**: `set -x`가 켜진 파이프라인이면 `curl` 호출 구간만 `set +x` … 실행 … `set -x`로 감싸거나, POST body를 **파일**(`--data-binary @file`)로 넘겨 명령 줄 노출을 줄이기.
+2. **높음**: `OTHER_BUILD_ENV`를 키·값 덤프로 키울 계획이 있으면, 사전에 `PASSWORD|SECRET|TOKEN|API_KEY|BEARER` 등 패턴 **삭제/치환** 규칙을 두기.
+3. **중간**: `GIT_LAST_LOG`, `CHANGE_TITLE`, `FRONTEND_POINT`/`HTTPS_PREFIX`/`ITMS_PREFIX` — Jenkins 쪽 마스킹 규칙(내부 도메인, 고정 프리픽스).
+4. **낮음**: `APP_NAME`, `BUILD_NUMBER`, Xcode/Gradle 버전 문자열 — 팀 정책에 따라 생략 가능.
 
 ## 4. 개선 방향(권장 순서)
 
