@@ -125,7 +125,25 @@ JENKINS_URL=...
 
 ---
 
-## 9. 결론 및 권장사항
+## 9. Forgejo 원격 사용 시 (jenkins/dist.sh)
+
+태그·브랜치를 **GitHub이 아닌 Forgejo**(또는 Gitea 등, push URL 호스트가 다른 경우)로 올릴 때는 `dist.config`의 **`[remote]`** 블록으로 push 대상을 고릅니다. (`util/dist_shlib`의 `dist_resolve_push_remote`)
+
+| 설정 키 | 동작 |
+|---------|------|
+| **`remote.name`** | 예: `origin`. 설정되어 있으면 **`pushUrlMatch`보다 우선**하며, 해당 이름의 remote로 push합니다. |
+| **`remote.pushUrlMatch`** | `git remote -v` 출력에서 **push URL에 포함된 부분 문자열**로 remote를 고릅니다. 기본값은 `github.com`입니다. Forgejo 인스턴스면 push URL에 실제로 나오는 호스트 조각(예: `git.example.org`)으로 바꿉니다. |
+
+**권장**
+
+- 여러 remote가 있고 기본 `github.com`으로는 Forgejo 쪽이 선택되지 않으면, 매칭 문자열을 Forgejo 호스트에 맞추거나 **`remote.name`으로 명시**하는 편이 안전합니다.
+- `pushUrlMatch`는 부분 문자열 일치이므로, 팀에서 쓰는 호스트명이 `git remote -v`에 그대로 보이는지 한 번 확인합니다.
+
+**dist_with_tag.sh**: 태그 push 경로가 **`git push origin …`** 형태로 고정된 경우가 많아, Forgejo를 쓸 때는 `origin`이 실제로 Forgejo를 가리키는지(또는 스크립트가 해당 remote명을 쓰는지)를 별도로 맞춰야 합니다. `jenkins/dist.sh`만 `[remote]`로 일반화되어 있습니다.
+
+---
+
+## 10. 결론 및 권장사항
 
 ### 기능 동등성
 
