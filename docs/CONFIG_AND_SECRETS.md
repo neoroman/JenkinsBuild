@@ -111,11 +111,11 @@
 - **iOS `AppStore.uploadApp.*` + `sudoPassword`**: 빌드 에이전트 서버 권한과 Apple 업로드 자격이 한 파일에 있음 → 분리·Credential Store 이전 우선순위가 높다.
 - **Android `usingAllatori` / `usingObfuscation`**: 난독화 파이프라인 옵션이 설정 파일에 있으므로, 실수로 `true`가 `development` 빌드에 섞이지 않는지 빌드 매트릭스와 대조한다.
 
-동일 저장소의 `lang/*.json`에는 고객 표기용 문자열만 두고, 비밀을 넣지 않는다.
+배포 사이트의 `lang/lang_*.json`(또는 `--language`로 지정한 JSON을 `buildenvironment`가 복사·해석)에는 고객 표기용 문자열만 두고, 비밀을 넣지 않는다. JenkinsBuild 레포 루트에 고정 `lang/` 트리가 있는 것은 아니다.
 
 ## 6. 참고 파일
 
 - 스키마 느낌의 샘플: `test/config.json`
-- **실배포 형태(키만 교차 검증)**: `working-copy/AngelNet-DistSite/config/config.json`(워크스페이스 클론 가정)
+- **실배포 형태(키만 교차 검증)**: `working-copy/AngelNet-DistSite/config/config.json`(워크스페이스에 해당 클론이 있을 때; 없으면 문서의 키 목록만 기준으로 삼는다)
 - 로더·변조 로직: `config/jsonconfig`
 - 표시용으로 config에서 ID/PW 읽는 부분: `config/buildenvironment`

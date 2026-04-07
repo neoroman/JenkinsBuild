@@ -4,10 +4,11 @@
 
 ## 1. 실행 흐름(한 줄 요악)
 
-1. `build.sh`가 `config/*`와 `util/*`를 순서대로 `source`한다.
-2. 플랫폼에 따라 `platform/android.sh` 또는 `platform/ios.sh`의 메인 함수가 실제 빌드·산출물 배치를 담당한다.
-3. 산출 메타는 `util/makejson`·`util/makehtml`로 만들고, `util/send{slack,teams,email}`로 알린다.
-4. 로컬 릴리스 헬퍼는 `dist.sh`(+`util/dist_shlib`, `util/versions`)가 Git 버전·태그·(옵션) Jenkins 트리거를 맡는다.
+1. `build.sh`가 `config/defaultconfig` → `argsparser` → `jsonconfig` → `sshfunctions` → `utilconfig`를 `source`한다.
+2. (비난독화·조건 충족 시) 배포 사이트 동기화로 `installOrUpdate.sh`를 실행한 뒤 `config/fcmconfig`를 `source`한다.
+3. Android는 `util/makePath`를 불러 온 뒤 `platform/android.sh`의 `doExecuteAndroid`, iOS는 `util/versions`를 불러 온 뒤 `platform/ios.sh`의 `doExecuteIOS`가 빌드·산출물 배치를 담당한다.
+4. 공통으로 `util/makejson` → `util/makehtml` 후, 출력 JSON이 있으면 `config/buildenvironment`를 거쳐 `util/sendslack`·`util/sendteams`·`util/sendemail` 순으로 알린다.
+5. 로컬 릴리스 헬퍼는 `dist.sh`(+`util/dist_shlib`, `util/versions`)가 Git 버전·태그·(옵션) Jenkins 트리거를 맡는다. (`util/versions`는 iOS 빌드 경로에서도 `build.sh`가 별도로 `source`한다.)
 
 ## 2. 논리 모듈 맵(파일 참조)
 
@@ -16,7 +17,7 @@
 - **설정 로드·변조**: `config/jsonconfig` — `config.json`에서 production/development 블록 추출, **topPath·jenkinsWorkspace 등을 jq로 파일에 다시 씀**.
 - **FCM/설정 파일 복사**: `config/fcmconfig` — 플랫폼·릴리스 여부에 따라 `google-services.json` 등 복사(상대/절대 경로 해석 포함).
 - **SSH/SCP 업로드**: `config/sshfunctions` — `jsonconfig`의 `.ssh.*` 기반 원격 디렉터리·파일 조작.
-- **배포 HTML/언어 메타**: `config/buildenvironment` — 언어 JSON, 테마 색, 클라이언트명·계정 표시용 값 로드.
+- **배포 HTML/언어 메타**: `config/buildenvironment` — 언어 JSON, 테마 색, 클라이언트명·계정 표시용 값 로드. (**실행 위치**: `makejson`/`makehtml` 이후, `$OUTPUT_FOLDER/$OUTPUT_FILENAME_JSON`이 있을 때만 `build.sh`가 `source`)
 - **Android 빌드 본체**: `platform/android.sh` — 버전 해석, 스토어(Play/원스토어/라이브/테스트), Gradle 태스크, **Allatori Gradle 훅**, 난독화 스크린샷(`check.sh` 등).
 - **iOS 빌드 본체**: `platform/ios.sh` — 스킴/타깃, xcodebuild, Export, **IxShield 관련 소스 패치·스크립트 실행·PNG 생성**.
 - **경로/산출 접두**: `util/makePath` 등.

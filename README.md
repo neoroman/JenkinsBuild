@@ -72,6 +72,8 @@ Language: BASH Shell Script
 
 ## Documentation
 
+- 경로·모듈 파일을 옮기거나 이름을 바꿀 때는 **`docs/ARCHITECTURE.md`**, **`docs/CONFIG_AND_SECRETS.md`**, 아래 문서 링크와 **교차 검증**해 같은 PR에서 갱신한다.
+
 - **Architecture & modules**: [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md) — execution flow, platform split, plugin boundaries (Allatori / IxShield / site-specific notify).
 - **Secrets & `config.json`**: [docs/CONFIG_AND_SECRETS.md](docs/CONFIG_AND_SECRETS.md) — external config, leakage points, split/merge recommendations. Cross-check keys with `test/config.json` and, if cloned, `working-copy/AngelNet-DistSite/config/config.json` (Forgejo `AngelNet/AngelNet-DistSite`; **no secrets in git**).
 - **Ralph refactor PRD**: [docs/RALPH_REFACTOR_TODO.md](docs/RALPH_REFACTOR_TODO.md) — checkbox backlog for `scripts/ralph.sh` (`PRD_PATH` → this file).
