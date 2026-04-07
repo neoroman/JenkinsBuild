@@ -347,6 +347,30 @@ function loadJenkinsConfig() {
     JENKINS_TOKEN=$(git config -f "dist.config" --get "jenkins.token" 2>/dev/null || true)
   fi
 }
+
+# Pick git remote for branch/tag push. Reads CONFIG_FILE (git config format).
+# remote.name — use this remote as-is (e.g. origin) when set; wins over match.
+# remote.pushUrlMatch — substring in `git remote -v` push URL (default: github.com).
+# Pipeline is guarded for pipefail when no remote matches the substring.
+function dist_resolve_push_remote() {
+  local cfg="$1"
+  local explicit match line
+  explicit=""
+  match=""
+  if [ -n "$cfg" ] && [ -f "$cfg" ]; then
+    explicit=$(git config -f "$cfg" --get "remote.name" 2>/dev/null || true)
+    match=$(git config -f "$cfg" --get "remote.pushUrlMatch" 2>/dev/null || true)
+  fi
+  if [ -n "$explicit" ]; then
+    echo "$explicit"
+    return 0
+  fi
+  match=${match:-github.com}
+  line=""
+  line=$(git remote -v 2>/dev/null | grep -F "$match" | grep '(push)' | awk '{print $1}' | tr -d ' ' | head -n1) || true
+  echo "${line:-origin}"
+}
+
 function downloadJenkinsCLI() {
   local url="$1" jarFile="$2"
   local maxAge=86400 tempFile
@@ -429,6 +453,8 @@ function makeConfig() {
 	job =
 	user =
 	token =
+[remote]
+	pushUrlMatch = github.com
 DEF
   else
     if ! grep -q '\[jenkins\]' "$configFile" 2>/dev/null; then
@@ -439,6 +465,13 @@ DEF
 	job =
 	user =
 	token =
+DEF
+    fi
+    if ! grep -q '^\[remote\]' "$configFile" 2>/dev/null; then
+      cat >> "$configFile" << 'DEF'
+
+[remote]
+	pushUrlMatch = github.com
 DEF
     fi
   fi
@@ -502,6 +535,8 @@ function help() {
     echo "   --jenkins-job      Jenkins job name"
     echo "   --jenkins-user     Jenkins user ID"
     echo "   --jenkins-token    Jenkins API token"
+    echo ""
+    echo "dist.config [remote]: remote.name overrides; else remote.pushUrlMatch (default github.com) picks push remote."
     echo ""
     echo "Example of config file: (git config style)"
     # thanks to ascii from https://en.wikipedia.org/wiki/Box-drawing_character

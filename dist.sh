@@ -109,6 +109,7 @@ checkArgumentsAndCope
 if [ -z "$JENKINS_URL" ] || [ -z "$JENKINS_JOB_NAME" ]; then
   loadJenkinsConfig "$CONFIG_FILE"
 fi
+REMOTE_REPO=$(dist_resolve_push_remote "$CONFIG_FILE")
 
 ### Auto-detect version update when project files exist
 if [ "$UPDATE_VERSION" -eq 0 ] && shouldUpdateVersion; then
@@ -150,8 +151,6 @@ processGitChanges() {
   fi
   git add -u
   git commit -m "Update version ${RELEASE_TYPE} v${MARKET_VERSION} build(${BUILD_NUMBER}) for ${INPUT_OS}" || exit 1
-  REMOTE_REPO=$(git remote -v | grep 'github.com' | grep '(push)' | awk '{print $1}' | tr -d ' ' | head -n1)
-  REMOTE_REPO=${REMOTE_REPO:-origin}
   CURRENT_BRANCH=$(git rev-parse --abbrev-ref HEAD)
   git push "$REMOTE_REPO" "$CURRENT_BRANCH"
   echo "  ┍━━━ commit & push version changed ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━┑"
@@ -177,7 +176,7 @@ processTagging() {
       exit 0
     fi
     git tag -d "${FINAL_TAG_CLEAN}" || true
-    git push --delete origin "${FINAL_TAG_CLEAN}" 2>/dev/null || true
+    git push --delete "$REMOTE_REPO" "${FINAL_TAG_CLEAN}" 2>/dev/null || true
     echo "  [$SCRIPT_NAME] Tag ${FINAL_TAG_CLEAN} deleted locally and from remote."
   fi
   set -e
@@ -248,8 +247,6 @@ fi
 ### Final confirmation before tag & push
 Type="${RELEASE_TYPE}"
 OS="${INPUT_OS}"
-REMOTE_REPO=$(git remote -v | grep 'github.com' | grep '(push)' | awk '{print $1}' | tr -d ' ' | head -n1)
-REMOTE_REPO=${REMOTE_REPO:-origin}
 FINAL_TAG_CLEAN=$(echo "${FINAL_TAG}" | tr -d "'" | tr -d '"')
 
 if [ "$UPDATE_VERSION" -eq 1 ]; then

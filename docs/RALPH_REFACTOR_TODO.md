@@ -49,7 +49,7 @@ export PRD_PATH="$HOME/.openclaw/workspace/working-copy/JenkinsBuild/docs/RALPH_
 
 ## Phase 6 — dist 워크플로
 
-- [ ] `dist.sh`가 `grep 'github.com'`으로 remote 고르는 부분 — Forgejo/기타 호스트 선택을 `dist.config` 옵션으로 일반화할지 결정.
+- [x] `dist.sh`가 `grep 'github.com'`으로 remote 고르는 부분 — Forgejo/기타 호스트 선택을 `dist.config` 옵션으로 일반화할지 결정.
 - [ ] `docs/dist_comparison.md`에 “Forgejo 원격 사용 시” 절 추가.
 
 ## Phase 7 — 장기 구조(선택)
@@ -74,3 +74,4 @@ export PRD_PATH="$HOME/.openclaw/workspace/working-copy/JenkinsBuild/docs/RALPH_
 | 2026-04-07 | Phase 4: Slack vs Teams 페이로드 — `notifications/formatters/` 즉시 분리는 보류; 이유·후속은 `docs/ARCHITECTURE.md` §4.1 |
 | 2026-04-07 | Phase 5: `config/fcmconfig` — `FCM_DRY_RUN=1` 시 복사 대상(src→dst)만 echo, mkdir/cp 생략 |
 | 2026-04-07 | Phase 5: `config/sshfunctions` — 현재 코드는 ssh 옵션 미지정; `BatchMode`/타임아웃/known_hosts 는 CI·`~/.ssh/config` 정책으로 문서화(`CONFIG_AND_SECRETS.md` §8); 재시도는 별 이슈 |
+| 2026-04-07 | Phase 6: `dist.config` `[remote]` — `remote.name` 우선, 없으면 `remote.pushUrlMatch`(기본 `github.com`)로 push URL에서 remote 선택; `dist_shlib`의 `dist_resolve_push_remote`; 태그 삭제 push도 동일 remote 사용 |
