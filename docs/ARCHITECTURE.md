@@ -6,7 +6,7 @@
 
 1. `build.sh`가 `config/defaultconfig`(마지막에 선택적으로 `config/defaultconfig.local`을 `source`) → `argsparser` → `jsonconfig` → `sshfunctions` → `utilconfig`를 `source`한다.
 2. (비난독화·조건 충족 시) 배포 사이트 동기화로 `installOrUpdate.sh`를 실행한 뒤 `config/fcmconfig`를 `source`한다.
-3. Android는 `util/makePath` → `plugins/allatori_android.sh`(Allatori 훅) → `platform/android.sh`의 `doExecuteAndroid`, iOS는 `util/versions`를 불러 온 뒤 `platform/ios.sh`(내부에서 `plugins/ixshield_ios.sh` 로드)의 `doExecuteIOS`가 빌드·산출물 배치를 담당한다.
+3. Android는 `util/makePath` → `plugins/allatori_android.sh`(Allatori 훅) → `platform/android.sh`(내부에서 `plugins/obfuscation_android.sh` 로드)의 `doExecuteAndroid`, iOS는 `util/versions`를 불러 온 뒤 `platform/ios.sh`(내부에서 `plugins/ixshield_ios.sh` 로드)의 `doExecuteIOS`가 빌드·산출물 배치를 담당한다.
 4. 공통으로 `util/makejson` → `util/makehtml` 후, 출력 JSON이 있으면 `config/buildenvironment`를 거쳐 `util/sendslack`·`util/sendteams`·`util/sendemail` 순으로 알린다.
 5. 로컬 릴리스 헬퍼는 `dist.sh`(+`util/dist_shlib`, `util/versions`)가 Git 버전·태그·(옵션) Jenkins 트리거를 맡는다. (`util/versions`는 iOS 빌드 경로에서도 `build.sh`가 별도로 `source`한다.)
 
@@ -18,7 +18,7 @@
 - **FCM/설정 파일 복사**: `config/fcmconfig` — 플랫폼·릴리스 여부에 따라 `google-services.json` 등 복사(상대/절대 경로 해석 포함).
 - **SSH/SCP 업로드**: `config/sshfunctions` — `jsonconfig`의 `.ssh.*` 기반 원격 디렉터리·파일 조작.
 - **배포 HTML/언어 메타**: `config/buildenvironment` — 언어 JSON, 테마 색, 클라이언트명·계정 표시용 값 로드. (**실행 위치**: `makejson`/`makehtml` 이후, `$OUTPUT_FOLDER/$OUTPUT_FILENAME_JSON`이 있을 때만 `build.sh`가 `source`)
-- **Android 빌드 본체**: `platform/android.sh` — 버전 해석, 스토어(Play/원스토어/라이브/테스트), Gradle 태스크, 난독화 스크린샷(`check.sh` 등). **Allatori Gradle 훅**은 `plugins/allatori_android.sh` (`build.sh`에서만 include).
+- **Android 빌드 본체**: `platform/android.sh` — 버전 해석, 스토어(Play/원스토어/라이브/테스트), Gradle 태스크. **난독화 증적 PNG**(`check.sh` 등)는 `plugins/obfuscation_android.sh` (`makeObfuscationScreenshot` → `jb_android_make_obfuscation_screenshot`). **Allatori Gradle 훅**은 `plugins/allatori_android.sh` (`build.sh`에서만 include).
 - **iOS 빌드 본체**: `platform/ios.sh` — 스킴/타깃, xcodebuild, Export. **IxShield 난독화 증적(PNG)** 은 `plugins/ixshield_ios.sh` (`platform/ios.sh`에서 `makeObfuscationScreenshot` → `jb_ixshield_make_obfuscation_screenshot`).
 - **경로/산출 접두**: `util/makePath` 등.
 - **JSON/HTML 산출**: `util/makejson`, `util/makehtml` — 배포 사이트용 아티팩트 목록·히스토리·git 로그 가공.
@@ -51,7 +51,7 @@
 | 구분 | 내용 | 현재 위치(대표) |
 |------|------|-----------------|
 | **벤더: Allatori** | Release 빌드 시 `build.gradle`에서 `runAllatori(variant)` 주석 해제·백업 | `plugins/allatori_android.sh` (`build.sh` → `doExecuteAndroid` 직전에 로드) |
-| **벤더: IxShield 계열** | `ix_set_debug` 치환, `IxShieldCheck.sh`/`check.sh` 실행, ImageMagick/gs PNG | **iOS:** `plugins/ixshield_ios.sh`; Android·테스트: `platform/android.sh`, `test/obfuscation_*.sh` |
+| **벤더: IxShield 계열** | `ix_set_debug` 치환, `IxShieldCheck.sh`/`check.sh` 실행, ImageMagick/gs PNG | **iOS:** `plugins/ixshield_ios.sh`; **Android:** `plugins/obfuscation_android.sh`; 스모크: `test/obfuscation_*.sh`가 각각 위 플러그인을 직접 source |
 | **사이트: PHP 메일 게이트** | `curl`로 `sendmail_domestic.php`에 subject/body/첨부 전달 | `util/sendemail` |
 | **사이트: Slack/Teams 웹훅 형식** | 메시지 페이로드 조합 | `util/sendslack`, `util/sendteams` |
 | **사이트: SSH 배포 경로 규약** | 원격 디렉터리 트리·권한 가정 | `config/sshfunctions`, 플랫폼 스크립트 내 `NEO2UA_OUTPUT_FOLDER` 등 |
@@ -74,7 +74,7 @@
 ## 6. 테스트·샘플
 
 - `test/config.json`: 스키마 샘플·더미 비밀(교육용) — **실운영 값과 혼동 금지**. 실예시에만 있는 **백업용·미사용** 키와의 차이는 `docs/CONFIG_AND_SECRETS.md` §1.2.
-- `test/obfuscation_*.sh`, `test/android/`, `test/ios/`: 난독화 경로 스모크용.
+- `test/obfuscation_*.sh`(플러그인 직접 호출), `test/android/`, `test/ios/`, `test/ios/fixtures/`: 난독화 경로 스모크용.
 
 ## 7. 관련 문서
 

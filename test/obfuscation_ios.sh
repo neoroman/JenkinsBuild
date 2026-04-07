@@ -1,72 +1,45 @@
-#!/bin/bash
+#!/usr/bin/env bash
+# Smokes iOS IxShield obfuscation screenshot via plugins/ixshield_ios.sh
+# (same path as platform/ios.sh → makeObfuscationScreenshot).
 
-WORKSPACE=.
-OUTPUT_FOLDER=.
+set -euo pipefail
 
-# Required commands
-REQUIRED_COMMANDS="a2ps gs convert"
+TOP_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
+cd "$TOP_DIR" || exit 1
 
-# Test obfuscation function
-test_obfuscation() {
-    echo "Testing iOS obfuscation in $WORKSPACE (debug: $DEBUGGING)"
-    
-    # Check required commands
-    MISSING_COMMANDS=""
-    for cmd in $REQUIRED_COMMANDS; do
-        if ! command -v $cmd >/dev/null 2>&1; then
-            MISSING_COMMANDS="$MISSING_COMMANDS $cmd"
-        fi
-    done
-    
-    if [ ! -z "$MISSING_COMMANDS" ]; then
-        echo "Warning: Required commands not found:$MISSING_COMMANDS"
-        echo "Please install missing commands using: brew install a2ps ghostscript imagemagick"
-        return 1
-    fi
-    
-    # Test IxShield check
-    CHECK_SHELL="${WORKSPACE}/IxShieldCheck.sh"
-    if test ! -f "$CHECK_SHELL"; then
-        CHECK_SHELL=$(find $WORKSPACE -name 'check.sh' | head -1)
-    fi
-    if [ -f "$CHECK_SHELL" ]; then
-        A2PS=$(command -v a2ps)
-        GS=$(command -v gs)
-        CONVERT=$(command -v convert)
-        
-        cd $WORKSPACE
-        echo "${systemName}:ios appDevTeam$ $CHECK_SHELL -i ./${PROJECT_NAME}" > merong.txt
-        $CHECK_SHELL -i ./${PROJECT_NAME} >> merong.txt
-        
-        if [ -f merong.txt ]; then
-            $A2PS --columns=1 -B -q --medium=A4 --borders=no -o out1.ps merong.txt && \
-            $GS -sDEVICE=png256 -dNOPAUSE -dBATCH -dSAFER -dTextAlphaBits=4 -q -r300x300 -sOutputFile=out2.png out1.ps && \
-            $CONVERT -trim -rotate 90 -bordercolor white -border 5 out2.png $OUTPUT_FOLDER/IxShieldCheck.png
-            
-            if [ -f "$OUTPUT_FOLDER/IxShieldCheck.png" ]; then
-                echo "✅ IxShield check screenshot generated"
-            else
-                echo "❌ IxShield check screenshot failed"
-                return 1
-            fi
-            
-            # Cleanup
-            rm -f out[12].png out[12].ps merong.txt
-        else
-            echo "❌ IxShield check output file not generated"
-            return 1
-        fi
-    else
-        echo "❌ IxShield check script not found"
-        return 1
-    fi
-    
-    echo "✅ All tests passed"
-    return 0
+cleanup() {
+    rm -f "$TOP_DIR/IxShieldCheck.sh"
 }
+trap cleanup EXIT
 
-# Run tests
-test_obfuscation
-test_result=$?
+cat > "$TOP_DIR/IxShieldCheck.sh" << 'EOF'
+#!/bin/sh
+echo "Running obfuscation check..."
+echo "Test successful!"
+EOF
+chmod +x "$TOP_DIR/IxShieldCheck.sh"
 
-exit $test_result
+export WORKSPACE="$TOP_DIR"
+export jsonConfig="$TOP_DIR/test/config.json"
+export JQ="jq"
+export PROJECT_NAME="test/ios/test"
+export OUTPUT_FOLDER="$TOP_DIR/test/ios/output"
+mkdir -p "$OUTPUT_FOLDER"
+export OUTPUT_FILENAME_APPSTORE_IX_SHIELD_CHECK="IxShieldCheck.png"
+export DEBUGGING=0
+export systemName="JenkinsBuildTest"
+export OBFUSCATION_SOURCE=""
+
+mkdir -p "$WORKSPACE/$PROJECT_NAME/ObjC"
+cp -f "$TOP_DIR/test/ios/fixtures/SplashViewController.m" \
+    "$WORKSPACE/$PROJECT_NAME/ObjC/SplashViewController.m"
+
+# shellcheck source=../plugins/ixshield_ios.sh
+. "${TOP_DIR}/plugins/ixshield_ios.sh"
+jb_ixshield_make_obfuscation_screenshot
+
+if [ ! -f "$OUTPUT_FOLDER/$OUTPUT_FILENAME_APPSTORE_IX_SHIELD_CHECK" ]; then
+    echo "Expected PNG not created: $OUTPUT_FOLDER/$OUTPUT_FILENAME_APPSTORE_IX_SHIELD_CHECK"
+    exit 1
+fi
+echo "iOS obfuscation screenshot smoke test OK"

@@ -37,6 +37,7 @@ files=(
   platform/jb_json_helpers.sh
   plugins/allatori_android.sh
   plugins/ixshield_ios.sh
+  plugins/obfuscation_android.sh
   test/obfuscation_android.sh
   test/obfuscation_ios.sh
   test/android/app/check.sh

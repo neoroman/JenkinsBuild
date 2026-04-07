@@ -35,7 +35,7 @@ export PRD_PATH="$HOME/.openclaw/workspace/working-copy/JenkinsBuild/docs/RALPH_
 
 - [x] `platform/android.sh`의 Allatori 블록을 `plugins/allatori_android.sh`(또는 `hooks/post-config-android.sh`)로 이동하고 `build.sh`에서만 source.
 - [x] `platform/ios.sh`의 IxShield 관련(sed, `IxShieldCheck.sh`, PNG)을 `plugins/ixshield_ios.sh`로 이동; 비활성 시 noop.
-- [ ] `test/obfuscation_android.sh`, `test/obfuscation_ios.sh`를 새 플러그인 경로에서 호출하도록 정리.
+- [x] `test/obfuscation_android.sh`, `test/obfuscation_ios.sh`를 새 플러그인 경로에서 호출하도록 정리.
 
 ## Phase 4 — 알림·사이트 특화 분리
 
@@ -69,3 +69,4 @@ export PRD_PATH="$HOME/.openclaw/workspace/working-copy/JenkinsBuild/docs/RALPH_
 | 2026-04-07 | Phase 2: `docs/SHELL_STRICT_AND_SHEBANG.md` — `build.sh`/`dist.sh` shebang·`set -e`/`-u`/pipefail 기준선·안전/위험 변경 표 |
 | 2026-04-07 | Phase 2: `platform/jb_json_helpers.sh` — `jb_jq_bool`/`jb_jq_str`; Android·iOS 스토어/타깃 설정 블록·난독화 플래그 일부 치환 |
 | 2026-04-07 | Phase 2: `.shellcheckrc` + `scripts/run-shellcheck.sh` 명시적 대상·`util/exp` 예외 + `shellcheck.yml` CI(기본 심각도 error); SC2148/SC2070/SC2242 등 소규모 정리 |
+| 2026-04-07 | Phase 3: `plugins/obfuscation_android.sh` — Android 난독화 스크린샷을 플러그인으로 이전; `test/obfuscation_*.sh`는 `ixshield_ios`/`obfuscation_android`를 직접 source |

@@ -20,3 +20,5 @@ config/defaultconfig.local
 ##
 # Log
 *.log
+# IxShield smoke: sed mutates splash copy under PROJECT_NAME (see test/obfuscation_ios.sh)
+test/ios/test/ObjC/
