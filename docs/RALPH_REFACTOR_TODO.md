@@ -22,7 +22,7 @@ export PRD_PATH="$HOME/.openclaw/workspace/working-copy/JenkinsBuild/docs/RALPH_
 ## Phase 1 — 비밀·설정 안전장치(고통 적음, 효과 큼)
 
 - [x] `config/defaultconfig`에서 실서비스 비밀·URL을 제거하고 placeholder만 남기거나, `defaultconfig.local.example` + gitignore 분리.
-- [ ] `config/jsonconfig`: `config.json` in-place 수정이 꼭 필요한지 문서화; 가능하면 환경변수 오버레이 또는 `config.runtime.json`(gitignore)로 대체 설계안 작성.
+- [x] `config/jsonconfig`: `config.json` in-place 수정이 꼭 필요한지 문서화; 가능하면 환경변수 오버레이 또는 `config.runtime.json`(gitignore)로 대체 설계안 작성.
 - [ ] `util/sendemail`: Jenkins 로그에 남을 수 있는 필드 목록 정리 및 마스킹 후보보고.
 
 ## Phase 2 — 쉘 공통화·품질

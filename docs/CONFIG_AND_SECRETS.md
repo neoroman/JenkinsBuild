@@ -78,12 +78,11 @@
 - **`secrets`**: Jenkins Credentials / macOS Keychain / `source` 가능한 `.env`(gitignore) / SOPS·git-crypt 등.
 - 스크립트는 시작 시 `merge(public, secrets)` 결과를 메모리/임시 파일에만 두고, **원본 JSON을 덮어쓰지 않기**.
 
-### 4.2 `jsonconfig` 동작 정책
+### 4.2 `jsonconfig` 동작 정책(요약)
 
-- `topPath`, `jenkinsWorkspace` 반영이 필요하면:
-  - **A)** 읽기 전용 오버레이(`config.runtime.json` 한 번 쓰기 + gitignore), 또는  
-  - **B)** 환경변수(`JB_TOP_PATH`, `JB_WORKSPACE`)로만 전달.  
-- “소스 트리의 config.json을 빌드할 때마다 mutate”는 점진적으로 제거하는 것이 안전하다.
+- **`config.json` in-place 수정은 기능적으로 필수가 아니다.** Jenkins가 이미 `TOP_PATH`·`WORKSPACE` 등을 환경변수로 넣을 수 있다면, 쉘 변수·오버레이만으로도 동일 빌드를 구성할 수 있다. 현재의 `jq` + `mv`는 **디스크 상의 단일 파일을 Jenkins 값과 맞춰 두려는 편의**에 가깝다(같은 경로의 JSON을 PHP·후속 스크립트·다음 빌드가 읽는다는 전제).
+- 대안은 **7절**에 정리한다: **A)** 사이트 옆 `config.runtime.json`(gitignore) + 병합 읽기, **B)** 표준화된 환경변수 오버레이.
+- *점진적 목표:* tracked `config.json`을 빌드마다 덮어쓰지 않는 방향으로 옮긴다.
 
 ### 4.3 스키마·검증
 
@@ -120,3 +119,71 @@
 - **실배포 형태(키만 교차 검증)**: `working-copy/AngelNet-DistSite/config/config.json`(워크스페이스에 해당 클론이 있을 때; 없으면 문서의 키 목록만 기준으로 삼는다)
 - 로더·변조 로직: `config/jsonconfig`
 - 표시용으로 config에서 ID/PW 읽는 부분: `config/buildenvironment`
+
+## 7. `config/jsonconfig` — in-place `config.json` 수정이 꼭 필요한가?
+
+### 7.1 지금 코드가 디스크에 쓰는 필드
+
+`config/jsonconfig`는 `$jsonConfig`(기본값은 `${APP_ROOT_PREFIX}/${TOP_PATH}/config/config.json`)가 존재할 때, 다음 조건에서만 **원본 파일을 임시 JSON에 쓴 뒤 `mv`로 치환**한다.
+
+| 조건 | 갱신 경로(JSON) |
+|------|-----------------|
+| `DEBUGGING=1`이고, 파일의 `.development.topPath`가 쉘의 `$TOP_PATH`와 다름 | `.development.topPath` |
+| `DEBUGGING≠1`이고, `.production.topPath`가 `$TOP_PATH`와 다름 | `.production.topPath` |
+| `$WORKSPACE`가 비어 있지 않고 `INPUT_OS=android`이며 `.android.jenkinsWorkspace`와 다름 | `.android.jenkinsWorkspace` |
+| 위와 같고 `INPUT_OS=ios`이며 `.ios.jenkinsWorkspace`와 다름 | `.ios.jenkinsWorkspace` |
+
+`CUSTOM_CONFIG=1`이고 `CUSTOM_CONFIG_PATH`가 지정된 경우, 먼저 해당 파일을 `DEFAULT_CONFIG_JSON`으로 복사한 뒤 같은 파일을 읽는다.
+
+### 7.2 “필수”인가? — **아니다**
+
+- **빌드 논리만 보면** `TOP_PATH`·`WORKSPACE`는 이미 쉘/CI에서 주입 가능하므로, JSON에 다시 써 넣지 않아도 **경로 계산·아티팩트 출력** 자체는 환경변수·내부 변수로 대체할 수 있다.
+- **현재 in-place 갱신의 실질 이유**는 (1) 웹·PHP·배포 스크립트가 **같은 `config.json`만** 보고 경로를 맞추길 기대하는 관행, (2) 이후 단계에서 `cat $jsonConfig | jq …`로 **파일을 다시 읽을 때** Jenkins와 파일 내용이 어긋나지 않게 하려는 목적에 가깝다.
+- 구현 상 주의: `jsonconfig`는 파일을 고친 뒤 **`config=$(cat $jsonConfig | $JQ '.development' …)`를 다시 실행하지 않는다.** 즉 같은 `source` 구간 안에서 이미 뽑아 둔 `$config`는 **갱신 전 스냅샷**이며, 갱신은 “디스크 동기화” 성격이 강하다.
+
+### 7.3 in-place를 줄이지 않으면 생기는 부담
+
+- Git으로 관리되는 배포 `config.json`이면 **의도치 않은 diff·커밋**, 아티팩트에 올라간 파일 유출 시 **전체 블록 노출** 위험이 커진다(§3.1과 동일).
+- DocumentRoot 아래 단일 JSON에 비밀·Jenkins가 덮어쓴 경로가 함께 있으면 공격 면이 넓어진다.
+
+### 7.4 대체 설계안 A — `config.runtime.json`(gitignore) + 병합
+
+**아이디어:** tracked 원본은 손대지 않고, Jenkins(또는 에이전트)만이 쓰는 **얇은 오버레이**에 `topPath`·`jenkinsWorkspace`만 둔다.
+
+- **위치(권장):** 배포 사이트 트리 `config/config.runtime.json`(저장소마다 **gitignore**에 추가). JenkinsBuild 레포에서만 시험할 때는 `test/config.runtime.json` 등 로컬 경로를 쓰고 동 파일은 **이 레포 `.gitignore`에 포함**해 두는 것이 안전하다.
+- **병합 규칙:** `jq`에서 객체 `*`는 중첩 객체까지 재귀 병합된다. 오버레이가 없으면 기존과 동일하게 단일 파일만 읽는다.
+
+```bash
+# 개념 예: 오버레이가 있을 때만 유효 JSON 하나로 고정
+if [ -f "${jsonConfig%/*}/config.runtime.json" ]; then
+  effective="$(mktemp ...)"
+  jq -s '.[0] * .[1]' "$jsonConfig" "${jsonConfig%/*}/config.runtime.json" > "$effective"
+else
+  effective="$jsonConfig"
+fi
+# 이후 모든 jq는 $effective 대상으로 통일(원본 config.json은 불변)
+```
+
+- **Jenkins 쪽:** 빌드 시작 시 `config.runtime.json`을 한 번 생성(또는 Credentials/워크스페이스에서 복사)하고, 끝나면 삭제하거나 비워 둔다.
+- **장점:** PHP가 여전히 “한 디렉터리의 JSON”만 보도록 맞출 때 **`config.runtime.json`만 배포 정책에서 제외**하기 쉽다.
+- **단점:** 로더( `jsonconfig` )가 **모든 읽기 경로**를 병합 결과로 바꿔야 해서 리팩터 범위가 생긴다.
+
+### 7.5 대체 설계안 B — 환경변수 오버레이
+
+**아이디어:** 덮어쓸 값은 **전부 env**로 정하고, JSON은 템플릿/기본값만 유지한다.
+
+| 제안 변수(예시 이름) | 용도 |
+|---------------------|------|
+| `JB_TOP_PATH` | `$TOP_PATH`와 불일치 시 JSON의 `.development`/`.production`. `topPath` 대신 **항상 이 값을 우선** |
+| `JB_ANDROID_JENKINS_WORKSPACE` | `$WORKSPACE` + `android`일 때 `.android.jenkinsWorkspace` 대체 |
+| `JB_IOS_JENKINS_WORKSPACE` | `$WORKSPACE` + `ios`일 때 `.ios.jenkinsWorkspace` 대체 |
+
+- **적용 방식:** `jsonconfig` 초반에 `effectiveTopPath="${JB_TOP_PATH:-$TOP_PATH}"`처럼 두고, `jq`로 파일을 고치는 대신 **이후에 `config`에서 파생되는 값만 env를 덮어쓴다**거나, 아예 **`$config` 생성 시 `jq --arg`** 로 메모리 상 JSON만 패치한 뒤 파일은 건드리지 않는 방법도 있다.
+- **장점:** Git/배포 JSON 불변, Jenkins **Credentials/EnvInject**와 모델이 맞다.
+- **단점:** PHP 등 **다른 소비자가 여전히 디스크의 `topPath`만 본다면** env-only로는 맞지 않으므로, 사이트 쪽도 env 주입·템플릿 렌더로 맞추는 **추가 조율**이 필요할 수 있다.
+
+### 7.6 권장 이행 순서(작은 단계)
+
+1. **관측:** 현재 배포 파이프라인에서 `config.json`의 `topPath`·`jenkinsWorkspace`를 **PHP·cron이 읽는지** 여부를 확인한다. 안 읽는다면 **설계안 B**가 비용 대비 유리할 수 있다.
+2. **병행:** `jsonconfig`에 “병합 소스(`effective`)” 변수를 도입해 읽기만 병합 파일로 전환하고, **쓰기(`mv`)는 플래그로 끈다**(예: `JB_JSONCONFIG_WRITE_DISK=0`).
+3. **수렴:** 기본값을 “디스크 비갱신”으로 바꾸고, 필요 시에만 레거시 in-place를 허용한다.

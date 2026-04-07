@@ -1,6 +1,8 @@
 .DS_Store
 .vscode
 tests
+# Optional JSON overlay for local experiments (see docs/CONFIG_AND_SECRETS.md section 7)
+test/config.runtime.json
 # Machine-local Jenkins defaults (passwords, real webhooks, internal URLs)
 config/defaultconfig.local
 ##
