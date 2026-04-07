@@ -37,16 +37,23 @@ fi
 ################################################################################
 . ${TOP_DIR}/config/utilconfig  ### Import Util Funtions ######################
 ################################################################################
+################################################################################
+. ${TOP_DIR}/platform/jb_dryrun.sh  ### Dry-run helpers ########################
+################################################################################
 ##
 # Update distribution site source ##############################################
 if [ -z "$OBFUSCATION_TEST" -a -f ${APP_ROOT_PREFIX}/${TOP_PATH}/.htaccess ]; then
   if [ -f ${APP_ROOT_PREFIX}/${TOP_PATH}/installOrUpdate.sh ]; then
-      if test -n "$sudoPassword"; then
-        sudo -S su ${jenkinsUser} -c "${APP_ROOT_PREFIX}/${TOP_PATH}/installOrUpdate.sh  2>&1" <<<"${sudoPassword}"
-        sudo -S su ${jenkinsUser} -c "chmod -R 777 ${APP_ROOT_PREFIX}/${TOP_PATH}  2>&1" <<<"${sudoPassword}"
+      if jb_is_dry_run; then
+        echo "[DRY-RUN] skip distribution site install/update: ${APP_ROOT_PREFIX}/${TOP_PATH}/installOrUpdate.sh"
       else
-        ${APP_ROOT_PREFIX}/${TOP_PATH}/installOrUpdate.sh  2>&1
-        chmod -R 777 ${APP_ROOT_PREFIX}/${TOP_PATH}  2>&1
+        if test -n "$sudoPassword"; then
+          sudo -S su ${jenkinsUser} -c "${APP_ROOT_PREFIX}/${TOP_PATH}/installOrUpdate.sh  2>&1" <<<"${sudoPassword}"
+          sudo -S su ${jenkinsUser} -c "chmod -R 777 ${APP_ROOT_PREFIX}/${TOP_PATH}  2>&1" <<<"${sudoPassword}"
+        else
+          ${APP_ROOT_PREFIX}/${TOP_PATH}/installOrUpdate.sh  2>&1
+          chmod -R 777 ${APP_ROOT_PREFIX}/${TOP_PATH}  2>&1
+        fi
       fi
   fi
 fi
@@ -105,6 +112,11 @@ elif [[ "$INPUT_OS" == "ios" ]]; then
     . ${TOP_DIR}/platform/ios.sh      ### Import iOS Shell Script ##############
     doExecuteIOS
     ############################################################################
+fi
+##
+if jb_is_dry_run; then
+  echo "[DRY-RUN] Completed platform dry-run checks only. Skip makejson/makehtml/notifications."
+  exit 0
 fi
 ##
 ################################################################################

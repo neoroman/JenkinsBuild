@@ -72,6 +72,18 @@ while [[ $# -gt 0 ]]; do
     DEBUGGING=1
     shift # past argument
     ;;
+  --dry-run)
+    DRY_RUN=1
+    FCM_DRY_RUN=1
+    shift # past argument
+    ;;
+  --dry-run-step)
+    DRY_RUN_STEP="$2"
+    DRY_RUN=1
+    FCM_DRY_RUN=1
+    shift # past argument
+    shift # past value
+    ;;
   no-output | -no | --no-output)
     PRODUCE_OUTPUT_USE=0
     shift # past argument
@@ -249,6 +261,8 @@ while [[ $# -gt 0 ]]; do
     echo "   -l, --language    {SITE_LANGUAGE.json}"
     echo "                     ex) ${WORKSPACE}/jankins_config/lang_en.json"
     echo "   -d, --debug       debugging mode"
+    echo "   --dry-run         print build/write actions only (no build, no file writes)"
+    echo "   --dry-run-step    run one dry-run checkpoint id only"
     exit
     ;;
   esac

@@ -78,6 +78,7 @@ Language: BASH Shell Script
 - **Secrets & `config.json`**: [docs/CONFIG_AND_SECRETS.md](docs/CONFIG_AND_SECRETS.md) — external config, leakage points, split/merge recommendations. Cross-check keys with `test/config.json` and, if cloned, `working-copy/AngelNet-DistSite/config/config.json` (Forgejo `AngelNet/AngelNet-DistSite`; **no secrets in git**).
 - **Ralph refactor PRD**: [docs/RALPH_REFACTOR_TODO.md](docs/RALPH_REFACTOR_TODO.md) — checkbox backlog for `scripts/ralph.sh` (`PRD_PATH` → this file).
 - **Ralph automated loop**: [docs/RALPH_AUTOMATED_RUN.md](docs/RALPH_AUTOMATED_RUN.md) — workspace wrapper `~/.openclaw/workspace/scripts/ralph-jenkinsbuild-refactor.sh` (100×5min 등).
+- **Platform dry-run checklist**: [docs/DRY_RUN_CHECKLIST.md](docs/DRY_RUN_CHECKLIST.md) — `--dry-run`, `--dry-run-step` 단계별 점검/실행 예시.
 - **dist.sh comparison**: [docs/dist_comparison.md](docs/dist_comparison.md)
 
 ## Author

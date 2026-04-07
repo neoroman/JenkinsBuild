@@ -3,6 +3,7 @@
 # Android Shell Script
 #
 . "${TOP_DIR}/platform/jb_json_helpers.sh"
+. "${TOP_DIR}/platform/jb_dryrun.sh"
 . "${TOP_DIR}/plugins/obfuscation_android.sh"
 
 function makeObfuscationScreenshot() {
@@ -183,6 +184,20 @@ fi
 
 
 function doExecuteAndroid() {
+    if jb_is_dry_run; then
+        jb_dryrun_header "android"
+        jb_dryrun_step "android.pre.reactnative" "React Native dependency/build 준비" "$ReactNativeBin install --legacy-peer-deps && $ReactNativeBin run build:android"
+        jb_dryrun_step "android.pre.allatori" "Allatori Gradle 태스크 주입" "jb_allatori_prepare_release_gradle"
+        jb_dryrun_step "android.build.primary" "주요 스토어 빌드 실행" "./gradlew <assemble|bundle><task>"
+        jb_dryrun_step "android.build.secondary" "보조 스토어/서버 빌드 실행" "./gradlew <assemble|bundle><task>"
+        jb_dryrun_step "android.output.move" "산출물 이동/이름 부여" "mv <build output> <${OUTPUT_FOLDER}>"
+        jb_dryrun_step "android.output.bundletool" "AAB -> universal APK 변환(선택)" "bundletool build-apks --bundle ... --output ..."
+        jb_dryrun_step "android.output.cleanup" "산출물 정리(옵션)" "rm -f <distribution binary>"
+        jb_dryrun_step "android.scp.upload" "원격 배포 경로 전송(옵션)" "sendFile <artifact> <remote dir>"
+        jb_dryrun_step "android.obfuscation.proof" "난독화 증적 스크린샷 생성" "makeObfuscationScreenshot"
+        return 0
+    fi
+
     if [ $isReactNativeEnabled -eq 1 ]; then
         cd ${WORKSPACE}
         $ReactNativeBin install --legacy-peer-deps

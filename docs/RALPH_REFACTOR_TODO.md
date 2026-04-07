@@ -9,7 +9,7 @@ export PRD_PATH="$HOME/.openclaw/workspace/working-copy/JenkinsBuild/docs/RALPH_
 "$HOME/.openclaw/workspace/scripts/ralph.sh" run 30 120
 ```
 
-**규칙**: 한 번에 **가장 위쪽의 미완료(`- [ ]`) 한 항목**만 처리하고 커밋하는 것이 Ralph 루프와 잘 맞는다.
+**규칙**: 한 번에 **가장 위쪽의 미완료 체크박스 한 항목**만 처리하고 커밋하는 것이 Ralph 루프와 잘 맞는다. 워크스페이스 `scripts/ralph.sh`는 **마크다운 코드 펜스 밖**에서 **줄 시작**(선행 공백만 허용)의 GFM 태스크 목록 항목만 집계한다(미완료: 하이픈·공백·`[`·공백·`]` 패턴, 완료: 대괄호 안이 `x`/`X`). `check`와 주입 프롬프트의 미완료 목록은 위 조건으로만 채운다. 표·진행 메모·설명 문장에 체크박스 모양을 넣을 때는 **해당 줄이 하이픈 목록으로 시작하지 않게** 쓰면 오탐이 없고, 실행 예시는 코드 펜스 안에 두는 것을 권장한다.
 
 ---
 
@@ -57,6 +57,13 @@ export PRD_PATH="$HOME/.openclaw/workspace/working-copy/JenkinsBuild/docs/RALPH_
 - [x] JSON Schema for public config + 검증 CLI(`scripts/validate-config.sh`).
 - [x] 단위 테스트 대체: 핵심 순수 함수만 `bash` + bats 또는 Python으로 추출.
 
+## Phase 8 — 플랫폼 단계 dry-run 검증
+
+- [x] `config/argsparser`에 `--dry-run`, `--dry-run-step` 옵션 추가.
+- [x] `platform/{ios,android}.sh`에서 빌드/파일쓰기 핵심 단계를 체크포인트로 분리해 dry-run 출력 제공.
+- [x] `build.sh`에서 dry-run 시 플랫폼 점검만 수행하고 `makejson`/알림 루틴은 스킵.
+- [x] `docs/DRY_RUN_CHECKLIST.md`에 단위 체크리스트·실행 예시·검증 결과 기록.
+
 ---
 
 ## 진행 메모(릴리스 노트용)
@@ -78,3 +85,7 @@ export PRD_PATH="$HOME/.openclaw/workspace/working-copy/JenkinsBuild/docs/RALPH_
 | 2026-04-07 | Phase 6: `docs/dist_comparison.md` §9 — Forgejo/비 GitHub 원격 시 `[remote]` (`name` vs `pushUrlMatch`), `dist_with_tag.sh`는 `origin` 고정 주의 |
 | 2026-04-07 | Phase 7: `schema/public-config.schema.json` + `scripts/validate-config.sh` / `validate_config.py`; CI ShellCheck 워크플로에서 `test/config.json` 검증 |
 | 2026-04-07 | Phase 7: `vercomp` → `scripts/pure/jb_vercomp.sh` 추출; `util/versions`는 source; `scripts/test_pure_vercomp.py` + CI 단계 |
+| 2026-04-07 | Iter 21: PRD 본문에 미완료 체크박스 **문자열 그대로** 예시를 두면 (단순 grep 시) 오탐할 수 있어 규칙 문장을 정리; 워크스페이스 `scripts/ralph.sh`는 줄 시작 마크다운 체크박스만 집계 |
+| 2026-04-07 | Iter 25: PRD 상단 규칙에 `ralph.sh` 집계 방식(코드 펜스 제외·줄 시작 GFM 태스크 목록만) 명시 |
+| 2026-04-07 | Iter 30: 규칙·진행 메모에서 태스크 리터럴 제거(서브스트링 검색 오탐 방지); `PRD_PATH`→`ralph.sh check` Completed 20 / Remaining 0 재확인 |
+| 2026-04-07 | Iter 31: `--dry-run`/`--dry-run-step` 추가, `platform/jb_dryrun.sh` 도입, iOS/Android 단계 체크포인트 및 `docs/DRY_RUN_CHECKLIST.md` 작성 |

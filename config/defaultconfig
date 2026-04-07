@@ -81,6 +81,8 @@ CUSTOM_EXPORT_OPTIONS=0
 USING_SCREENSHOT=1
 USING_DSYM=0
 USING_ADHOC_DEBUG=0
+DRY_RUN=0
+DRY_RUN_STEP="all"
 #
 ##
 # Local overrides (optional): copy config/defaultconfig.local.example → config/defaultconfig.local (gitignored).

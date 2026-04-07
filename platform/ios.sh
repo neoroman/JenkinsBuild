@@ -1,6 +1,7 @@
 #!/bin/sh
 ##
 . "${TOP_DIR}/platform/jb_json_helpers.sh"
+. "${TOP_DIR}/platform/jb_dryrun.sh"
 . "${TOP_DIR}/plugins/ixshield_ios.sh"
 
 function makeObfuscationScreenshot() {
@@ -141,7 +142,9 @@ elif [ ${XCODE_DEVELOPER#"Xcode"} != ${XCODE_DEVELOPER} ]; then
 fi
 XCODE_DEVELOPER_LAST=${XCODE_DEVELOPER}
 if [[ -z "$OBFUSCATION_TEST" ]]; then
-    if test ! -z "$sudoPassword"; then
+    if jb_is_dry_run; then
+        echo "[DRY-RUN] skip xcode-select switch: ${XCODE_DEVELOPER_LAST}"
+    elif test ! -z "$sudoPassword"; then
         sudo -S xcode-select -s $XCODE_DEVELOPER_LAST <<<"${sudoPassword}"
     fi
 fi
@@ -167,6 +170,21 @@ fi
 ###################
 ###################
 function doExecuteIOS() {
+    if jb_is_dry_run; then
+        jb_dryrun_header "ios"
+        jb_dryrun_step "ios.pre.flutter_or_react" "Flutter/React Native 사전 빌드 준비" "$FlutterBin build ios || $ReactNativeBin run build:ios"
+        jb_dryrun_step "ios.pre.init_config" "버전/출력 경로/대상 설정 초기화" "initializeIOSBuildConfig"
+        jb_dryrun_step "ios.pre.pods" "Pod install/update (선택)" "pod install|update"
+        jb_dryrun_step "ios.pre.unlock_keychain" "서명용 keychain unlock (선택)" "security unlock-keychain"
+        jb_dryrun_step "ios.build.archive" "xcodebuild archive/export 실행" "xcodebuild ... archive; xcodebuild -exportArchive ..."
+        jb_dryrun_step "ios.output.package" "IPA 패키징/이동(zip, mv)" "zip -r ... Payload && mv ... ${OUTPUT_FOLDER}"
+        jb_dryrun_step "ios.output.cleanup" "산출물 제거/정리(옵션)" "rm -f <distribution binary>"
+        jb_dryrun_step "ios.output.plist" "OTA plist 생성" "echo <plist> > ${OUTPUT_FOLDER}/*.plist"
+        jb_dryrun_step "ios.scp.upload" "원격 배포 경로 전송(옵션)" "sendFile <artifact> <remote dir>"
+        jb_dryrun_step "ios.obfuscation.proof" "IxShield 증적 스크린샷 생성" "makeObfuscationScreenshot"
+        return 0
+    fi
+
     if [ $isFlutterEnabled -eq 1 ]; then
         export SDKROOT="/Applications/Xcode.app/Contents/Developer/Platforms/iPhoneOS.platform/Developer/SDKs/iPhoneOS.sdk"
         export LANG=en_US.UTF-8
