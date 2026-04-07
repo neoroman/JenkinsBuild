@@ -27,7 +27,7 @@ export PRD_PATH="$HOME/.openclaw/workspace/working-copy/JenkinsBuild/docs/RALPH_
 
 ## Phase 2 — 쉘 공통화·품질
 
-- [ ] `build.sh` vs `dist.sh` shebang/strict mode(`set -u` 등) 정책 통일안 — 무엇을 깨지 않을지 리스트업.
+- [x] `build.sh` vs `dist.sh` shebang/strict mode(`set -u` 등) 정책 통일안 — 무엇을 깨지 않을지 리스트업.
 - [ ] `platform/android.sh` / `platform/ios.sh` 공통: 반복되는 `jq cat $jsonConfig` 패턴을 함수(`jb_jq_bool`, `jb_jq_str`)로 추출할지 결정 후 일부만 이동(작은 PR).
 - [ ] `shellcheck` 대상 디렉터리와 예외 파일 목록을 정함(`.shellcheckrc` 또는 CI 한 줄).
 
@@ -66,3 +66,4 @@ export PRD_PATH="$HOME/.openclaw/workspace/working-copy/JenkinsBuild/docs/RALPH_
 | 2026-04-06 | 초안 작성 — 아키텍처/비밀 문서와 연동 |
 | 2026-04-07 | Phase 0: DistSite vs `test/config.json` 최상위 키 델타 절차·기준선을 `test/README.md`에 기록 (`mail-gmail` 제외 시 동일 집합) |
 | 2026-04-07 | Phase 1: `util/sendemail` 폼 필드·로그 유출 경로·마스킹 우선순위를 `docs/CONFIG_AND_SECRETS.md` §3.1에 정리 |
+| 2026-04-07 | Phase 2: `docs/SHELL_STRICT_AND_SHEBANG.md` — `build.sh`/`dist.sh` shebang·`set -e`/`-u`/pipefail 기준선·안전/위험 변경 표 |
