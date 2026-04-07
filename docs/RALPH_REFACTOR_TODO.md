@@ -54,7 +54,7 @@ export PRD_PATH="$HOME/.openclaw/workspace/working-copy/JenkinsBuild/docs/RALPH_
 
 ## Phase 7 — 장기 구조(선택)
 
-- [ ] JSON Schema for public config + 검증 CLI(`scripts/validate-config.sh`).
+- [x] JSON Schema for public config + 검증 CLI(`scripts/validate-config.sh`).
 - [ ] 단위 테스트 대체: 핵심 순수 함수만 `bash` + bats 또는 Python으로 추출.
 
 ---
@@ -76,3 +76,4 @@ export PRD_PATH="$HOME/.openclaw/workspace/working-copy/JenkinsBuild/docs/RALPH_
 | 2026-04-07 | Phase 5: `config/sshfunctions` — 현재 코드는 ssh 옵션 미지정; `BatchMode`/타임아웃/known_hosts 는 CI·`~/.ssh/config` 정책으로 문서화(`CONFIG_AND_SECRETS.md` §8); 재시도는 별 이슈 |
 | 2026-04-07 | Phase 6: `dist.config` `[remote]` — `remote.name` 우선, 없으면 `remote.pushUrlMatch`(기본 `github.com`)로 push URL에서 remote 선택; `dist_shlib`의 `dist_resolve_push_remote`; 태그 삭제 push도 동일 remote 사용 |
 | 2026-04-07 | Phase 6: `docs/dist_comparison.md` §9 — Forgejo/비 GitHub 원격 시 `[remote]` (`name` vs `pushUrlMatch`), `dist_with_tag.sh`는 `origin` 고정 주의 |
+| 2026-04-07 | Phase 7: `schema/public-config.schema.json` + `scripts/validate-config.sh` / `validate_config.py`; CI ShellCheck 워크플로에서 `test/config.json` 검증 |

@@ -41,6 +41,7 @@ files=(
   test/obfuscation_android.sh
   test/obfuscation_ios.sh
   test/android/app/check.sh
+  scripts/validate-config.sh
 )
 
 exec shellcheck -x -S "$SEVERITY" -- "${files[@]}"

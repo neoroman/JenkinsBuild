@@ -22,3 +22,8 @@ jobs:
         env:
           SHELLCHECK_SEVERITY: error
         run: bash scripts/run-shellcheck.sh
+
+      - name: Validate test/config.json (JSON Schema)
+        run: |
+          python3 -m pip install --quiet jsonschema
+          bash scripts/validate-config.sh test/config.json

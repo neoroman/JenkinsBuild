@@ -1,0 +1,204 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://local.jenkinsbuild/schema/public-config",
+  "title": "JenkinsBuild config.json — public shape (structure/types; not secret values)",
+  "description": "Validates the on-disk JSON shape expected by config/jsonconfig and related tooling. Extra top-level keys (e.g. mail-gmail) are allowed. Does not reject placeholder secrets in sample files.",
+  "type": "object",
+  "required": [
+    "development",
+    "production",
+    "android",
+    "ios",
+    "mail",
+    "slack",
+    "teams",
+    "ssh",
+    "Flutter",
+    "ReactNative"
+  ],
+  "properties": {
+    "development": { "$ref": "#/$defs/envBlock" },
+    "production": { "$ref": "#/$defs/envBlock" },
+    "notifications": {
+      "type": "object",
+      "properties": {
+        "mailEndpoint": { "type": "string", "minLength": 1 }
+      },
+      "additionalProperties": true
+    },
+    "mail": {
+      "type": "object",
+      "required": ["domesticEnabled"],
+      "properties": {
+        "domesticEnabled": { "type": "boolean" }
+      },
+      "additionalProperties": true
+    },
+    "slack": {
+      "type": "object",
+      "required": ["enabled", "channel", "webhook"],
+      "properties": {
+        "enabled": { "type": "boolean" },
+        "channel": { "type": "string" },
+        "webhook": { "type": "string" }
+      },
+      "additionalProperties": true
+    },
+    "teams": {
+      "type": "object",
+      "required": ["enabled", "webhook"],
+      "properties": {
+        "enabled": { "type": "boolean" },
+        "webhook": { "type": "string" },
+        "iconImage": { "type": "string" }
+      },
+      "additionalProperties": true
+    },
+    "discord": {
+      "type": "object",
+      "properties": {
+        "enabled": { "type": "boolean" },
+        "channel": { "type": "string" },
+        "webhook": { "type": "string" }
+      },
+      "additionalProperties": true
+    },
+    "ssh": {
+      "type": "object",
+      "required": ["enabled"],
+      "properties": {
+        "enabled": { "type": "boolean" },
+        "port": { "type": "string" },
+        "endpoint": { "type": "string" },
+        "target": { "type": "string" }
+      },
+      "additionalProperties": true
+    },
+    "Flutter": {
+      "type": "object",
+      "required": ["enabled", "path"],
+      "properties": {
+        "enabled": { "type": "boolean" },
+        "path": { "type": "string" }
+      },
+      "additionalProperties": true
+    },
+    "ReactNative": {
+      "type": "object",
+      "required": ["enabled", "path"],
+      "properties": {
+        "enabled": { "type": "boolean" },
+        "path": { "type": "string" }
+      },
+      "additionalProperties": true
+    },
+    "android": {
+      "type": "object",
+      "required": [
+        "enabled",
+        "packageId",
+        "obfuscationInputFile",
+        "outputGoogleStoreSuffix",
+        "outputOneStoreSuffix",
+        "jenkinsWorkspace",
+        "androidHome",
+        "javaHome",
+        "appPath"
+      ],
+      "properties": {
+        "enabled": { "type": "boolean" },
+        "packageId": { "type": "string" },
+        "obfuscationInputFile": { "type": "string" },
+        "outputGoogleStoreSuffix": { "type": "string" },
+        "outputOneStoreSuffix": { "type": "string" },
+        "jenkinsWorkspace": { "type": "string" },
+        "androidHome": { "type": "string" },
+        "javaHome": { "type": "string" },
+        "appPath": { "type": "string" },
+        "AppStore": { "$ref": "#/$defs/androidStoreChannel" },
+        "OneStore": { "$ref": "#/$defs/androidStoreChannel" },
+        "LiveServer": { "$ref": "#/$defs/androidStoreChannel" },
+        "TestServer": { "$ref": "#/$defs/androidStoreChannel" }
+      },
+      "additionalProperties": true
+    },
+    "ios": {
+      "type": "object",
+      "required": [
+        "enabled",
+        "projectName",
+        "podFile",
+        "rubyGemPath",
+        "usingObfuscation",
+        "jenkinsWorkspace",
+        "jenkinsUser",
+        "sudoPassword",
+        "InfoPlist",
+        "AppStore"
+      ],
+      "properties": {
+        "enabled": { "type": "boolean" },
+        "projectName": { "type": "string" },
+        "podFile": { "type": "string" },
+        "rubyGemPath": { "type": ["string", "null"] },
+        "usingObfuscation": { "type": "boolean" },
+        "jenkinsWorkspace": { "type": "string" },
+        "jenkinsUser": { "type": "string" },
+        "sudoPassword": { "type": "string" },
+        "InfoPlist": { "type": "string" },
+        "AppStore": {
+          "type": "object",
+          "required": ["obfuscationSource"],
+          "properties": {
+            "obfuscationSource": { "type": "string" }
+          },
+          "additionalProperties": true
+        },
+        "Adhoc": { "type": "object", "additionalProperties": true },
+        "Enterprise": { "type": "object", "additionalProperties": true }
+      },
+      "additionalProperties": true
+    },
+    "users": { "type": "object", "additionalProperties": true },
+    "icon": { "type": "object", "additionalProperties": true },
+    "jira": { "type": "object", "additionalProperties": true },
+    "custom": { "type": "object", "additionalProperties": true }
+  },
+  "additionalProperties": true,
+  "$defs": {
+    "envBlock": {
+      "type": "object",
+      "required": [
+        "frontEndProtocol",
+        "frontEndPoint",
+        "outBoundProtocol",
+        "outBoundPoint",
+        "topPath",
+        "outputPrefix"
+      ],
+      "properties": {
+        "frontEndProtocol": { "type": "string" },
+        "frontEndPoint": { "type": "string" },
+        "outBoundProtocol": { "type": "string" },
+        "outBoundPoint": { "type": "string" },
+        "topPath": { "type": "string" },
+        "outputPrefix": { "type": "string" }
+      },
+      "additionalProperties": true
+    },
+    "androidStoreChannel": {
+      "type": "object",
+      "required": ["enabled", "title", "taskName", "releaseType", "usingBundleAAB", "showToClient"],
+      "properties": {
+        "enabled": { "type": "boolean" },
+        "title": { "type": "string" },
+        "taskName": { "type": "string" },
+        "releaseType": { "type": "string" },
+        "usingBundleAAB": { "type": "boolean" },
+        "showToClient": { "type": "boolean" },
+        "buildDebugVersion": { "type": "boolean" }
+      },
+      "additionalProperties": true
+    }
+  }
+}

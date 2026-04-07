@@ -121,8 +121,9 @@
 
 ### 4.3 스키마·검증
 
-- JSON Schema 또는 `jq` 기반 체크 스크립트로 **필수 키·타입·enum** 검증.
-- CI에서 `test/config.json`을 **금지 키 목록**(실비밀 패턴)으로 스캔.
+- **JSON Schema:** `schema/public-config.schema.json` — `config/jsonconfig`가 직접 읽는 블록 위주로 필수 키·타입을 검증한다(`mail-gmail` 등 추가 최상위 키는 스키마에서 허용).
+- **CLI:** `scripts/validate-config.sh [path]` — 기본은 `test/config.json`. 의존성: `pip install jsonschema`(CI ShellCheck 워크플로에서 샘플 검증).
+- 보완으로 `jq` 기반 경량 체크·**금지 키/실비밀 패턴** 스캔을 CI에 추가할 수 있다.
 
 ### 4.4 로그·알림
 
@@ -150,6 +151,7 @@
 
 ## 6. 참고 파일
 
+- 스키마: `schema/public-config.schema.json` · 검증: `./scripts/validate-config.sh`
 - 스키마 느낌의 샘플: `test/config.json`
 - **실배포 형태(키만 교차 검증)**: `working-copy/AngelNet-DistSite/config/config.json`(워크스페이스에 해당 클론이 있을 때; 없으면 문서의 키 목록만 기준으로 삼는다)
 - 로더·변조 로직: `config/jsonconfig`
