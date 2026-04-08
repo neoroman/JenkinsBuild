@@ -29,3 +29,32 @@ jb_dryrun_step() {
     echo "[DRY-RUN][SKIP] ${step_id} :: ${description}"
   fi
 }
+
+jb_exec() {
+  local action="$1"
+  shift
+  if jb_is_dry_run; then
+    echo "[DRY-RUN][EXEC] ${action}"
+    echo "  > $*"
+    return 0
+  fi
+  "$@"
+}
+
+jb_fs_write() {
+  local action="$1"
+  shift
+  jb_exec "[FS][WRITE] ${action}" "$@"
+}
+
+jb_fs_copy() {
+  local action="$1"
+  shift
+  jb_exec "[FS][COPY] ${action}" "$@"
+}
+
+jb_fs_remove() {
+  local action="$1"
+  shift
+  jb_exec "[FS][REMOVE] ${action}" "$@"
+}

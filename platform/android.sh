@@ -161,11 +161,11 @@ SLACK_TEXT=""
 MAIL_TEXT=""
 ###################
 if [ ! -d $APP_ROOT ]; then
-    mkdir -p $APP_ROOT
+    jb_fs_write "android app root mkdir" mkdir -p "$APP_ROOT"
     chmod 777 $APP_ROOT
 fi
 if [ ! -d $OUTPUT_FOLDER ]; then
-    mkdir -p $OUTPUT_FOLDER
+    jb_fs_write "android output folder mkdir" mkdir -p "$OUTPUT_FOLDER"
     chmod 777 $OUTPUT_FOLDER
 fi
 if [ $USING_SCP -eq 1 ]; then
@@ -183,21 +183,11 @@ if [ -f "${WORKSPACE}/gradlew" ]; then
 fi
 
 
-function doExecuteAndroid() {
+function android_exec_prepare() {
     if jb_is_dry_run; then
-        jb_dryrun_header "android"
-        jb_dryrun_step "android.pre.reactnative" "React Native dependency/build 준비" "$ReactNativeBin install --legacy-peer-deps && $ReactNativeBin run build:android"
-        jb_dryrun_step "android.pre.allatori" "Allatori Gradle 태스크 주입" "jb_allatori_prepare_release_gradle"
-        jb_dryrun_step "android.build.primary" "주요 스토어 빌드 실행" "./gradlew <assemble|bundle><task>"
-        jb_dryrun_step "android.build.secondary" "보조 스토어/서버 빌드 실행" "./gradlew <assemble|bundle><task>"
-        jb_dryrun_step "android.output.move" "산출물 이동/이름 부여" "mv <build output> <${OUTPUT_FOLDER}>"
-        jb_dryrun_step "android.output.bundletool" "AAB -> universal APK 변환(선택)" "bundletool build-apks --bundle ... --output ..."
-        jb_dryrun_step "android.output.cleanup" "산출물 정리(옵션)" "rm -f <distribution binary>"
-        jb_dryrun_step "android.scp.upload" "원격 배포 경로 전송(옵션)" "sendFile <artifact> <remote dir>"
-        jb_dryrun_step "android.obfuscation.proof" "난독화 증적 스크린샷 생성" "makeObfuscationScreenshot"
+        jb_dryrun_step "android.exec.prepare" "android_exec_prepare (prepare)" "ReactNative deps/build + Allatori prepare"
         return 0
     fi
-
     if [ $isReactNativeEnabled -eq 1 ]; then
         cd ${WORKSPACE}
         $ReactNativeBin install --legacy-peer-deps
@@ -215,20 +205,27 @@ function doExecuteAndroid() {
     ###################
     # Step 1.1: Allatori — build.gradle의 runAllatori(variant) (plugins/allatori_android.sh)
     jb_allatori_prepare_release_gradle
+}
+
+function android_exec_build() {
+    if jb_is_dry_run; then
+        jb_dryrun_step "android.exec.build" "android_exec_build (build)" "./gradlew / flutter build + artifact move"
+        return 0
+    fi
     if [ $DEBUGGING -eq 1 ]; then
         if [ $IS_RELEASE -eq 1 ]; then
             if [ ! -f $OUTPUT_FOLDER/$APK_GOOGLESTORE ]; then
-                touch $OUTPUT_FOLDER/$APK_GOOGLESTORE
+                jb_fs_write "android debug touch googlestore apk" touch "$OUTPUT_FOLDER/$APK_GOOGLESTORE"
             fi
             if [ ! -f $OUTPUT_FOLDER/$APK_ONESTORE ]; then
-                touch $OUTPUT_FOLDER/$APK_ONESTORE
+                jb_fs_write "android debug touch onestore apk" touch "$OUTPUT_FOLDER/$APK_ONESTORE"
             fi
         else
             if [ ! -f $OUTPUT_FOLDER/$OUTPUT_APK_LIVESERVER ]; then
-                touch $OUTPUT_FOLDER/$OUTPUT_APK_LIVESERVER
+                jb_fs_write "android debug touch liveserver apk" touch "$OUTPUT_FOLDER/$OUTPUT_APK_LIVESERVER"
             fi
             if [ ! -f $OUTPUT_FOLDER/$OUTPUT_APK_TESTSERVER ]; then
-                touch $OUTPUT_FOLDER/$OUTPUT_APK_TESTSERVER
+                jb_fs_write "android debug touch testserver apk" touch "$OUTPUT_FOLDER/$OUTPUT_APK_TESTSERVER"
             fi
         fi
     else
@@ -293,7 +290,7 @@ function doExecuteAndroid() {
                 BUILD_APK_GOOGLESTORE="$BUILD_APK_OUTPUT"
             fi
             if [ -f "$BUILD_OUTPUT_FOLDER/$BUILD_APK_GOOGLESTORE" ]; then
-                mv "$BUILD_OUTPUT_FOLDER/$BUILD_APK_GOOGLESTORE" "$OUTPUT_FOLDER/$APK_GOOGLESTORE"
+                jb_fs_copy "android move googlestore artifact" mv "$BUILD_OUTPUT_FOLDER/$BUILD_APK_GOOGLESTORE" "$OUTPUT_FOLDER/$APK_GOOGLESTORE"
                 SIZE_GOOGLE_APP_FILE=$(du -sh ${OUTPUT_FOLDER}/${APK_GOOGLESTORE} | awk '{print $1}')
                 SLACK_TEXT="${SLACK_TEXT}${HOSTNAME} > ${GRADLE_TASK_GOOGLESTORE} 배포용 다운로드(${SIZE_GOOGLE_APP_FILE}B): ${HTTPS_PREFIX}${APK_GOOGLESTORE}\n"
                 MAIL_TEXT="${MAIL_TEXT}${GRADLE_TASK_GOOGLESTORE} 배포용 다운로드(${SIZE_GOOGLE_APP_FILE}B): <a href=${HTTPS_PREFIX}${APK_GOOGLESTORE}>${HTTPS_PREFIX}${APK_GOOGLESTORE}</a><br />"
@@ -302,7 +299,7 @@ function doExecuteAndroid() {
                 if [[ $USING_BUNDLE_GOOGLESTORE -eq 1 && -f "$BUNDLE_TOOL" ]]; then
                     BUNDLE_APK_FILE="$OUTPUT_FOLDER/${APK_GOOGLESTORE%.aab}.apks"
                     if [ -f "$BUNDLE_APK_FILE" ]; then
-                        rm -f "$BUNDLE_APK_FILE"
+                        jb_fs_remove "android remove stale apks bundle" rm -f "$BUNDLE_APK_FILE"
                     fi
                     if [ -f "$KEYSTORE_FILE" ]; then
                         $BUNDLE_TOOL build-apks --bundle="$OUTPUT_FOLDER/$APK_GOOGLESTORE" --output="$BUNDLE_APK_FILE" --mode=universal --ks="$KEYSTORE_FILE" --ks-pass="pass:$STOREPASS" --ks-key-alias="$KEYSTORE_ALIAS"
@@ -310,17 +307,17 @@ function doExecuteAndroid() {
                         $BUNDLE_TOOL build-apks --bundle="$OUTPUT_FOLDER/$APK_GOOGLESTORE" --output="$BUNDLE_APK_FILE" --mode=universal
                     fi
                     BUNDLE_APK2ZIP="${BUNDLE_APK_FILE%.apks}.zip"
-                    mv -f "${BUNDLE_APK_FILE}" "${BUNDLE_APK2ZIP}"
+                    jb_fs_copy "android rename apks to zip" mv -f "${BUNDLE_APK_FILE}" "${BUNDLE_APK2ZIP}"
                     unzip -o "${BUNDLE_APK2ZIP}"
                     BUNDLE_APK_FILE="$OUTPUT_FOLDER/${APK_GOOGLESTORE%.aab}.apk"
                     if [ -f universal.apk ]; then
-                        touch universal.apk
+                        jb_fs_write "android touch universal apk" touch universal.apk
 
                         # Move APK(extract from AAB) to DocRoot
-                        mv -f universal.apk "$BUNDLE_APK_FILE"
+                        jb_fs_copy "android move universal apk output" mv -f universal.apk "$BUNDLE_APK_FILE"
                         find . -name 'toc.*' -exec rm {} \;
                         if [ -f "$BUNDLE_APK2ZIP" ]; then
-                            rm $BUNDLE_APK2ZIP
+                            jb_fs_remove "android remove bundle zip" rm "$BUNDLE_APK2ZIP"
                         fi
                     fi
                     SIZE_GOOGLE_APP_FILE=$(du -sh ${BUNDLE_APK_FILE} | awk '{print $1}')
@@ -330,22 +327,22 @@ function doExecuteAndroid() {
                         if [[ "$DEBUG_APK_OUTPUT" == *".aab" && -f "$BUNDLE_TOOL" ]]; then
                             BUNDLE_DEBUG_FILE="$DEBUG_OUTPUT_FOLDER/${DEBUG_APK_OUTPUT%.aab}.apks"
                             if [ -f "$BUNDLE_DEBUG_FILE" ]; then
-                                rm -f "$BUNDLE_DEBUG_FILE"
+                                jb_fs_remove "android remove stale debug apks bundle" rm -f "$BUNDLE_DEBUG_FILE"
                             fi
                             $BUNDLE_TOOL build-apks --bundle="$DEBUG_OUTPUT_FOLDER/$DEBUG_APK_OUTPUT" --output="$BUNDLE_DEBUG_FILE" --mode=universal
                             BUNDLE_APK2ZIP="${BUNDLE_DEBUG_FILE%.apks}.zip"
-                            mv -f "${BUNDLE_DEBUG_FILE}" "${BUNDLE_APK2ZIP}"
+                            jb_fs_copy "android rename debug apks to zip" mv -f "${BUNDLE_DEBUG_FILE}" "${BUNDLE_APK2ZIP}"
                             unzip -o "${BUNDLE_APK2ZIP}"
                             APK_DEBUG="${APK_FILE_TITLE}${outputGoogleStoreSuffix%release.*}debug.apk"
                             BUNDLE_DEBUG_FILE="$OUTPUT_FOLDER/$APK_DEBUG"
                             if [ -f universal.apk ]; then
-                                touch universal.apk
+                                jb_fs_write "android touch universal debug apk" touch universal.apk
 
                                 # Move APK(extract from AAB) to DocRoot
-                                mv -f universal.apk "$BUNDLE_DEBUG_FILE"
+                                jb_fs_copy "android move universal debug apk output" mv -f universal.apk "$BUNDLE_DEBUG_FILE"
                                 find . -name 'toc.*' -exec rm {} \;
                                 if [ -f "$BUNDLE_APK2ZIP" ]; then
-                                    rm $BUNDLE_APK2ZIP
+                                    jb_fs_remove "android remove debug bundle zip" rm "$BUNDLE_APK2ZIP"
                                 fi
                             fi
                             SIZE_DEBUG_APP_FILE=$(du -sh ${BUNDLE_DEBUG_FILE} | awk '{print $1}')
@@ -354,7 +351,7 @@ function doExecuteAndroid() {
                 elif [ $USING_ADHOC_DEBUG -eq 1 -a -f "$DEBUG_OUTPUT_FOLDER/$DEBUG_APK_OUTPUT" ]; then
                     # for debug build APK
                     APK_DEBUG="${APK_FILE_TITLE}${outputGoogleStoreSuffix%release.*}debug.apk"
-                    mv "$DEBUG_OUTPUT_FOLDER/$DEBUG_APK_OUTPUT" "$OUTPUT_FOLDER/$APK_DEBUG"
+                    jb_fs_copy "android move debug apk output" mv "$DEBUG_OUTPUT_FOLDER/$DEBUG_APK_OUTPUT" "$OUTPUT_FOLDER/$APK_DEBUG"
                     SIZE_DEBUG_APP_FILE=$(du -sh "$OUTPUT_FOLDER/$APK_DEBUG" | awk '{print $1}')
                 fi
             fi
@@ -405,14 +402,14 @@ function doExecuteAndroid() {
                 BUILD_APK_ONESTORE="$BUILD_APK_OUTPUT"
             fi
             if [ -f "$BUILD_OUTPUT_FOLDER/$BUILD_APK_ONESTORE" ]; then
-                mv "$BUILD_OUTPUT_FOLDER/$BUILD_APK_ONESTORE" "$OUTPUT_FOLDER/$APK_ONESTORE"
+                jb_fs_copy "android move onestore artifact" mv "$BUILD_OUTPUT_FOLDER/$BUILD_APK_ONESTORE" "$OUTPUT_FOLDER/$APK_ONESTORE"
                 SIZE_ONE_APP_FILE=$(du -sh ${OUTPUT_FOLDER}/${APK_ONESTORE} | awk '{print $1}')
                 SLACK_TEXT="${SLACK_TEXT}${HOSTNAME} > ${GRADLE_TASK_ONESTORE} 배포용 다운로드(${SIZE_ONE_APP_FILE}B): ${HTTPS_PREFIX}${APK_ONESTORE}\n"
                 MAIL_TEXT="${MAIL_TEXT}${GRADLE_TASK_ONESTORE} 배포용 다운로드(${SIZE_ONE_APP_FILE}B): <a href=${HTTPS_PREFIX}${APK_ONESTORE}>${HTTPS_PREFIX}${APK_ONESTORE}</a><br />"
 
                 if [ $USING_ADHOC_DEBUG -eq 1 -a -f "$DEBUG_OUTPUT_FOLDER/$DEBUG_APK_OUTPUT" -a ! -f "$OUTPUT_FOLDER/$APK_DEBUG" ]; then
                     APK_DEBUG="${APK_FILE_TITLE}${outputOneStoreSuffix%release.*}debug.apk"
-                    mv "$DEBUG_OUTPUT_FOLDER/$DEBUG_APK_OUTPUT" "$OUTPUT_FOLDER/$APK_DEBUG"
+                    jb_fs_copy "android move onestore debug artifact" mv "$DEBUG_OUTPUT_FOLDER/$DEBUG_APK_OUTPUT" "$OUTPUT_FOLDER/$APK_DEBUG"
                     SIZE_DEBUG_APP_FILE=$(du -sh "$OUTPUT_FOLDER/$APK_DEBUG" | awk '{print $1}')
                 fi
             fi
@@ -460,7 +457,7 @@ function doExecuteAndroid() {
                 APK_LIVESERVER="$BUILD_APK_OUTPUT"
             fi
             if [ -f "$BUILD_OUTPUT_FOLDER/$APK_LIVESERVER" ]; then
-                mv "$BUILD_OUTPUT_FOLDER/$APK_LIVESERVER" "$OUTPUT_FOLDER/$OUTPUT_APK_LIVESERVER"
+                jb_fs_copy "android move liveserver artifact" mv "$BUILD_OUTPUT_FOLDER/$APK_LIVESERVER" "$OUTPUT_FOLDER/$OUTPUT_APK_LIVESERVER"
                 SIZE_LIVE_APP_FILE=$(du -sh ${OUTPUT_FOLDER}/${OUTPUT_APK_LIVESERVER} | awk '{print $1}')
                 SLACK_TEXT="${SLACK_TEXT}${HOSTNAME} > ${GRADLE_TASK_LIVESERVER}(debug)(${SIZE_LIVE_APP_FILE}B): ${HTTPS_PREFIX}${OUTPUT_APK_LIVESERVER}\n"
                 MAIL_TEXT="${MAIL_TEXT}${GRADLE_TASK_LIVESERVER}(debug)(${SIZE_LIVE_APP_FILE}B): <a href=${HTTPS_PREFIX}${OUTPUT_APK_LIVESERVER}>${HTTPS_PREFIX}${OUTPUT_APK_LIVESERVER}</a><br />"
@@ -476,7 +473,7 @@ function doExecuteAndroid() {
                     if grep -q 'Config.IS_TB_GMMS_SERVER =' "$MAIN_ACTIVITY"; then
                     sed '/Config.IS_TB_GMMS_SERVER = .*/ a\
                                 Config.IS_TB_GMMS_SERVER = true;' $MAIN_ACTIVITY >$MAIN_ACTIVITY.new
-                    mv -f $MAIN_ACTIVITY.new $MAIN_ACTIVITY
+                    jb_fs_copy "android replace MainActivity GMMS TB mode" mv -f "$MAIN_ACTIVITY.new" "$MAIN_ACTIVITY"
                     fi
                 fi
             fi
@@ -519,7 +516,7 @@ function doExecuteAndroid() {
                 APK_TESTSERVER="$BUILD_APK_OUTPUT"
             fi
             if [ -f "$BUILD_OUTPUT_FOLDER/$APK_TESTSERVER" ]; then
-                mv "$BUILD_OUTPUT_FOLDER/$APK_TESTSERVER" "$OUTPUT_FOLDER/$OUTPUT_APK_TESTSERVER"
+                jb_fs_copy "android move testserver artifact" mv "$BUILD_OUTPUT_FOLDER/$APK_TESTSERVER" "$OUTPUT_FOLDER/$OUTPUT_APK_TESTSERVER"
                 SIZE_TEST_APP_FILE=$(du -sh ${OUTPUT_FOLDER}/${OUTPUT_APK_TESTSERVER} | awk '{print $1}')
                 SLACK_TEXT="${SLACK_TEXT}${HOSTNAME} > ${GRADLE_TASK_TESTSERVER}(${RELEASE_TYPE_TESTSERVER})(${SIZE_TEST_APP_FILE}B): ${HTTPS_PREFIX}${OUTPUT_APK_TESTSERVER}\n"
                 MAIL_TEXT="${MAIL_TEXT}${GRADLE_TASK_TESTSERVER}(${RELEASE_TYPE_TESTSERVER})(${SIZE_TEST_APP_FILE}B): <a href=${HTTPS_PREFIX}${OUTPUT_APK_TESTSERVER}>${HTTPS_PREFIX}${OUTPUT_APK_TESTSERVER}</a><br />"
@@ -527,71 +524,88 @@ function doExecuteAndroid() {
         fi
         fi
     fi
-    ###################
+}
+
+function android_exec_artifact() {
+    if jb_is_dry_run; then
+        jb_dryrun_step "android.exec.artifact" "android_exec_artifact (artifact)" "optional scp upload + makeObfuscationScreenshot"
+        return 0
+    fi
+    if [ $DEBUGGING -eq 0 ]; then
+        if [ $USING_SCP -eq 1 ]; then
+            # Step 2.99: Send file to NAS (app.company.com)
+            if [ -f "${OUTPUT_FOLDER}/${APK_GOOGLESTORE}" ]; then
+                if [ $(sendFile ${OUTPUT_FOLDER}/${APK_GOOGLESTORE} ${NEO2UA_OUTPUT_FOLDER}) -eq 0 ]; then
+                    echo "TODO: **NEED** to resend this file => ${OUTPUT_FOLDER}/${APK_GOOGLESTORE} to ${NEO2UA_OUTPUT_FOLDER}"
+                fi
+                if [ $USING_BUNDLE_GOOGLESTORE -eq 1 ]; then
+                    SCP_BUNDLE_APK_FILE="$OUTPUT_FOLDER/${APK_GOOGLESTORE%.aab}.apk"
+                    if [ -f "${SCP_BUNDLE_APK_FILE}" ]; then
+                        if [ $(sendFile ${SCP_BUNDLE_APK_FILE} ${NEO2UA_OUTPUT_FOLDER}) -eq 0 ]; then
+                            echo "TODO: **NEED** to resend this file => ${SCP_BUNDLE_APK_FILE} to ${NEO2UA_OUTPUT_FOLDER}"
+                        fi
+                    fi
+                fi
+            fi
+            if [ -f "${OUTPUT_FOLDER}/${APK_ONESTORE}" ]; then
+                if [ $(sendFile ${OUTPUT_FOLDER}/${APK_ONESTORE} ${NEO2UA_OUTPUT_FOLDER}) -eq 0 ]; then
+                    echo "TODO: **NEED** to resend this file => ${OUTPUT_FOLDER}/${APK_ONESTORE} to ${NEO2UA_OUTPUT_FOLDER}"
+                fi
+            fi
+            if [ -f "${OUTPUT_FOLDER}/${OUTPUT_APK_LIVESERVER}" ]; then
+                if [ $(sendFile ${OUTPUT_FOLDER}/${OUTPUT_APK_LIVESERVER} ${NEO2UA_OUTPUT_FOLDER}) -eq 0 ]; then
+                    echo "TODO: **NEED** to resend this file => ${OUTPUT_FOLDER}/${OUTPUT_APK_LIVESERVER} to ${NEO2UA_OUTPUT_FOLDER}"
+                fi
+            fi
+            if [ -f "${OUTPUT_FOLDER}/${OUTPUT_APK_TESTSERVER}" ]; then
+                if [ $(sendFile ${OUTPUT_FOLDER}/${OUTPUT_APK_TESTSERVER} ${NEO2UA_OUTPUT_FOLDER}) -eq 0 ]; then
+                    echo "TODO: **NEED** to resend this file => ${OUTPUT_FOLDER}/${OUTPUT_APK_TESTSERVER} to ${NEO2UA_OUTPUT_FOLDER}"
+                fi
+            fi
+        fi
+    fi
+    # Step 3: 난독화 증적 자료 생성
+    makeObfuscationScreenshot
+}
+
+function android_exec_cleanup() {
+    if jb_is_dry_run; then
+        jb_dryrun_step "android.exec.cleanup" "android_exec_cleanup (cleanup)" "rm -f <distribution binary>"
+        return 0
+    fi
     # Step 2.9: Exit if output not using for distribution, maybe it's for SonarQube
     if [ $PRODUCE_OUTPUT_USE -eq 0 ]; then
         if [ $OUTPUT_AND_EXIT_USE -ne 1 ]; then
             # Exit here with remove all binary outputs
             if [ -f "$OUTPUT_FOLDER/$APK_GOOGLESTORE" ]; then
-                rm -f $OUTPUT_FOLDER/$APK_GOOGLESTORE
+                jb_fs_remove "android cleanup googlestore artifact" rm -f "$OUTPUT_FOLDER/$APK_GOOGLESTORE"
                 if [ $USING_BUNDLE_GOOGLESTORE -eq 1 ]; then
                     BUNDLE_APK_FILE="$OUTPUT_FOLDER/${APK_GOOGLESTORE%.aab}.apk"
                     if [ -f "$BUNDLE_APK_FILE" ]; then
-                        rm -f $OUTPUT_FOLDER/$BUNDLE_APK_FILE
+                        jb_fs_remove "android cleanup bundle apk artifact" rm -f "$BUNDLE_APK_FILE"
                     fi
                 fi
             fi
             if [ -f "$OUTPUT_FOLDER/$APK_ONESTORE" ]; then
-                rm -f $OUTPUT_FOLDER/$APK_ONESTORE
+                jb_fs_remove "android cleanup onestore artifact" rm -f "$OUTPUT_FOLDER/$APK_ONESTORE"
             fi
             if [ -f "$OUTPUT_FOLDER/$OUTPUT_APK_LIVESERVER" ]; then
-                rm -f $OUTPUT_FOLDER/$OUTPUT_APK_LIVESERVER
+                jb_fs_remove "android cleanup liveserver artifact" rm -f "$OUTPUT_FOLDER/$OUTPUT_APK_LIVESERVER"
             fi
             if [ -f "$OUTPUT_FOLDER/$APK_TESTSERVER" ]; then
-                rm -f $OUTPUT_FOLDER/$OUTPUT_APK_TESTSERVER
+                jb_fs_remove "android cleanup testserver artifact" rm -f "$OUTPUT_FOLDER/$OUTPUT_APK_TESTSERVER"
             fi
         fi
         exit
-    elif [ $DEBUGGING -eq 0 ]; then
-        if [ $USING_SCP -eq 1 ]; then
-        ###################
-        # Step 2.99: Send file to NAS (app.company.com)
-        if [ -f "${OUTPUT_FOLDER}/${APK_GOOGLESTORE}" ]; then
-            if [ $(sendFile ${OUTPUT_FOLDER}/${APK_GOOGLESTORE} ${NEO2UA_OUTPUT_FOLDER}) -eq 0 ]; then
-                #   echo "Failed to send file"
-                echo "TODO: **NEED** to resend this file => ${OUTPUT_FOLDER}/${APK_GOOGLESTORE} to ${NEO2UA_OUTPUT_FOLDER}"
-            fi
-            if [ $USING_BUNDLE_GOOGLESTORE -eq 1 ]; then
-                SCP_BUNDLE_APK_FILE="$OUTPUT_FOLDER/${APK_GOOGLESTORE%.aab}.apk"
-                if [ -f "${SCP_BUNDLE_APK_FILE}" ]; then
-                    if [ $(sendFile ${SCP_BUNDLE_APK_FILE} ${NEO2UA_OUTPUT_FOLDER}) -eq 0 ]; then
-                        #   echo "Failed to send file"
-                        echo "TODO: **NEED** to resend this file => ${SCP_BUNDLE_APK_FILE} to ${NEO2UA_OUTPUT_FOLDER}"
-                    fi
-                fi
-            fi
-        fi
-        if [ -f "${OUTPUT_FOLDER}/${APK_ONESTORE}" ]; then
-            if [ $(sendFile ${OUTPUT_FOLDER}/${APK_ONESTORE} ${NEO2UA_OUTPUT_FOLDER}) -eq 0 ]; then
-                #   echo "Failed to send file"
-                echo "TODO: **NEED** to resend this file => ${OUTPUT_FOLDER}/${APK_ONESTORE} to ${NEO2UA_OUTPUT_FOLDER}"
-            fi
-        fi
-        if [ -f "${OUTPUT_FOLDER}/${OUTPUT_APK_LIVESERVER}" ]; then
-            if [ $(sendFile ${OUTPUT_FOLDER}/${OUTPUT_APK_LIVESERVER} ${NEO2UA_OUTPUT_FOLDER}) -eq 0 ]; then
-                #   echo "Failed to send file"
-                echo "TODO: **NEED** to resend this file => ${OUTPUT_FOLDER}/${OUTPUT_APK_LIVESERVER} to ${NEO2UA_OUTPUT_FOLDER}"
-            fi
-        fi
-        if [ -f "${OUTPUT_FOLDER}/${OUTPUT_APK_TESTSERVER}" ]; then
-            if [ $(sendFile ${OUTPUT_FOLDER}/${OUTPUT_APK_TESTSERVER} ${NEO2UA_OUTPUT_FOLDER}) -eq 0 ]; then
-                #   echo "Failed to send file"
-                echo "TODO: **NEED** to resend this file => ${OUTPUT_FOLDER}/${OUTPUT_APK_TESTSERVER} to ${NEO2UA_OUTPUT_FOLDER}"
-            fi
-        fi
-        fi
     fi
-    ###################
-    # Step 3: 난독화 증적 자료 생성
-    makeObfuscationScreenshot
+}
+
+function doExecuteAndroid() {
+    if jb_is_dry_run; then
+        jb_dryrun_header "android"
+    fi
+    android_exec_prepare
+    android_exec_build
+    android_exec_cleanup
+    android_exec_artifact
 }

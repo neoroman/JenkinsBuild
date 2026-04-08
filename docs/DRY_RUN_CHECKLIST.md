@@ -55,7 +55,43 @@ mkdir -p /tmp/jb-dryrun-root/JenkinsBuildDryRun/{config,lang}
 - iOS dry-run에서 `xcode-select`/`sudo` 실행은 차단됨 (`[DRY-RUN] skip xcode-select switch`)
 - dry-run 모드에서는 플랫폼 시뮬레이션 후 즉시 종료(`makejson/makehtml/notification` 스킵)
 
-## 6) 후속 TODO (강화 포인트)
+## 6) Android/iOS 함수 단위 테스트 케이스 (성공/실패/skip)
+
+### Android (`jb_android_make_obfuscation_screenshot`)
+
+- 성공: `bash test/obfuscation_android.sh`
+- 실패: 필수 환경변수 누락 상태에서 함수 직접 호출 (`OUTPUT_FOLDER` 미설정)
+- skip: `DEBUGGING=1` 상태에서 함수 직접 호출
+
+실행 결과(2026-04-07):
+
+- 재실행 확인: `bash test/obfuscation_android.sh` + 실패/skip 함수 직접 호출 3케이스 모두 재현
+- 성공 케이스: `exit 0`
+  - 핵심 로그: `Created obfuscation screenshot with ImageMagick`, `Copied obfuscation file: .../test/android/output/obfuscation_output.png`
+  - 참고: ImageMagick `convert` deprecation/font warning 출력은 있었지만 테스트 자체는 통과
+- 실패 케이스: `exit 1`
+  - 오류: `plugins/obfuscation_android.sh: line 16: OUTPUT_FOLDER: unbound variable`
+- skip 케이스: `exit 0`
+  - 로그: `ANDROID_SKIP_OK` (DEBUGGING 분기로 함수 본문 실행 생략 확인)
+
+### iOS (`jb_ixshield_make_obfuscation_screenshot`)
+
+- 성공: `bash test/obfuscation_ios.sh`
+- 실패: 필수 환경변수 누락 상태에서 함수 직접 호출 (`OBFUSCATION_SOURCE` 미설정)
+- skip: `DEBUGGING=1` 상태에서 함수 직접 호출
+
+실행 결과(2026-04-07):
+
+- 재실행 확인: `bash test/obfuscation_ios.sh` + 실패/skip 함수 직접 호출 3케이스 모두 재현
+- 성공 케이스: `exit 0`
+  - 핵심 로그: `Created obfuscation screenshot with ImageMagick`, `iOS obfuscation screenshot smoke test OK`
+  - 참고: ImageMagick `convert` deprecation/font warning 출력은 있었지만 테스트 자체는 통과
+- 실패 케이스: `exit 1`
+  - 오류: `plugins/ixshield_ios.sh: line 19: OBFUSCATION_SOURCE: unbound variable`
+- skip 케이스: `exit 0`
+  - 로그: `IOS_SKIP_OK` (DEBUGGING 분기로 함수 본문 실행 생략 확인)
+
+## 7) 후속 TODO (강화 포인트)
 
 - dry-run 단계별 사전 조건 검증(필수 파일/디렉터리 존재 체크) 자동화
 - `ios.output.plist`/`android.output.move`에서 출력 경로 계산값을 더 상세히 표기

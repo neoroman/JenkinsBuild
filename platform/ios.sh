@@ -74,18 +74,18 @@ function initializeIOSBuildConfig() {
     fi
     ###################
     if [ ! -d $DST_ROOT ]; then
-        mkdir -p $DST_ROOT
+        jb_fs_write "ios dst root mkdir" mkdir -p "$DST_ROOT"
         chmod 777 $DST_ROOT
     fi
     if [ -d $DST_ROOT/Applications ]; then
-        rm -rf ${DST_ROOT}/Applications
+        jb_fs_remove "ios cleanup dst applications" rm -rf "${DST_ROOT}/Applications"
     fi
     if [ ! -d $APP_ROOT ]; then
-        mkdir -p $APP_ROOT
+        jb_fs_write "ios app root mkdir" mkdir -p "$APP_ROOT"
         chmod 777 $APP_ROOT
     fi
     if [ ! -d $OUTPUT_FOLDER ]; then
-        mkdir -p $OUTPUT_FOLDER
+        jb_fs_write "ios output folder mkdir" mkdir -p "$OUTPUT_FOLDER"
         chmod 777 $OUTPUT_FOLDER
     fi
     if [ $USING_SCP -eq 1 ]; then
@@ -285,7 +285,7 @@ function doExecuteIOS() {
             fi
             EXPORT_PLIST="${APP_ROOT}/ExportOptions.plist"
             if [ -f $plistConfig ]; then
-                cp $plistConfig $EXPORT_PLIST
+                jb_fs_copy "ios copy export options plist" cp "$plistConfig" "$EXPORT_PLIST"
                 chmod 777 $EXPORT_PLIST
                 echo ""
                 echo "Warning: should modify ``ExportOptions.plist`` for binary(IPK) of App Store"
@@ -366,26 +366,26 @@ function doExecuteIOS() {
         ###################
         # Step 2.1: Copy ``App Store'' target from Applications to OUTPUT_FOLDER
         if [ -f "${OUTPUT_FILE}" ]; then
-            mv "$OUTPUT_FILE" "${OUTPUT_FOLDER}/${OUTPUT_FILENAME_APPSTORE_IPA}"
+            jb_fs_copy "ios move appstore ipa" mv "$OUTPUT_FILE" "${OUTPUT_FOLDER}/${OUTPUT_FILENAME_APPSTORE_IPA}"
             SIZE_STORE_APP_FILE=$(du -sh "${OUTPUT_FOLDER}/${OUTPUT_FILENAME_APPSTORE_IPA}" | awk '{print $1}')
 
             if [ ! -d $OUTPUT_FOLDER/$TEMP_APPSTORE_APP_FOLDER ]; then
-                mkdir $OUTPUT_FOLDER/$TEMP_APPSTORE_APP_FOLDER
+                jb_fs_write "ios mkdir temp appstore folder" mkdir -p "$OUTPUT_FOLDER/$TEMP_APPSTORE_APP_FOLDER"
             fi
             if [ -f $OUTPUT_FOLDER/DistributionSummary.plist ]; then
-                mv -f $OUTPUT_FOLDER/DistributionSummary.plist $OUTPUT_FOLDER/$TEMP_APPSTORE_APP_FOLDER/
+                jb_fs_copy "ios move DistributionSummary plist" mv -f "$OUTPUT_FOLDER/DistributionSummary.plist" "$OUTPUT_FOLDER/$TEMP_APPSTORE_APP_FOLDER/"
             fi
             if [ -f $OUTPUT_FOLDER/ExportOptions.plist ]; then
-                mv -f $OUTPUT_FOLDER/ExportOptions.plist $OUTPUT_FOLDER/$TEMP_APPSTORE_APP_FOLDER/
+                jb_fs_copy "ios move ExportOptions plist" mv -f "$OUTPUT_FOLDER/ExportOptions.plist" "$OUTPUT_FOLDER/$TEMP_APPSTORE_APP_FOLDER/"
             fi
             if [ -f $OUTPUT_FOLDER/Packaging.log ]; then
-                mv -f $OUTPUT_FOLDER/Packaging.log $OUTPUT_FOLDER/$TEMP_APPSTORE_APP_FOLDER/
+                jb_fs_copy "ios move Packaging log" mv -f "$OUTPUT_FOLDER/Packaging.log" "$OUTPUT_FOLDER/$TEMP_APPSTORE_APP_FOLDER/"
             fi
             if [ -d $ARCHIVE_PATH ]; then
                 if [ -d $OUTPUT_FOLDER/$TEMP_APPSTORE_APP_FOLDER/$ARCHIVE_FILE ]; then
-                    rm -rf $OUTPUT_FOLDER/$TEMP_APPSTORE_APP_FOLDER/$ARCHIVE_FILE
+                    jb_fs_remove "ios remove stale archive folder" rm -rf "$OUTPUT_FOLDER/$TEMP_APPSTORE_APP_FOLDER/$ARCHIVE_FILE"
                 fi
-                mv -f $ARCHIVE_PATH $OUTPUT_FOLDER/$TEMP_APPSTORE_APP_FOLDER/
+                jb_fs_copy "ios move archive folder" mv -f "$ARCHIVE_PATH" "$OUTPUT_FOLDER/$TEMP_APPSTORE_APP_FOLDER/"
             fi
             ###################
             ## 난독화 증적 자료 생성
@@ -397,16 +397,16 @@ function doExecuteIOS() {
             if [ $USING_DSYM -eq 1 ]; then
                 # find dSYM file for App Store binary(IPA)
                 if [ -d /tmp/${PROJECT_NAME}/${LOCAL_BRANCH}/${TEMP_APPSTORE_APP_FOLDER} ]; then
-                    rm -rf /tmp/${PROJECT_NAME}/${LOCAL_BRANCH}/${TEMP_APPSTORE_APP_FOLDER}
+                    jb_fs_remove "ios remove stale tmp app folder" rm -rf "/tmp/${PROJECT_NAME}/${LOCAL_BRANCH}/${TEMP_APPSTORE_APP_FOLDER}"
                 fi
-                mv $OUTPUT_FOLDER/$TEMP_APPSTORE_APP_FOLDER /tmp/${PROJECT_NAME}/${LOCAL_BRANCH}/
+                jb_fs_copy "ios move temp app folder to tmp" mv "$OUTPUT_FOLDER/$TEMP_APPSTORE_APP_FOLDER" "/tmp/${PROJECT_NAME}/${LOCAL_BRANCH}/"
                 cd /tmp/${PROJECT_NAME}/${LOCAL_BRANCH}/${TEMP_APPSTORE_APP_FOLDER}/${ARCHIVE_FILE}
                 DSYM_FOLDER=$(find . -name '*.dSYM' | grep -v 'Intermediates')
                 zip -vr ${OUTPUT_FOLDER}/${OUTPUT_FILENAME_APPSTORE_DSYM} ${DSYM_FOLDER} -x "*.DS_Store"
                 cd -
                 SIZE_STORE_DSYM_FILE=$(du -sh "${OUTPUT_FOLDER}/${OUTPUT_FILENAME_APPSTORE_DSYM}" | awk '{print $1}')
             else
-                rm -rf $OUTPUT_FOLDER/$TEMP_APPSTORE_APP_FOLDER
+                jb_fs_remove "ios cleanup temp appstore folder" rm -rf "$OUTPUT_FOLDER/$TEMP_APPSTORE_APP_FOLDER"
             fi
         fi
     fi
@@ -422,13 +422,13 @@ function doExecuteIOS() {
         OUTPUT_FILE="${INSTALL_ROOT}/Applications/${OUTPUT_FILENAME_ADHOC_IPA}"
         if [ -d "${INSTALL_ROOT}/Applications/${TARGET_ADHOC}" ]; then
             if [ -d ${INSTALL_ROOT}/Applications/Payload ]; then
-                rm -rf ${INSTALL_ROOT}/Applications/Payload
+                jb_fs_remove "ios cleanup adhoc payload" rm -rf "${INSTALL_ROOT}/Applications/Payload"
             fi
-            mkdir -p ${INSTALL_ROOT}/Applications/Payload
-            mv "${INSTALL_ROOT}/Applications/${TARGET_ADHOC}" "${INSTALL_ROOT}/Applications/Payload"
+            jb_fs_write "ios mkdir adhoc payload" mkdir -p "${INSTALL_ROOT}/Applications/Payload"
+            jb_fs_copy "ios move adhoc app to payload" mv "${INSTALL_ROOT}/Applications/${TARGET_ADHOC}" "${INSTALL_ROOT}/Applications/Payload"
             cd "${INSTALL_ROOT}/Applications"
             $ZIP -r "${OUTPUT_FILE}" Payload
-            mv "$OUTPUT_FILE" "${OUTPUT_FOLDER}/"
+            jb_fs_copy "ios move adhoc ipa output" mv "$OUTPUT_FILE" "${OUTPUT_FOLDER}/"
             SIZE_ADHOC_APP_FILE=$(du -sh ${OUTPUT_FOLDER}/${OUTPUT_FILENAME_ADHOC_IPA} | awk '{print $1}')
         else
             exit 255
@@ -441,13 +441,13 @@ function doExecuteIOS() {
             OUTPUT_FILE="${INSTALL_ROOT}/Applications/${OUTPUT_FILENAME_ADHOC_IPA}"
             if [ -d "${INSTALL_ROOT}/Applications/${TARGET_ADHOC}" ]; then
                 if [ -d ${INSTALL_ROOT}/Applications/Payload ]; then
-                    rm -rf ${INSTALL_ROOT}/Applications/Payload
+                    jb_fs_remove "ios cleanup adhoc debug payload" rm -rf "${INSTALL_ROOT}/Applications/Payload"
                 fi
-                mkdir -p ${INSTALL_ROOT}/Applications/Payload
-                mv "${INSTALL_ROOT}/Applications/${TARGET_ADHOC}" "${INSTALL_ROOT}/Applications/Payload"
+                jb_fs_write "ios mkdir adhoc debug payload" mkdir -p "${INSTALL_ROOT}/Applications/Payload"
+                jb_fs_copy "ios move adhoc debug app to payload" mv "${INSTALL_ROOT}/Applications/${TARGET_ADHOC}" "${INSTALL_ROOT}/Applications/Payload"
                 cd "${INSTALL_ROOT}/Applications"
                 $ZIP -r "${OUTPUT_FILE}" Payload
-                mv "$OUTPUT_FILE" "${OUTPUT_FOLDER}/"
+                jb_fs_copy "ios move adhoc debug ipa output" mv "$OUTPUT_FILE" "${OUTPUT_FOLDER}/"
                 SIZE_ADHOC_DEBUG_FILE=$(du -sh ${OUTPUT_FOLDER}/${OUTPUT_FILENAME_ADHOC_IPA} | awk '{print $1}')
             fi
         fi
@@ -464,13 +464,13 @@ function doExecuteIOS() {
         OUTPUT_FILE="${INSTALL_ROOT}/Applications/${OUTPUT_FILENAME_ENTER_IPA}"
         if [ -d "${INSTALL_ROOT}/Applications/${TARGET_ENTER}" ]; then
             if [ -d ${INSTALL_ROOT}/Applications/Payload ]; then
-                rm -rf ${INSTALL_ROOT}/Applications/Payload
+                jb_fs_remove "ios cleanup enterprise payload" rm -rf "${INSTALL_ROOT}/Applications/Payload"
             fi
-            mkdir -p ${INSTALL_ROOT}/Applications/Payload
-            mv "${INSTALL_ROOT}/Applications/${TARGET_ENTER}" "${INSTALL_ROOT}/Applications/Payload"
+            jb_fs_write "ios mkdir enterprise payload" mkdir -p "${INSTALL_ROOT}/Applications/Payload"
+            jb_fs_copy "ios move enterprise app to payload" mv "${INSTALL_ROOT}/Applications/${TARGET_ENTER}" "${INSTALL_ROOT}/Applications/Payload"
             cd "${INSTALL_ROOT}/Applications"
             $ZIP -r "${OUTPUT_FILE}" Payload
-            mv "$OUTPUT_FILE" "${OUTPUT_FOLDER}/"
+            jb_fs_copy "ios move enterprise ipa output" mv "$OUTPUT_FILE" "${OUTPUT_FOLDER}/"
             SIZE_ENTER_APP_FILE=$(du -sh ${OUTPUT_FOLDER}/${OUTPUT_FILENAME_ENTER_IPA} | awk '{print $1}')
         else
             exit 255
@@ -492,13 +492,13 @@ function doExecuteIOS() {
         OUTPUT_FILE="${INSTALL_ROOT}/Applications/${OUTPUT_FILENAME_ENTER4WEB_IPA}"
         if [ -d "${INSTALL_ROOT}/Applications/${TARGET_ENTER4WEB}" ]; then
             if [ -d ${INSTALL_ROOT}/Applications/Payload ]; then
-                rm -rf ${INSTALL_ROOT}/Applications/Payload
+                jb_fs_remove "ios cleanup enterprise4web payload" rm -rf "${INSTALL_ROOT}/Applications/Payload"
             fi
-            mkdir -p ${INSTALL_ROOT}/Applications/Payload
-            mv "${INSTALL_ROOT}/Applications/${TARGET_ENTER4WEB}" "${INSTALL_ROOT}/Applications/Payload"
+            jb_fs_write "ios mkdir enterprise4web payload" mkdir -p "${INSTALL_ROOT}/Applications/Payload"
+            jb_fs_copy "ios move enterprise4web app to payload" mv "${INSTALL_ROOT}/Applications/${TARGET_ENTER4WEB}" "${INSTALL_ROOT}/Applications/Payload"
             cd "${INSTALL_ROOT}/Applications"
             $ZIP -r "${OUTPUT_FILE}" Payload
-            mv "$OUTPUT_FILE" "${OUTPUT_FOLDER}/"
+            jb_fs_copy "ios move enterprise4web ipa output" mv "$OUTPUT_FILE" "${OUTPUT_FOLDER}/"
             SIZE_ENTER4WEB_APP_FILE=$(du -sh ${OUTPUT_FOLDER}/${OUTPUT_FILENAME_ENTER4WEB_IPA} | awk '{print $1}')
         else
             exit 255
@@ -510,44 +510,44 @@ function doExecuteIOS() {
         if [ $OUTPUT_AND_EXIT_USE -ne 1 ]; then
             # Exit here with remove all binary outputs
             if [ -f ${OUTPUT_FOLDER}/${OUTPUT_FILENAME_ENTER_IPA} ]; then
-                rm -f ${OUTPUT_FOLDER}/${OUTPUT_FILENAME_ENTER_IPA}
+                jb_fs_remove "ios cleanup enterprise ipa" rm -f "${OUTPUT_FOLDER}/${OUTPUT_FILENAME_ENTER_IPA}"
             fi
             if [ -f ${OUTPUT_FOLDER}/${OUTPUT_FILENAME_ENTER4WEB_IPA} ]; then
-                rm -f ${OUTPUT_FOLDER}/${OUTPUT_FILENAME_ENTER4WEB_IPA}
+                jb_fs_remove "ios cleanup enterprise4web ipa" rm -f "${OUTPUT_FOLDER}/${OUTPUT_FILENAME_ENTER4WEB_IPA}"
             fi
             if [ -f ${OUTPUT_FOLDER}/${OUTPUT_FILENAME_ADHOC_IPA} ]; then
-                rm -f ${OUTPUT_FOLDER}/${OUTPUT_FILENAME_ADHOC_IPA}
+                jb_fs_remove "ios cleanup adhoc ipa" rm -f "${OUTPUT_FOLDER}/${OUTPUT_FILENAME_ADHOC_IPA}"
             fi
             if [ -f $OUTPUT_FOLDER/$OUTPUT_FILENAME_APPSTORE_IX_SHIELD_CHECK ]; then
-                rm -f $OUTPUT_FOLDER/$OUTPUT_FILENAME_APPSTORE_IX_SHIELD_CHECK
+                jb_fs_remove "ios cleanup appstore ixshield check" rm -f "$OUTPUT_FOLDER/$OUTPUT_FILENAME_APPSTORE_IX_SHIELD_CHECK"
             fi
             if [ -f ${OUTPUT_FOLDER}/${OUTPUT_FILENAME_APPSTORE_IPA} ]; then
-                rm -f ${OUTPUT_FOLDER}/${OUTPUT_FILENAME_APPSTORE_IPA}
+                jb_fs_remove "ios cleanup appstore ipa" rm -f "${OUTPUT_FOLDER}/${OUTPUT_FILENAME_APPSTORE_IPA}"
             fi
         fi
         exit
     elif [ $DEBUGGING -eq 1 ]; then
         if [ $USING_ENTERPRISE -eq 1 ]; then
             if [ ! -f ${OUTPUT_FOLDER}/${OUTPUT_FILENAME_ENTER_IPA} ]; then
-                touch ${OUTPUT_FOLDER}/${OUTPUT_FILENAME_ENTER_IPA}
+                jb_fs_write "ios debug touch enterprise ipa" touch "${OUTPUT_FOLDER}/${OUTPUT_FILENAME_ENTER_IPA}"
             fi
         fi
         if [ $USING_ENTER4WEB -eq 1 ]; then
             if [ ! -f ${OUTPUT_FOLDER}/${OUTPUT_FILENAME_ENTER4WEB_IPA} ]; then
-                touch ${OUTPUT_FOLDER}/${OUTPUT_FILENAME_ENTER4WEB_IPA}
+                jb_fs_write "ios debug touch enterprise4web ipa" touch "${OUTPUT_FOLDER}/${OUTPUT_FILENAME_ENTER4WEB_IPA}"
             fi
         fi
         if [ $USING_ADHOC -eq 1 ]; then
             if [ ! -f ${OUTPUT_FOLDER}/${OUTPUT_FILENAME_ADHOC_IPA} ]; then
-                touch ${OUTPUT_FOLDER}/${OUTPUT_FILENAME_ADHOC_IPA}
+                jb_fs_write "ios debug touch adhoc ipa" touch "${OUTPUT_FOLDER}/${OUTPUT_FILENAME_ADHOC_IPA}"
             fi
         fi
         if [ $IS_RELEASE -eq 1 -a $USING_APPSTORE -eq 1 ]; then
             if [ ! -f $OUTPUT_FOLDER/$OUTPUT_FILENAME_APPSTORE_IX_SHIELD_CHECK ]; then
-                touch $OUTPUT_FOLDER/$OUTPUT_FILENAME_APPSTORE_IX_SHIELD_CHECK
+                jb_fs_write "ios debug touch ixshield check" touch "$OUTPUT_FOLDER/$OUTPUT_FILENAME_APPSTORE_IX_SHIELD_CHECK"
             fi
             if [ ! -f ${OUTPUT_FOLDER}/${OUTPUT_FILENAME_APPSTORE_IPA} ]; then
-                touch ${OUTPUT_FOLDER}/${OUTPUT_FILENAME_APPSTORE_IPA}
+                jb_fs_write "ios debug touch appstore ipa" touch "${OUTPUT_FOLDER}/${OUTPUT_FILENAME_APPSTORE_IPA}"
             fi
         fi
     elif [ $USING_SCP -eq 1 ]; then

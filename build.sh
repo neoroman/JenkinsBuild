@@ -48,11 +48,11 @@ if [ -z "$OBFUSCATION_TEST" -a -f ${APP_ROOT_PREFIX}/${TOP_PATH}/.htaccess ]; th
         echo "[DRY-RUN] skip distribution site install/update: ${APP_ROOT_PREFIX}/${TOP_PATH}/installOrUpdate.sh"
       else
         if test -n "$sudoPassword"; then
-          sudo -S su ${jenkinsUser} -c "${APP_ROOT_PREFIX}/${TOP_PATH}/installOrUpdate.sh  2>&1" <<<"${sudoPassword}"
-          sudo -S su ${jenkinsUser} -c "chmod -R 777 ${APP_ROOT_PREFIX}/${TOP_PATH}  2>&1" <<<"${sudoPassword}"
+          jb_exec "distribution site install/update as jenkinsUser" sudo -S su "${jenkinsUser}" -c "${APP_ROOT_PREFIX}/${TOP_PATH}/installOrUpdate.sh  2>&1" <<<"${sudoPassword}"
+          jb_exec "distribution site chmod as jenkinsUser" sudo -S su "${jenkinsUser}" -c "chmod -R 777 ${APP_ROOT_PREFIX}/${TOP_PATH}  2>&1" <<<"${sudoPassword}"
         else
-          ${APP_ROOT_PREFIX}/${TOP_PATH}/installOrUpdate.sh  2>&1
-          chmod -R 777 ${APP_ROOT_PREFIX}/${TOP_PATH}  2>&1
+          jb_exec "distribution site install/update" "${APP_ROOT_PREFIX}/${TOP_PATH}/installOrUpdate.sh" 2>&1
+          jb_exec "distribution site chmod" chmod -R 777 "${APP_ROOT_PREFIX}/${TOP_PATH}" 2>&1
         fi
       fi
   fi
@@ -78,7 +78,7 @@ if [[ "$INPUT_OS" == "android" ]]; then
         echo "Testing obfuscation code..."
         source ./platform/android.sh
         # Create dummy APK file
-        touch ${OUTPUT_FOLDER}/${APK_GOOGLESTORE}
+        jb_exec "create dummy android apk for obfuscation test" touch "${OUTPUT_FOLDER}/${APK_GOOGLESTORE}"
         makeObfuscationScreenshot
         exit 0
       fi
@@ -151,7 +151,7 @@ if [ -f $OUTPUT_FOLDER/$OUTPUT_FILENAME_JSON ]; then
   ##############################################################################
   ## Reorder html filetime by builTime in json file
   if [ -f ${APP_ROOT_PREFIX}/${TOP_PATH}/src/shell/reorderFileTime.sh ]; then
-    ${APP_ROOT_PREFIX}/${TOP_PATH}/src/shell/reorderFileTime.sh -p $INPUT_OS >/dev/null 2>&1
+    jb_exec "reorder html file time" "${APP_ROOT_PREFIX}/${TOP_PATH}/src/shell/reorderFileTime.sh" -p "$INPUT_OS" >/dev/null 2>&1
   fi
   ##############################################################################
 fi

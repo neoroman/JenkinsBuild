@@ -89,3 +89,11 @@ export PRD_PATH="$HOME/.openclaw/workspace/working-copy/JenkinsBuild/docs/RALPH_
 | 2026-04-07 | Iter 25: PRD 상단 규칙에 `ralph.sh` 집계 방식(코드 펜스 제외·줄 시작 GFM 태스크 목록만) 명시 |
 | 2026-04-07 | Iter 30: 규칙·진행 메모에서 태스크 리터럴 제거(서브스트링 검색 오탐 방지); `PRD_PATH`→`ralph.sh check` Completed 20 / Remaining 0 재확인 |
 | 2026-04-07 | Iter 31: `--dry-run`/`--dry-run-step` 추가, `platform/jb_dryrun.sh` 도입, iOS/Android 단계 체크포인트 및 `docs/DRY_RUN_CHECKLIST.md` 작성 |
+
+## Phase 9 — 강력 리팩터링 2차 (실행부 분리/검증 강화)
+
+- [x] `platform/android.sh` 실행부를 `android_exec_*` 함수(prepare/build/artifact/cleanup)로 분리하고 각 함수 단위 dry-run 체크포인트를 추가한다.
+- [x] `platform/ios.sh` 실행부를 `ios_exec_*` 함수(prepare/xcodebuild/export/sign/cleanup)로 분리하고 각 함수 단위 dry-run 체크포인트를 추가한다.
+- [x] 파일 쓰기/삭제 지점을 공통 래퍼(`jb_fs_write`, `jb_fs_copy`, `jb_fs_remove`)로 통일해 dry-run에서 실제 I/O를 차단한다.
+- [x] 외부 명령 실행을 공통 래퍼(`jb_exec`)로 통일해 dry-run 시 실행 계획/인자만 출력하도록 한다.
+- [x] `docs/DRY_RUN_CHECKLIST.md`에 Android/iOS 함수 단위 테스트 케이스(성공/실패/skip)를 추가하고 실제 실행 결과를 기록한다.
