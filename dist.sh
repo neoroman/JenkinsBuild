@@ -220,17 +220,25 @@ if [ "$UPDATE_VERSION" -eq 1 ]; then
     AOS_FILE=$(find . -name 'build.gradle' -exec grep -lir 'com.android.application' {} \; 2>/dev/null | grep -v 'node_modules' | head -n1)
     hide_spinner
     if [ -f "$AOS_FILE" ]; then
-      oldVersionName=$(grep 'versionName' "$AOS_FILE" | sort | uniq | xargs | tr -d '[A-Za-z]-_() ')
-      oldVersionCode=$(grep 'versionCode ' "$AOS_FILE" | sort | uniq | xargs | tr -d '[A-Za-z]-_() ')
+      oldVersionName=$(dist_extract_android_version_name "$AOS_FILE")
+      oldVersionCode=$(dist_extract_android_version_code "$AOS_FILE")
       parsedTagVersion=$(getParsedVersion "${VERSIONS}")
-      if ! checkVersionUpdate "$parsedTagVersion" "$oldVersionName" "Android" "$AOS_FILE"; then
-        printGradleVersionNameError
+      set +e
+      checkVersionUpdate "$parsedTagVersion" "$oldVersionName" "Android" "$AOS_FILE"
+      _cv_rv=$?
+      set -e
+      if [ "$_cv_rv" -ne 0 ]; then
+        if [ "$_cv_rv" -eq 1 ]; then
+          printGradleVersionNameError
+        fi
         exit 1
       fi
       if [ "$DRY_RUN" -eq 1 ]; then
         echo "  (DEBUG) Android: versionName ${oldVersionName} <== ${MARKET_VERSION}, versionCode ${oldVersionCode} <== ${BUILD_NUMBER}"
       else
-        sed -e "/versionCode =/!s/versionCode .*/versionCode $BUILD_NUMBER/g" \
+        sed -e "s/versionCode = [0-9][0-9]*/versionCode = $BUILD_NUMBER/g" \
+            -e "/versionCode =/!s/versionCode .*/versionCode $BUILD_NUMBER/g" \
+            -e "s/versionName = \".*\"/versionName = \"$MARKET_VERSION\"/g" \
             -e "s/versionName \".*\"/versionName \"$MARKET_VERSION\"/g" \
             "$AOS_FILE" > "${AOS_FILE}.new"
         mv "${AOS_FILE}.new" "$AOS_FILE"

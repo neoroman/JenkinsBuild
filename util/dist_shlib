@@ -286,6 +286,43 @@ function iosHighestMarketingVersion() {
   done < <(grep 'MARKETING_VERSION =' "$pbx" 2>/dev/null || true)
   echo "$best"
 }
+
+# Keep only digits and dots so Kotlin/Groovy noise (e.g. ="2.0.4") does not break vercomp.
+function dist_normalize_semver_loose() {
+  local s="$1"
+  s=$(printf '%s' "$s" | tr -cd '0-9.')
+  s="${s#.}"
+  s="${s%.}"
+  printf '%s' "$s"
+}
+
+# First app module build.gradle: marketing version (Groovy versionName "x" or Kotlin versionName = "x").
+function dist_extract_android_version_name() {
+  local file="$1"
+  local vn=""
+  if [ ! -f "$file" ]; then
+    echo ""
+    return 0
+  fi
+  vn=$(grep 'versionName' "$file" 2>/dev/null | grep -v '^[[:space:]]*//' | sed -n 's/.*versionName[^"]*"\([^"]*\)".*/\1/p' | tr -d ' \r' | head -n 1)
+  if [ -z "$vn" ]; then
+    vn=$(grep 'versionName' "$file" 2>/dev/null | grep -v '^[[:space:]]*//' | sed -n "s/.*versionName[^']*'\([^']*\)'.*/\1/p" | tr -d ' \r' | head -n 1)
+  fi
+  printf '%s' "$vn"
+}
+
+# versionCode / versionCode = N (first application module line).
+function dist_extract_android_version_code() {
+  local file="$1"
+  local vc=""
+  if [ ! -f "$file" ]; then
+    echo ""
+    return 0
+  fi
+  vc=$(grep 'versionCode' "$file" 2>/dev/null | grep -v '^[[:space:]]*//' | head -n 1 | sed -n 's/.*versionCode[^0-9]*\([0-9][0-9]*\).*/\1/p' | tr -d ' \r')
+  printf '%s' "$vc"
+}
+
 function checkVersionUpdate() {
   local parsedTagVersion="$1"
   local currentVersion="$2"
@@ -293,6 +330,17 @@ function checkVersionUpdate() {
   local versionSource="${4:-}"
   if [ "${UPDATE_VERSION_FORCE:-0}" -eq 1 ]; then
     return 0
+  fi
+  parsedTagVersion=$(dist_normalize_semver_loose "$parsedTagVersion")
+  currentVersion=$(dist_normalize_semver_loose "$currentVersion")
+  if [ -z "$parsedTagVersion" ] || [ -z "$currentVersion" ]; then
+    echo "  [$SCRIPT_NAME] $platform: 버전 비교를 할 수 없습니다(정규화 후 비어 있음)."
+    echo "  [$SCRIPT_NAME]   태그에서: '$1' → '${parsedTagVersion:-?}' / 프로젝트: '$2' → '${currentVersion:-?}'"
+    if [ -n "$versionSource" ]; then
+      echo "  [$SCRIPT_NAME]   출처: $versionSource"
+    fi
+    echo "  [$SCRIPT_NAME] Gradle의 versionName 줄이 Groovy/Kotlin DSL 형식인지 확인하세요."
+    return 2
   fi
   local versionComparison
   versionComparison=$(vercomp "$parsedTagVersion" "$currentVersion")
@@ -324,7 +372,7 @@ function shouldUpdateVersion() {
     fi
   fi
   if [ -n "$HAS_AOS_FILE" ]; then
-    oldVersionName=$(grep 'versionName' "$HAS_AOS_FILE" | awk -F'"' '{print $2}' | head -n 1)
+    oldVersionName=$(dist_extract_android_version_name "$HAS_AOS_FILE")
     if [ -n "$oldVersionName" ]; then
       checkVersionUpdate "$parsedTagVersion" "$oldVersionName" "Android" "$HAS_AOS_FILE" && SHOULD_UPDATE=1
     fi
