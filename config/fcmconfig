@@ -6,7 +6,19 @@
 #
 # Dry-run: set FCM_DRY_RUN=1 to print planned copy pairs (src -> dst) only; no mkdir/cp.
 #
-fcm_resolve_path() {
+fcm_resolve_src() {
+  _p="$1"
+  case "$_p" in
+    /*) printf '%s' "$_p" ;;
+    '') printf '%s' '' ;;
+    *)
+      _site="${APP_ROOT_PREFIX%/}/${TOP_PATH#/}"
+      printf '%s' "$_site/$_p"
+      ;;
+  esac
+}
+
+fcm_resolve_dst() {
   _p="$1"
   case "$_p" in
     /*) printf '%s' "$_p" ;;
@@ -40,8 +52,8 @@ fcm_try_copy_pair() {
     ;;
   esac
 
-  _abs_src=$(fcm_resolve_path "$_src")
-  _abs_dst=$(fcm_resolve_path "$_dst")
+  _abs_src=$(fcm_resolve_src "$_src")
+  _abs_dst=$(fcm_resolve_dst "$_dst")
 
   if [ ! -f "$_abs_src" ]; then
     echo "       [FCM] skip (${_tag} ${_variant}): source missing: $_abs_src" >&2
