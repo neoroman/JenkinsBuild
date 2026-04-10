@@ -86,5 +86,4 @@
 
 - `docs/CONFIG_AND_SECRETS.md` — 민감 정보·외부 주입 개선.
 - `docs/SHELL_STRICT_AND_SHEBANG.md` — `build.sh` vs `dist.sh` shebang·strict mode 정책(무엇을 바로 바꾸지 않을지 포함).
-- `docs/RALPH_REFACTOR_TODO.md` — `scripts/ralph.sh` 루프용 리팩터링 체크리스트.
 - `docs/dist_comparison.md` — `dist.sh` vs 과거 단일 스크립트 비교.

@@ -57,8 +57,6 @@ bash -ex "${WORKSPACE}/jenkins/build.sh" -p android --toppath "NeoRoman/AppProje
 
 - [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md)
 - [docs/CONFIG_AND_SECRETS.md](docs/CONFIG_AND_SECRETS.md)
-- [docs/RALPH_REFACTOR_TODO.md](docs/RALPH_REFACTOR_TODO.md)
-- [docs/RALPH_AUTOMATED_RUN.md](docs/RALPH_AUTOMATED_RUN.md)
 - [docs/DRY_RUN_CHECKLIST.md](docs/DRY_RUN_CHECKLIST.md)
 - [docs/dist_comparison.md](docs/dist_comparison.md)
 

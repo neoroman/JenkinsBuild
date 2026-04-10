@@ -67,4 +67,4 @@
 
 ---
 
-*관련: `docs/ARCHITECTURE.md`(실행 흐름), `docs/RALPH_REFACTOR_TODO.md`(Phase 2).*
+*관련: `docs/ARCHITECTURE.md`(실행 흐름).*
