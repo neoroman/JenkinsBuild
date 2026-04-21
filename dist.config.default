@@ -1,9 +1,9 @@
 [ios "tagPrefix"]
-	develop = D-
-	release = RI-
+	release = R
+	develop = D
 [android "tagPrefix"]
-	release = RA-
-	develop = D-
+	release = R
+	develop = D
 [version]
 	autoUpdate = true
 [jenkins]
@@ -11,6 +11,7 @@
 	job =
 	user =
 	token =
+	triggerToken =
 [remote]
 	# Push 대상 remote: Forgejo 등은 push URL에 맞는 문자열로 바꾸거나, 아래 name으로 고정.
 	# remote.name 이 있으면 pushUrlMatch 보다 우선합니다.

@@ -29,6 +29,7 @@ JENKINS_URL=""
 JENKINS_JOB_NAME=""
 JENKINS_USER=""
 JENKINS_TOKEN=""
+JENKINS_TRIGGER_TOKEN=""
 JENKINS_JAR="/tmp/jenkins-cli.jar"
 CONFIG_FILE=""
 
@@ -87,6 +88,10 @@ while [[ $# -gt 0 ]]; do
       ;;
     --jenkins-token)
       JENKINS_TOKEN="$2"
+      shift 2
+      ;;
+    --jenkins-trigger-token)
+      JENKINS_TRIGGER_TOKEN="$2"
       shift 2
       ;;
     -h|--help)

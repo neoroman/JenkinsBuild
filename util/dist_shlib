@@ -387,12 +387,14 @@ function loadJenkinsConfig() {
     JENKINS_JOB_NAME=$(git config -f "$cfg" --get "jenkins.job" 2>/dev/null || true)
     JENKINS_USER=$(git config -f "$cfg" --get "jenkins.user" 2>/dev/null || true)
     JENKINS_TOKEN=$(git config -f "$cfg" --get "jenkins.token" 2>/dev/null || true)
+    JENKINS_TRIGGER_TOKEN=$(git config -f "$cfg" --get "jenkins.triggerToken" 2>/dev/null || true)
   fi
   if [ -f "dist.config" ] && [ -z "$JENKINS_URL" ]; then
     JENKINS_URL=$(git config -f "dist.config" --get "jenkins.url" 2>/dev/null || true)
     JENKINS_JOB_NAME=$(git config -f "dist.config" --get "jenkins.job" 2>/dev/null || true)
     JENKINS_USER=$(git config -f "dist.config" --get "jenkins.user" 2>/dev/null || true)
     JENKINS_TOKEN=$(git config -f "dist.config" --get "jenkins.token" 2>/dev/null || true)
+    JENKINS_TRIGGER_TOKEN=$(git config -f "dist.config" --get "jenkins.triggerToken" 2>/dev/null || true)
   fi
 }
 
@@ -452,7 +454,36 @@ function downloadJenkinsCLI() {
 }
 function triggerJenkinsBuild() {
   local url="$1" jobName="$2" jarFile="$3"
+  local baseUrl jobPath triggerUrl causeText
   echo "  [$SCRIPT_NAME] Triggering Jenkins build for job '$jobName'..."
+  if [ -n "${JENKINS_TRIGGER_TOKEN:-}" ]; then
+    baseUrl="${url%/}"
+    if [[ "$jobName" == job/* || "$jobName" == */job/* ]]; then
+      jobPath="$jobName"
+    else
+      jobPath="job/$jobName"
+    fi
+    triggerUrl="${baseUrl}/${jobPath}/buildWithParameters"
+    causeText="${SCRIPT_NAME}+tag+${FINAL_TAG}"
+    if [ "$DRY_RUN" -eq 1 ]; then
+      echo "  [$SCRIPT_NAME] DRY-RUN: Would trigger remote token build: ${triggerUrl}"
+      return 0
+    fi
+    show_spinner
+    if curl -fsS -X POST \
+      --data-urlencode "token=${JENKINS_TRIGGER_TOKEN}" \
+      --data-urlencode "cause=${causeText}" \
+      --data-urlencode "TAG=${FINAL_TAG}" \
+      --data-urlencode "RELEASE_TYPE=${RELEASE_TYPE}" \
+      --data-urlencode "PLATFORM=${INPUT_OS}" \
+      "${triggerUrl}" >/dev/null; then
+      hide_spinner
+      echo "  [$SCRIPT_NAME] Jenkins remote-token build triggered successfully."
+      return 0
+    fi
+    hide_spinner
+    echo "  [$SCRIPT_NAME] WARN: Remote-token trigger failed. Fallback to Jenkins CLI build."
+  fi
   if [ -z "$JENKINS_USER" ] || [ -z "$JENKINS_TOKEN" ]; then
     if [ "${NON_INTERACTIVE:-0}" -eq 1 ]; then
       echo "  [$SCRIPT_NAME] ERROR: Jenkins credentials required in config for non-interactive mode (-y)."
@@ -501,6 +532,7 @@ function makeConfig() {
 	job =
 	user =
 	token =
+	triggerToken =
 [remote]
 	pushUrlMatch = github.com
 DEF
@@ -513,6 +545,7 @@ DEF
 	job =
 	user =
 	token =
+	triggerToken =
 DEF
     fi
     if ! grep -q '^\[remote\]' "$configFile" 2>/dev/null; then
@@ -549,7 +582,7 @@ function help() {
     echo "       $SCRIPT_NAME [ -t | --tag <tag name>] [ -p | --platform {ios|android|both}] "
     echo "          [ -c | --config <config_file>] [ -r | --release-type {release|develop}] "
     echo "          [ -a | --auto-update] [ -uf | --force-update] [ -y | --yes] [ --dry-run]"
-    echo "          [ --jenkins-url <url>] [ --jenkins-job <job>] [ --jenkins-user <user>] [ --jenkins-token <token>]"
+    echo "          [ --jenkins-url <url>] [ --jenkins-job <job>] [ --jenkins-user <user>] [ --jenkins-token <token>] [ --jenkins-trigger-token <token>]"
     echo ""
     echo "Examples:"
     echo "       $SCRIPT_NAME -t '1.0.0.123'"
@@ -583,6 +616,7 @@ function help() {
     echo "   --jenkins-job      Jenkins job name"
     echo "   --jenkins-user     Jenkins user ID"
     echo "   --jenkins-token    Jenkins API token"
+    echo "   --jenkins-trigger-token  Jenkins 'Trigger builds remotely' token (preferred for script mode)"
     echo ""
     echo "dist.config [remote]: remote.name overrides; else remote.pushUrlMatch (default github.com) picks push remote."
     echo ""
