@@ -1,3 +1,6 @@
+# Example trigger command:
+# ./dist.sh -t "D-1.2.3.456" -uf -y --jenkins-url "https://jenkins.example.com" --jenkins-job "ExampleFolder/job/ExampleAndroidJob" --jenkins-trigger-token "<TOKEN_NAME>"
+
 [ios "tagPrefix"]
 	release = R
 	develop = D
@@ -7,11 +10,11 @@
 [version]
 	autoUpdate = true
 [jenkins]
-	url =
-	job =
+	url = https://jenkins.example.com
+	job = ExampleFolder/job/ExampleAndroidJob
 	user =
 	token =
-	triggerToken =
+	triggerToken = <TOKEN_NAME>
 [remote]
 	# Push 대상 remote: Forgejo 등은 push URL에 맞는 문자열로 바꾸거나, 아래 name으로 고정.
 	# remote.name 이 있으면 pushUrlMatch 보다 우선합니다.
