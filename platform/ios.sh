@@ -325,6 +325,10 @@ function doExecuteIOS() {
             usingXcodeAbove_14_3=1
         fi
         if [ $USING_ADHOC -eq 1 ]; then
+            xcodeSourcePackageArgument="-derivedDataPath ${DST_ROOT} -clonedSourcePackagesDirPath ${DST_ROOT}/SourcePackages"
+            # Step 1.2-1: SPM 재해석 강제 for AdHoc
+            $XCODE -resolvePackageDependencies $XCODE_OPTION "${XCODE_WORKSPACE}" -scheme "${SCHEME_ADHOC}" -destination "generic/platform=iOS" archive ${xcodeSourcePackageArgument} -verbose
+
             # Step 1.2: Build target for AdHoc
             $XCODE $XCODE_OPTION "${XCODE_WORKSPACE}" -scheme "${SCHEME_ADHOC}" -destination "generic/platform=iOS" archive ${xcodeArgument}/${SCHEME_ADHOC} -verbose
 
