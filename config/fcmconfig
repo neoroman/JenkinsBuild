@@ -1,7 +1,8 @@
 #!/bin/sh
 #
 # Copy Firebase / FCM config files from jsonConfig (both release_* and debug_* when defined).
-# Android: IS_RELEASE=1 → GoogleStore FCM only; else → LiveServer FCM only.
+# Android: IS_RELEASE=1 → GoogleStore FCM only; also copy release_src into $WORKSPACE/app/
+#            (same basename as source). else → LiveServer FCM only.
 # Sourced by build.sh after utilconfig (WORKSPACE, jsonConfig, JQ, IS_RELEASE are set).
 #
 # Dry-run: set FCM_DRY_RUN=1 to print planned copy pairs (src -> dst) only; no mkdir/cp.
@@ -92,6 +93,45 @@ fcm_copy_block() {
   fcm_try_copy_pair "$_jqpath" "$_tag" debug
 }
 
+# Android release: mirror GoogleService/google-services.json from release_src into $WORKSPACE/app/
+# (in addition to release_dst from fcm_copy_block).
+fcm_android_release_copy_release_src_to_app() {
+  _jqpath="$1"
+  _tag="$2"
+
+  if ! $JQ -e "${_jqpath} | type == \"object\" and (.release_src | type == \"string\") and (.release_src != \"\")" "$jsonConfig" >/dev/null 2>&1; then
+    return 0
+  fi
+
+  _src=$($JQ -r "${_jqpath}.release_src" "$jsonConfig")
+  _abs_src=$(fcm_resolve_src "$_src")
+  _app_root="${WORKSPACE%/}/app"
+  _abs_dst="${_app_root}/$(basename "$_abs_src")"
+
+  if [ ! -f "$_abs_src" ]; then
+    echo "       [FCM] skip (${_tag} release → app): source missing: $_abs_src" >&2
+    return 0
+  fi
+
+  if [ "${FCM_DRY_RUN:-0}" -eq 1 ]; then
+    echo "       [FCM] dry-run (${_tag} release → app): $_abs_src -> $_abs_dst"
+    return 0
+  fi
+
+  if [ ! -d "$_app_root" ]; then
+    mkdir -p "$_app_root" || {
+      echo "       [FCM] skip (${_tag} release → app): could not create directory: $_app_root" >&2
+      return 0
+    }
+  fi
+
+  cp "$_abs_src" "$_abs_dst" || {
+    echo "       [FCM] skip (${_tag} release → app): copy failed: $_abs_src -> $_abs_dst" >&2
+    return 0
+  }
+  echo "       [FCM] ${_tag} (release → app): $(basename "$_abs_src") -> app/$(basename "$_abs_src")"
+}
+
 # Sourced by build.sh only: use return (never exit) so the main script always continues.
 if [ ! -f "$jsonConfig" ]; then
   return 0
@@ -104,6 +144,7 @@ fi
 # REMARK: Actual FCM copy dispatch (only runs when jsonConfig exists and jq is available).
 #         iOS: AppStore and Enterprise blocks are both attempted (each copies release_* and debug_* if defined).
 #         Android: GoogleStore when IS_RELEASE=1, otherwise LiveServer (same per-block copy rules).
+#                  In release mode, release_src is also copied to $WORKSPACE/app/<basename>.
 #
 case "$INPUT_OS" in
   ios)
@@ -113,6 +154,7 @@ case "$INPUT_OS" in
   android)
     if [ "${IS_RELEASE:-0}" -eq 1 ]; then
       fcm_copy_block '.android.GoogleStore.FCM' 'Android GoogleStore FCM'
+      fcm_android_release_copy_release_src_to_app '.android.GoogleStore.FCM' 'Android GoogleStore FCM'
     else
       fcm_copy_block '.android.LiveServer.FCM' 'Android LiveServer FCM'
     fi
