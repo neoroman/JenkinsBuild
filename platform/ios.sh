@@ -76,6 +76,10 @@ function initializeIOSBuildConfig() {
     if [ ! -d $DST_ROOT ]; then
         jb_fs_write "ios dst root mkdir" mkdir -p "$DST_ROOT"
         chmod 777 $DST_ROOT
+    else
+        jb_fs_remove "ios cleanup dst root" rm -rf "$DST_ROOT"
+        jb_fs_write "ios dst root mkdir" mkdir -p "$DST_ROOT"
+        chmod 777 $DST_ROOT
     fi
     if [ -d $DST_ROOT/Applications ]; then
         jb_fs_remove "ios cleanup dst applications" rm -rf "${DST_ROOT}/Applications"
