@@ -59,6 +59,7 @@ bash -ex "${WORKSPACE}/jenkins/build.sh" -p android --toppath "NeoRoman/AppProje
 - [docs/CONFIG_AND_SECRETS.md](docs/CONFIG_AND_SECRETS.md)
 - [docs/DRY_RUN_CHECKLIST.md](docs/DRY_RUN_CHECKLIST.md)
 - [docs/dist_comparison.md](docs/dist_comparison.md)
+- [docs/SWITCH_BRANCH.md](docs/SWITCH_BRANCH.md) — 상용/개발 브랜치 전환 도구 (`switch.sh`, `dev_switch.config.default`)
 
 ## 작성자
 

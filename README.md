@@ -59,6 +59,7 @@ bash -ex "${WORKSPACE}/jenkins/build.sh" -p android --toppath "NeoRoman/AppProje
 - [docs/CONFIG_AND_SECRETS.md](docs/CONFIG_AND_SECRETS.md)
 - [docs/DRY_RUN_CHECKLIST.md](docs/DRY_RUN_CHECKLIST.md)
 - [docs/dist_comparison.md](docs/dist_comparison.md)
+- [docs/SWITCH_BRANCH.md](docs/SWITCH_BRANCH.md) — develop/release branch switch helper (`switch.sh`, `dev_switch.config.default`)
 
 ## Author
 

@@ -1,0 +1,37 @@
+[repo]
+name = Example-Android
+push_url = ssh://git@git.example.com:22/example-org/Example-App.git
+remote_name = origin
+release_branch = master
+develop_branch = develop/main
+
+# rule.<name> sections declare production vs development string differences.
+# - file: path to file (relative to repository root)
+# - prod: production string
+# - dev: development string
+#
+# Example:
+# bash switch.sh \
+#   --mode generate-config \
+#   --release-branch master \
+#   --develop-branch develop/main
+
+[rule.android_api_base_url]
+file = app/src/main/res/values/config.xml
+prod = https://api.example.com
+dev = https://api-dev.example.com
+
+[rule.android_oauth_client_id]
+file = app/src/main/res/values/config.xml
+prod = example-android-prod-client
+dev = example-android-dev-client
+
+[rule.android_app_name]
+file = app/src/main/res/values/strings.xml
+prod = ExampleApp
+dev = ExampleApp Dev
+
+[rule.android_logging_flag]
+file = app/build.gradle
+prod = buildConfigField "boolean", "ENABLE_VERBOSE_LOG", "false"
+dev = buildConfigField "boolean", "ENABLE_VERBOSE_LOG", "true"

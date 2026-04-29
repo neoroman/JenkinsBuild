@@ -22,3 +22,8 @@ config/defaultconfig.local
 *.log
 # IxShield smoke: sed mutates splash copy under PROJECT_NAME (see test/obfuscation_ios.sh)
 test/ios/test/ObjC/
+
+# Develop/release switch tool outputs (see docs/SWITCH_BRANCH.md)
+/dev_switch.config
+/dev_switch.config.zip
+/.generate-config/

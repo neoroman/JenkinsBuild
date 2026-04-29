@@ -16,6 +16,7 @@ SEVERITY="${SHELLCHECK_SEVERITY:-error}"
 
 files=(
   build.sh dist.sh
+  switch.sh
   config/defaultconfig
   config/defaultconfig.local.example
   config/argsparser
