@@ -1,6 +1,6 @@
 #!/bin/sh
 #
-# Copy Firebase / FCM config files from jsonConfig (both release_* and debug_* when defined).
+# Copy Firebase / FCM config files from jsonConfig (release_*, debug_*, and ini_* when defined).
 # Android: IS_RELEASE=1 → GoogleStore FCM only; also copy release_src into $WORKSPACE/app/
 #            (same basename as source). else → LiveServer FCM only.
 # Sourced by build.sh after utilconfig (WORKSPACE, jsonConfig, JQ, IS_RELEASE are set).
@@ -48,6 +48,13 @@ fcm_try_copy_pair() {
     _src=$($JQ -r "${_jqpath}.debug_src" "$jsonConfig")
     _dst=$($JQ -r "${_jqpath}.debug_dst" "$jsonConfig")
     ;;
+  ini)
+    if ! $JQ -e "${_jqpath} | type == \"object\" and (.ini_src | type == \"string\") and (.ini_dst | type == \"string\") and (.ini_src != \"\") and (.ini_dst != \"\")" "$jsonConfig" >/dev/null 2>&1; then
+      return 0
+    fi
+    _src=$($JQ -r "${_jqpath}.ini_src" "$jsonConfig")
+    _dst=$($JQ -r "${_jqpath}.ini_dst" "$jsonConfig")
+    ;;
   *)
     return 0
     ;;
@@ -91,6 +98,7 @@ fcm_copy_block() {
 
   fcm_try_copy_pair "$_jqpath" "$_tag" release
   fcm_try_copy_pair "$_jqpath" "$_tag" debug
+  fcm_try_copy_pair "$_jqpath" "$_tag" ini
 }
 
 # Android release: mirror GoogleService/google-services.json from release_src into $WORKSPACE/app/
