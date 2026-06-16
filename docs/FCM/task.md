@@ -1,0 +1,4 @@
+- [x] FCM 설정 복사 동적 처리 구현 및 검증
+  - [x] `test/config.json`에 테스트용 FCM 블록 추가 및 테스트 파일 생성
+  - [x] `config/fcmconfig` 스크립체 수정 (동적 감지 및 순회)
+  - [x] `FCM_DRY_RUN=1`을 통한 동작 검증

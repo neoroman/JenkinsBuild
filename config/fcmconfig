@@ -33,32 +33,11 @@ fcm_try_copy_pair() {
   _tag="$2"
   _variant="$3"
 
-  case "$_variant" in
-  release)
-    if ! $JQ -e "${_jqpath} | type == \"object\" and (.release_src | type == \"string\") and (.release_dst | type == \"string\") and (.release_src != \"\") and (.release_dst != \"\")" "$jsonConfig" >/dev/null 2>&1; then
-      return 0
-    fi
-    _src=$($JQ -r "${_jqpath}.release_src" "$jsonConfig")
-    _dst=$($JQ -r "${_jqpath}.release_dst" "$jsonConfig")
-    ;;
-  debug)
-    if ! $JQ -e "${_jqpath} | type == \"object\" and (.debug_src | type == \"string\") and (.debug_dst | type == \"string\") and (.debug_src != \"\") and (.debug_dst != \"\")" "$jsonConfig" >/dev/null 2>&1; then
-      return 0
-    fi
-    _src=$($JQ -r "${_jqpath}.debug_src" "$jsonConfig")
-    _dst=$($JQ -r "${_jqpath}.debug_dst" "$jsonConfig")
-    ;;
-  ini)
-    if ! $JQ -e "${_jqpath} | type == \"object\" and (.ini_src | type == \"string\") and (.ini_dst | type == \"string\") and (.ini_src != \"\") and (.ini_dst != \"\")" "$jsonConfig" >/dev/null 2>&1; then
-      return 0
-    fi
-    _src=$($JQ -r "${_jqpath}.ini_src" "$jsonConfig")
-    _dst=$($JQ -r "${_jqpath}.ini_dst" "$jsonConfig")
-    ;;
-  *)
+  if ! $JQ -e "${_jqpath} | type == \"object\" and (.${_variant}_src | type == \"string\") and (.${_variant}_dst | type == \"string\") and (.${_variant}_src != \"\") and (.${_variant}_dst != \"\")" "$jsonConfig" >/dev/null 2>&1; then
     return 0
-    ;;
-  esac
+  fi
+  _src=$($JQ -r "${_jqpath}.${_variant}_src" "$jsonConfig")
+  _dst=$($JQ -r "${_jqpath}.${_variant}_dst" "$jsonConfig")
 
   _abs_src=$(fcm_resolve_src "$_src")
   _abs_dst=$(fcm_resolve_dst "$_dst")
@@ -96,9 +75,14 @@ fcm_copy_block() {
     return 0
   fi
 
-  fcm_try_copy_pair "$_jqpath" "$_tag" release
-  fcm_try_copy_pair "$_jqpath" "$_tag" debug
-  fcm_try_copy_pair "$_jqpath" "$_tag" ini
+  _variants=$($JQ -r "${_jqpath} | to_entries | . as \$entries | .[] | select(.key | endswith(\"_src\")) | .key as \$key | (\$key | sub(\"_src$\"; \"\")) as \$prefix | (\$prefix + \"_dst\") as \$dst_key | (\$entries | map(select(.key == \$dst_key and (.value | type == \"string\") and .value != \"\")) | .[0].value) as \$dst_val | select(\$dst_val != null) | select(.value | type == \"string\" and . != \"\") | \$prefix" "$jsonConfig" 2>/dev/null)
+
+  if [ -n "$_variants" ]; then
+    echo "$_variants" | while read -r _variant; do
+      [ -z "$_variant" ] && continue
+      fcm_try_copy_pair "$_jqpath" "$_tag" "$_variant"
+    done
+  fi
 }
 
 # Android release: mirror GoogleService/google-services.json from release_src into $WORKSPACE/app/
