@@ -49,7 +49,7 @@ jb_ixshield_make_obfuscation_screenshot() {
                     echo "Please install missing commands using: brew install a2ps ghostscript imagemagick"
                 else
                     GS=$(command -v gs)
-                    CONVERT=$(command -v convert)
+                    CONVERT=$(command -v magick)
 
                     # Execute commands with proper path tracking
                     MERONG_FILE="$WORKSPACE/merong.txt"
@@ -61,10 +61,22 @@ jb_ixshield_make_obfuscation_screenshot() {
                         echo "Created check output file"
 
                         # Try direct text-to-image conversion with ImageMagick
-                        $CONVERT -background white -fill black -font Courier -pointsize 14 \
-                        label:"$(cat $MERONG_FILE)" \
-                        -rotate 0 -bordercolor white -border 5 \
-                        "$OUTPUT_FOLDER/$OUTPUT_FILENAME_APPSTORE_IX_SHIELD_CHECK"
+                        # $CONVERT -background white -fill black -font Courier -pointsize 14 \
+                        # label:"$(cat $MERONG_FILE)" \
+                        # -rotate 0 -bordercolor white -border 5 \
+                        # "$OUTPUT_FOLDER/$OUTPUT_FILENAME_APPSTORE_IX_SHIELD_CHECK"
+
+                        FONT="/System/Library/Fonts/AppleSDGothicNeo.ttc"
+                        "$CONVERT" \
+                            -background white \
+                            -fill black \
+                            -font "$FONT" \
+                            -pointsize 14 \
+                            -size 1400x \
+                            "caption:@$MERONG_FILE" \
+                            -bordercolor white \
+                            -border 5 \
+                            "$OUTPUT_FOLDER/$OUTPUT_FILENAME_APPSTORE_IX_SHIELD_CHECK"
 
                         if [ -f "$OUTPUT_FOLDER/$OUTPUT_FILENAME_APPSTORE_IX_SHIELD_CHECK" ]; then
                             echo "Created obfuscation screenshot with ImageMagick"

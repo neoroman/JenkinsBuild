@@ -34,7 +34,7 @@ jb_android_make_obfuscation_screenshot() {
                         echo "Please install missing commands using: brew install ghostscript imagemagick"
                     else
                         GS=$(command -v gs)
-                        CONVERT=$(command -v convert)
+                        CONVERT=$(command -v magick)
 
                         MERONG_FILE="$WORKSPACE/$ANDROID_APP_PATH/merong.txt"
 
@@ -46,11 +46,22 @@ jb_android_make_obfuscation_screenshot() {
                         if [ -f "$MERONG_FILE" ]; then
                             echo "Created check output file"
 
-                            $CONVERT -background white -fill black -font Courier -pointsize 14 \
-                                label:"$(cat $MERONG_FILE)" \
-                                -rotate 0 -bordercolor white -border 5 \
-                                "$OUTPUT_FOLDER/$Obfuscation_SCREENSHOT"
+                            # $CONVERT -background white -fill black -font Courier -pointsize 14 \
+                            #     label:"$(cat $MERONG_FILE)" \
+                            #     -rotate 0 -bordercolor white -border 5 \
+                            #     "$OUTPUT_FOLDER/$Obfuscation_SCREENSHOT"
 
+                            FONT="/System/Library/Fonts/AppleSDGothicNeo.ttc"
+                            "$CONVERT" \
+                                -background white \
+                                -fill black \
+                                -font "$FONT" \
+                                -pointsize 14 \
+                                "label:@${MERONG_FILE}" \
+                                -bordercolor white \
+                                -border 5 \
+                                "$OUTPUT_FOLDER/$Obfuscation_SCREENSHOT"
+                                
                             if [ -f "$OUTPUT_FOLDER/$Obfuscation_SCREENSHOT" ]; then
                                 echo "Created obfuscation screenshot with ImageMagick"
                             else

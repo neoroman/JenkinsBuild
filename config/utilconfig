@@ -11,9 +11,9 @@ if [ $USING_SCREENSHOT -eq 1 ]; then
   if [ ! -f "$GS" ]; then
     GS=$(command -v gs)
   fi
-  CONVERT="/usr/local/bin/convert"
+  CONVERT="/usr/local/bin/magick"
   if [ ! -f "$CONVERT" ]; then
-    CONVERT=$(command -v convert)
+    CONVERT=$(command -v magick)
   fi
 else
   A2PS=""
