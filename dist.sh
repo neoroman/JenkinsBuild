@@ -33,6 +33,7 @@ JENKINS_TRIGGER_TOKEN=""
 JENKINS_JAR="/tmp/jenkins-cli.jar"
 JENKINS_TRIGGERED=0
 CONFIG_FILE=""
+REMOTE_OVERRIDE=""
 
 ### Argument parsing
 while [[ $# -gt 0 ]]; do
@@ -66,6 +67,10 @@ while [[ $# -gt 0 ]]; do
       UPDATE_VERSION=1
       UPDATE_VERSION_FORCE=1
       shift
+      ;;
+    --remote)
+      REMOTE_OVERRIDE="$2"
+      shift 2
       ;;
     -y|--yes)
       NON_INTERACTIVE=1
@@ -116,6 +121,11 @@ if [ -z "$JENKINS_URL" ] || [ -z "$JENKINS_JOB_NAME" ]; then
   loadJenkinsConfig "$CONFIG_FILE"
 fi
 REMOTE_REPO=$(dist_resolve_push_remote "$CONFIG_FILE")
+# --remote 로 push 대상 remote 를 명시하면 dist.config / 자동 추론보다 우선한다.
+if [ -n "$REMOTE_OVERRIDE" ]; then
+  git remote get-url "$REMOTE_OVERRIDE" >/dev/null 2>&1 || { echo "  [$SCRIPT_NAME] Error: unknown remote '$REMOTE_OVERRIDE'"; exit 1; }
+  REMOTE_REPO="$REMOTE_OVERRIDE"
+fi
 
 ### Auto-detect version update when project files exist
 if [ "$UPDATE_VERSION" -eq 0 ] && shouldUpdateVersion; then
