@@ -78,6 +78,9 @@ function getInputTag() {
     fi
   else
     getPrefixOnly
+    # config 가 없으면 사용자가 입력한 태그 접두어(대/소문자)를 그대로 보존한다.
+    # (getPrefixOnly 는 비교용으로 대문자화하므로 v1.7.0.91 이 V1.7.0.91 로 바뀌던 문제 방지)
+    BUILD_TYPE="$(printf '%s' "${GIT_TAG_FULL}" | tr -d '0-9._()')"
   fi
   getParsedVersion
   FINAL_TAG="${BUILD_TYPE}${VERSIONS}"
@@ -108,7 +111,11 @@ function printInputTag() {
 }
 function printResult() {
   echo " ┍━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━┑"
-  echo "     Result - Jenkins build as tag '$FINAL_TAG' started..."
+  if [ "${JENKINS_TRIGGERED:-0}" -eq 1 ]; then
+    echo "     Result - Jenkins build as tag '$FINAL_TAG' triggered..."
+  else
+    echo "     Result - tag '$FINAL_TAG' pushed (Jenkins starts by tag push / not triggered by this script)"
+  fi
   echo " ┕━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━┙"
 }
 function printUntrackError() {
@@ -240,16 +247,18 @@ function spinner() {
     done
 }
 function show_spinner() {
-    tput civis #hide cursor
+    # Jenkins/CI 처럼 TTY 가 없으면 스피너를 쓰지 않는다 (tput 오류/로그 오염 방지)
+    [ -t 1 ] || return 0
+    tput civis 2>/dev/null #hide cursor
     spinner &
     spinner_pid=$!
 }
 function hide_spinner() {
-  if test ! -z "$spinner_pid"; then
+  if test ! -z "${spinner_pid:-}"; then
     kill $spinner_pid 2>/dev/null || true
     wait $spinner_pid 2>/dev/null || true
     unset spinner_pid
-    tput cnorm #show cursor
+    tput cnorm 2>/dev/null #show cursor
     echo -e "\033[1K" # remove echoed one line
   fi
 }
@@ -355,13 +364,51 @@ function checkVersionUpdate() {
   fi
   return 0
 }
+# 앱 프로젝트 파일 탐색: git 에 추적되는 파일만 대상으로 한다.
+# - submodule(예: jenkins/ 의 test fixture project.pbxproj, build.gradle)은 git ls-files 에 나오지 않아 제외된다.
+# - git 저장소가 아니면 find 로 대체하되 스크립트 디렉터리(SCRIPT_PATH)는 제외한다.
+function dist_find_ios_pbxproj() {
+  local f=""
+  if git rev-parse --is-inside-work-tree >/dev/null 2>&1; then
+    f=$(git ls-files -- '*project.pbxproj' 2>/dev/null | grep -v -e '/Pods/' -e '^Pods/' -e 'node_modules' | head -n 1) || true
+    [ -n "$f" ] && { echo "./$f"; return 0; }
+  fi
+  find . -name 'project.pbxproj' -not -path "*/Pods/*" -not -path "*/node_modules/*" -not -path "${SCRIPT_PATH}/*" -print -quit 2>/dev/null
+}
+function dist_find_android_gradle() {
+  local f
+  if git rev-parse --is-inside-work-tree >/dev/null 2>&1; then
+    while IFS= read -r f; do
+      [ -z "$f" ] && continue
+      case "$f" in *node_modules*) continue;; esac
+      if grep -q 'com.android.application' "$f" 2>/dev/null; then echo "./$f"; return 0; fi
+    done < <(git ls-files -- '*build.gradle' 2>/dev/null)
+    return 0
+  fi
+  find . -name 'build.gradle' -not -path "${SCRIPT_PATH}/*" -exec grep -l 'com.android.application' {} + 2>/dev/null | grep -v 'node_modules' | head -n 1
+}
+# submodule 경로를 git add 에서 제외하기 위한 pathspec (포인터/dirty 상태를 의도치 않게 커밋하지 않는다)
+function dist_submodule_excludes() {
+  [ -f .gitmodules ] || return 0
+  git config -f .gitmodules --get-regexp '^submodule\..*\.path$' 2>/dev/null | awk '{print ":(exclude)"$2}'
+}
+# 커밋할 변경(추적 파일, submodule 제외)이 있는가?
+function dist_has_commitable_changes() {
+  [ -n "$(git status --untracked-files=no --porcelain --ignore-submodules=all 2>/dev/null)" ]
+}
 function shouldUpdateVersion() {
   local HAS_IOS_FILE HAS_AOS_FILE SHOULD_UPDATE=0
   local parsedTagVersion versionPart
   versionPart=$(echo "${GIT_TAG_FULL}" | tr -d '[A-Za-z]-')
   parsedTagVersion=$(echo "$versionPart" | awk -F. '{print $1"."$2"."$3}')
-  HAS_IOS_FILE=$(find . -name 'project.pbxproj' -not -path "*/Pods/*" -not -path "*/node_modules/*" -print -quit 2>/dev/null)
-  HAS_AOS_FILE=$(find . -name 'build.gradle' -exec grep -l 'com.android.application' {} + 2>/dev/null | grep -v 'node_modules' | head -n 1)
+  HAS_IOS_FILE=""
+  HAS_AOS_FILE=""
+  # -p 로 지정한 플랫폼만 검사한다 (ios 빌드가 Android 버전 때문에 막히지 않도록)
+  case "${INPUT_OS:-both}" in
+    ios)     HAS_IOS_FILE=$(dist_find_ios_pbxproj) ;;
+    android) HAS_AOS_FILE=$(dist_find_android_gradle) ;;
+    *)       HAS_IOS_FILE=$(dist_find_ios_pbxproj); HAS_AOS_FILE=$(dist_find_android_gradle) ;;
+  esac
   if [ -z "$HAS_IOS_FILE" ] && [ -z "$HAS_AOS_FILE" ]; then
     return 1
   fi

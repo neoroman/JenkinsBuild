@@ -31,6 +31,7 @@ JENKINS_USER=""
 JENKINS_TOKEN=""
 JENKINS_TRIGGER_TOKEN=""
 JENKINS_JAR="/tmp/jenkins-cli.jar"
+JENKINS_TRIGGERED=0
 CONFIG_FILE=""
 
 ### Argument parsing
@@ -132,69 +133,24 @@ fi
 getInputTag
 printInputTag
 
-### Process uncommitted changes (dist_with_tag.sh: allow commit)
-processGitChanges() {
-  if [ -z "$(git status --untracked-files=no --porcelain --ignore-submodules 2>/dev/null)" ]; then
-    echo "  [$SCRIPT_NAME] No changes to commit."
-    return 0
-  fi
-  echo "  [$SCRIPT_NAME] Processing Git changes..."
-  if [ "$DRY_RUN" -eq 1 ]; then
-    echo "  [$SCRIPT_NAME] DRY-RUN: Would stage, commit and push changes."
-    return 0
-  fi
-  if ! confirm "There's uncommitted changes. Do you want to commit and push?"; then
-    echo "  [$SCRIPT_NAME] Commit & push cancelled by user."
-    exit 0
-  fi
-  UNTRACKED_FILES=$(git ls-files --others --exclude-standard 2>/dev/null || true)
-  if [ -n "$UNTRACKED_FILES" ]; then
-    git add $UNTRACKED_FILES
-    echo "  ┍━━━ adding new files ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━┑"
-    echo "    git add new files ..... [DONE]"
-    echo "  ┕━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━┙"
-  fi
-  git add -u
-  git commit -m "Update version ${RELEASE_TYPE} v${MARKET_VERSION} build(${BUILD_NUMBER}) for ${INPUT_OS}" || exit 1
-  CURRENT_BRANCH=$(git rev-parse --abbrev-ref HEAD)
-  git push "$REMOTE_REPO" "$CURRENT_BRANCH"
-  echo "  ┍━━━ commit & push version changed ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━┑"
-  echo "    git commit & push ..... [DONE]"
-  echo "  ┕━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━┙"
-}
-
-processGitChanges
-
-### Process existing tag (fix ${FINAL_TAG} bug, add remote delete)
-processTagging() {
-  set +e  # pipeline in conditional can trigger exit in some bash versions
-  FINAL_TAG_CLEAN=$(echo "${FINAL_TAG}" | tr -d "'" | tr -d '"')
-  tag_exists=0
-  git tag 2>/dev/null | grep -q "^${FINAL_TAG_CLEAN}$" && tag_exists=1 || true
-  if [ "$tag_exists" -eq 1 ]; then
-    if [ "$DRY_RUN" -eq 1 ]; then
-      echo "  [$SCRIPT_NAME] DRY-RUN: Tag ${FINAL_TAG_CLEAN} exists. Would delete locally and from remote."
-      return 0
-    fi
-    if ! confirm "Tag ${FINAL_TAG_CLEAN} already exists. Do you want to delete and recreate it?"; then
-      echo "  [$SCRIPT_NAME] Tag operation cancelled by user."
-      exit 0
-    fi
-    git tag -d "${FINAL_TAG_CLEAN}" || true
-    git push --delete "$REMOTE_REPO" "${FINAL_TAG_CLEAN}" 2>/dev/null || true
-    echo "  [$SCRIPT_NAME] Tag ${FINAL_TAG_CLEAN} deleted locally and from remote."
-  fi
-  set -e
-}
-
-processTagging
+### Detect existing tag (삭제는 최종 확인 이후에 수행한다 - 취소해도 기존 태그가 보존되도록)
+FINAL_TAG_CLEAN=$(echo "${FINAL_TAG}" | tr -d "'" | tr -d '"')
+TAG_EXISTS_LOCAL=0
+TAG_EXISTS_REMOTE=0
+git rev-parse -q --verify "refs/tags/${FINAL_TAG_CLEAN}" >/dev/null 2>&1 && TAG_EXISTS_LOCAL=1
+git ls-remote --exit-code --tags "$REMOTE_REPO" "refs/tags/${FINAL_TAG_CLEAN}" >/dev/null 2>&1 && TAG_EXISTS_REMOTE=1
+echo "  [$SCRIPT_NAME] push remote: ${REMOTE_REPO}, HEAD: $(git rev-parse --short HEAD)"
+if [ "$TAG_EXISTS_LOCAL" -eq 1 ] || [ "$TAG_EXISTS_REMOTE" -eq 1 ]; then
+  OLD_TAG_COMMIT=$(git rev-parse -q --verify "refs/tags/${FINAL_TAG_CLEAN}^{commit}" 2>/dev/null | cut -c1-7)
+  echo "  [$SCRIPT_NAME] Tag ${FINAL_TAG_CLEAN} already exists (local=${TAG_EXISTS_LOCAL}, remote=${TAG_EXISTS_REMOTE}${OLD_TAG_COMMIT:+, points to ${OLD_TAG_COMMIT}}); it will be recreated on HEAD."
+fi
 
 ### Update version in project files
 if [ "$UPDATE_VERSION" -eq 1 ]; then
   set +e  # hide_spinner and some commands can return non-zero
   if [[ "$INPUT_OS" == "ios" || "$INPUT_OS" == "both" ]]; then
     show_spinner
-    IOS_FILE=$(find . -name 'project.pbxproj' -not -path "*/Pods/*" -not -path "*/node_modules/*" | head -n1)
+    IOS_FILE=$(dist_find_ios_pbxproj)
     hide_spinner
     if [ -f "$IOS_FILE" ]; then
       oldMarketingVersion=$(grep 'MARKETING_VERSION =' "$IOS_FILE" | sort | uniq | xargs)
@@ -222,7 +178,7 @@ if [ "$UPDATE_VERSION" -eq 1 ]; then
 
   if [[ "$INPUT_OS" == "android" || "$INPUT_OS" == "both" ]]; then
     show_spinner
-    AOS_FILE=$(find . -name 'build.gradle' -exec grep -lir 'com.android.application' {} \; 2>/dev/null | grep -v 'node_modules' | head -n1)
+    AOS_FILE=$(dist_find_android_gradle)
     hide_spinner
     if [ -f "$AOS_FILE" ]; then
       oldVersionName=$(dist_extract_android_version_name "$AOS_FILE")
@@ -260,12 +216,14 @@ fi
 ### Final confirmation before tag & push
 Type="${RELEASE_TYPE}"
 OS="${INPUT_OS}"
-FINAL_TAG_CLEAN=$(echo "${FINAL_TAG}" | tr -d "'" | tr -d '"')
 
 if [ "$UPDATE_VERSION" -eq 1 ]; then
   echo "  Commit this version changing, Push tag '${FINAL_TAG_CLEAN}', and Proceed build on Jenkins"
 else
   echo "  Push tag '${FINAL_TAG_CLEAN}', and Proceed build on Jenkins"
+fi
+if [ "$TAG_EXISTS_LOCAL" -eq 1 ] || [ "$TAG_EXISTS_REMOTE" -eq 1 ]; then
+  echo "  (existing tag '${FINAL_TAG_CLEAN}' will be deleted locally/remote and recreated)"
 fi
 
 if [ "$DRY_RUN" -eq 0 ] && ! confirm "Are you sure?"; then
@@ -273,25 +231,41 @@ if [ "$DRY_RUN" -eq 0 ] && ! confirm "Are you sure?"; then
   exit 0
 fi
 
-### Commit if we updated version and have changes
-if [ "$UPDATE_VERSION" -eq 1 ] && [ "$DRY_RUN" -eq 0 ]; then
-  if [ -n "$(git status --porcelain 2>/dev/null)" ]; then
-    git add -u
-    UNTRACKED_FILES=$(git ls-files --others --exclude-standard 2>/dev/null || true)
-    [ -n "$UNTRACKED_FILES" ] && git add $UNTRACKED_FILES
-    git commit -am "Update version $Type v${MARKET_VERSION} build(${BUILD_NUMBER}) for $OS"
-    git push "$REMOTE_REPO" "$(git rev-parse --abbrev-ref HEAD)"
-    echo "  ┍━━━ commit & push version changed ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━┑"
-    echo "    git commit & push ..... [DONE]"
-    echo "  ┕━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━┙"
+### Commit tracked changes (version bump etc.). submodule 변경/untracked 파일은 커밋하지 않는다.
+CURRENT_BRANCH=$(git rev-parse --abbrev-ref HEAD)
+if dist_has_commitable_changes; then
+  if [ "$DRY_RUN" -eq 1 ]; then
+    echo "  [$SCRIPT_NAME] DRY-RUN: Would commit tracked changes (excluding submodules) and push branch ${CURRENT_BRANCH}."
+  else
+    EXCLUDES=()
+    while IFS= read -r ex; do [ -n "$ex" ] && EXCLUDES+=("$ex"); done < <(dist_submodule_excludes)
+    git add -u -- . ${EXCLUDES[@]+"${EXCLUDES[@]}"}
+    if git diff --cached --quiet; then
+      echo "  [$SCRIPT_NAME] No staged changes to commit."
+    else
+      git commit -m "Update version $Type v${MARKET_VERSION} build(${BUILD_NUMBER}) for $OS"
+      if [ "$CURRENT_BRANCH" = "HEAD" ]; then
+        echo "  [$SCRIPT_NAME] WARN: detached HEAD - branch push skipped (tag will point to the new commit)."
+      else
+        git push "$REMOTE_REPO" "$CURRENT_BRANCH"
+      fi
+      echo "  ┍━━━ commit & push version changed ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━┑"
+      echo "    git commit & push ..... [DONE]"
+      echo "  ┕━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━┙"
+    fi
   fi
 fi
 
-### Create and push tag
+### Delete existing tag (local & remote), then create and push tag on HEAD
 if [ "$DRY_RUN" -eq 1 ]; then
+  [ "$TAG_EXISTS_LOCAL" -eq 1 ] || [ "$TAG_EXISTS_REMOTE" -eq 1 ] && echo "  (DEBUG) command: git tag -d ${FINAL_TAG_CLEAN}; git push ${REMOTE_REPO} --delete ${FINAL_TAG_CLEAN}"
   echo "  (DEBUG) command: git tag -a \"${FINAL_TAG_CLEAN}\""
   echo "  (DEBUG) command: git push ${REMOTE_REPO} ${FINAL_TAG_CLEAN}"
 else
+  [ "$TAG_EXISTS_LOCAL" -eq 1 ] && git tag -d "${FINAL_TAG_CLEAN}"
+  if [ "$TAG_EXISTS_REMOTE" -eq 1 ]; then
+    git push "$REMOTE_REPO" --delete "${FINAL_TAG_CLEAN}"
+  fi
   git tag -a "${FINAL_TAG_CLEAN}" -m "${Type} build for ${OS}"
   git push "$REMOTE_REPO" "${FINAL_TAG_CLEAN}"
   echo "  ┍━━━ add tag & push to remote ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━┑"
@@ -303,7 +277,7 @@ fi
 ### Trigger Jenkins build if configured
 if [ -n "$JENKINS_URL" ] && [ -n "$JENKINS_JOB_NAME" ]; then
   if downloadJenkinsCLI "$JENKINS_URL" "$JENKINS_JAR"; then
-    triggerJenkinsBuild "$JENKINS_URL" "$JENKINS_JOB_NAME" "$JENKINS_JAR"
+    triggerJenkinsBuild "$JENKINS_URL" "$JENKINS_JOB_NAME" "$JENKINS_JAR" && JENKINS_TRIGGERED=1
   fi
 fi
 
